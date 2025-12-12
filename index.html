@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Café Halab POS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top left, #fef3c7 0, #f9fafb 45%, #e5e7eb 100%);
+      }
+      .app-shell {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      header {
+        background: linear-gradient(90deg, #0f172a, #1d3557);
+        color: #f9fafb;
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.45);
+      }
+      header h1 {
+        font-size: 20px;
+        letter-spacing: 0.04em;
+        margin: 0;
+      }
+      header span {
+        font-size: 12px;
+        opacity: 0.85;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        object-fit: contain;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 4px;
+      }
+      main {
+        display: grid;
+        grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
+        gap: 18px;
+        padding: 18px 20px 24px;
+      }
+      @media (max-width: 900px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+      }
+      .panel {
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 18px;
+        padding: 14px 16px 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        backdrop-filter: blur(6px);
+      }
+      .categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .category-btn {
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+        padding: 6px 14px;
+        font-size: 12px;
+        background: #f9fafb;
+        cursor: pointer;
+        transition: all 0.16s ease-out;
+      }
+      .category-btn.active {
+        background: linear-gradient(135deg, #f97316, #facc15);
+        color: #111827;
+        border-color: transparent;
+        box-shadow: 0 6px 14px rgba(248, 181, 0, 0.45);
+      }
+      .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        gap: 14px;
+      }
+      .product-card {
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        padding: 10px 10px 12px;
+        background: linear-gradient(145deg, #f9fafb, #eef2ff);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+        overflow: hidden;
+      }
+      .product-image {
+        width: 100%;
+        height: 130px;
+        object-fit: cover;
+        border-radius: 14px;
+        margin-bottom: 8px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.26);
+      }
+      .product-name {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .product-price {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 8px;
+      }
+      .btn-primary {
+        border: none;
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 13px;
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(34, 197, 94, 0.6);
+        transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: default;
+        box-shadow: none;
+      }
+      .cart-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        padding: 6px 0;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .cart-item:last-child {
+        border-bottom: none;
+      }
+      .cart-item-main {
+        display: flex;
+        flex-direction: column;
+      }
+      .cart-item-meta {
+        font-size: 11px;
+        color: #6b7280;
+      }
+      .cart-item-controls {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .qty-btn {
+        border-radius: 4px;
+        border: 1px solid #d1d5db;
+        background: white;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+      .summary-row.total {
+        font-weight: 700;
+        margin-top: 8px;
+      }
+      .milk-select {
+        width: 100%;
+        margin-top: 4px;
+        font-size: 12px;
+        padding: 4px;
+      }
+      .status {
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      .status.ok {
+        color: #16a34a;
+      }
+      .status.err {
+        color: #b91c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- React from CDNs (global React / ReactDOM) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Inline POS App (no modules, works via file://) -->
+    <script>
+      const e = React.createElement;
+
+      const INITIAL_MENU_DATA = [
+        {
+          id: "omelette_cheese",
+          name: "Omelette with Cheese",
+          nameFr: "Omelette au Fromage",
+          nameAr: "أومليت بالجبن",
+          price: 26.0,
+          category: "Breakfast",
+          imageUrl:
+            "https://images.unsplash.com/photo-1604909052743-94e838986d0e?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+        {
+          id: "omelette_turkey",
+          name: "Omelette with Turkey",
+          nameFr: "Omelette à la Dinde Fumée",
+          nameAr: "أومليت بالديك الرومي المدخن",
+          price: 28.0,
+          category: "Breakfast",
+          imageUrl:
+            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+        {
+          id: "omelette_kashir",
+          name: "Omelette with Kashir",
+          nameFr: "Omelette au Kashir",
+          nameAr: "أومليت بالكاشير",
+          price: 24.0,
+          category: "Breakfast",
+          imageUrl:
+            "https://images.unsplash.com/photo-1546069901-d5bfd2cbfb1f?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+        {
+          id: "breakfast_marrakchi",
+          name: "Marrakchi Breakfast",
+          nameFr: "Petit Déjeuner Marrakchi",
+          nameAr: "فطور مراكشي",
+          price: 26.0,
+          category: "Breakfast",
+          modifiers: []
+        },
+        {
+          id: "breakfast_catalan",
+          name: "Catalan Breakfast",
+          nameFr: "Petit Déjeuner Catalan",
+          nameAr: "فطور كاتالان",
+          price: 29.0,
+          category: "Breakfast",
+          imageUrl:
+            "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+        {
+          id: "fried_eggs",
+          name: "Fried Eggs (Mirror)",
+          nameFr: "Œufs au plat miroir",
+          nameAr: "فطور بيض عوينات",
+          price: 20.0,
+          category: "Breakfast",
+          imageUrl:
+            "https://images.unsplash.com/photo-1588167865096-71c620227d92?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+        {
+          id: "single_egg",
+          name: "Single Egg",
+          nameFr: "Un œuf",
+          nameAr: "بيضة واحدة",
+          price: 20.0,
+          category: "Breakfast",
+          modifiers: []
+        },
+        {
+          id: "croissant_breakfast",
+          name: "Croissant Breakfast",
+          nameFr: "Petit-déjeuner au croissant",
+          nameAr: "فطور كرواسون",
+          price: 20.0,
+          category: "Breakfast",
+          modifiers: []
+        },
+
+        {
+          id: "coffee",
+          name: "Coffee",
+          nameFr: "Café",
+          nameAr: "قهوة",
+          price: 11.0,
+          category: "Hot Drinks",
+          imageUrl:
+            "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+        {
+          id: "coffee_with_milk",
+          name: "Coffee with Milk",
+          nameFr: "Café au lait",
+          nameAr: "قهوة بالحليب",
+          price: 11.0,
+          category: "Hot Drinks",
+          modifiers: []
+        },
+        {
+          id: "machada",
+          name: "Machada",
+          nameFr: "Machada",
+          nameAr: "ماشادا",
+          price: 11.0,
+          category: "Hot Drinks",
+          modifiers: []
+        },
+        {
+          id: "nescafe",
+          name: "NESCAFE",
+          nameFr: "NESCAFÉ",
+          nameAr: "نسكافيه",
+          price: 11.0,
+          category: "Hot Drinks",
+          modifiers: []
+        },
+        {
+          id: "tea_lipton",
+          name: "Lipton Tea",
+          nameFr: "Thé Lipton",
+          nameAr: "شاي ليبتون",
+          price: 11.0,
+          category: "Hot Drinks",
+          modifiers: []
+        },
+        {
+          id: "tea_mint",
+          name: "Mint Tea",
+          nameFr: "Thé à la Menthe",
+          nameAr: "شاي بالنعناع",
+          price: 7.0,
+          category: "Hot Drinks",
+          imageUrl:
+            "https://images.unsplash.com/photo-1523906630133-f6934a1ab1b4?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+        {
+          id: "tea_berrad",
+          name: "Berrad Tea (Teapot)",
+          nameFr: "Thé Berrad",
+          nameAr: "براد شاي",
+          price: 9.0,
+          category: "Hot Drinks",
+          imageUrl:
+            "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+
+        {
+          id: "juice_orange",
+          name: "Orange Juice",
+          nameFr: "Jus d'orange",
+          nameAr: "عصير البرتقال",
+          price: 17.0,
+          category: "Cold Drinks",
+          imageUrl:
+            "https://images.unsplash.com/photo-1542444459-db63c79b0d7a?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+        {
+          id: "juice_apple",
+          name: "Apple Juice",
+          nameFr: "Jus de pomme",
+          nameAr: "عصير التفاح",
+          price: 20.0,
+          category: "Cold Drinks",
+          imageUrl:
+            "https://images.unsplash.com/photo-1577803645773-f96470509666?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        },
+        {
+          id: "juice_lemon",
+          name: "Lemon Juice",
+          nameFr: "Jus de citron",
+          nameAr: "عصير الليمون",
+          price: 20.0,
+          category: "Cold Drinks",
+          modifiers: []
+        },
+        {
+          id: "juice_banana",
+          name: "Banana Juice",
+          nameFr: "Jus de banane",
+          nameAr: "عصير الموز",
+          price: 20.0,
+          category: "Cold Drinks",
+          modifiers: []
+        },
+        {
+          id: "juice_avocado",
+          name: "Avocado Juice",
+          nameFr: "Jus d'avocat",
+          nameAr: "عصير الأفوكادو",
+          price: 27.0,
+          category: "Cold Drinks",
+          imageUrl:
+            "https://images.unsplash.com/photo-1497534446932-c925b458314e?auto=format&fit=crop&w=600&q=80",
+          modifiers: []
+        }
+      ];
+
+      const INITIAL_CATEGORIES = ["Breakfast", "Hot Drinks", "Cold Drinks"];
+
+      const USERS = [
+        { id: "worker_fatima", name: "Fatima", role: "worker", pin: "1111" },
+        { id: "manager_ali", name: "Ali", role: "manager", pin: "2222" },
+        { id: "admin_sara", name: "Sara", role: "admin", pin: "3333" }
+      ];
+
+      const INVENTORY_INITIAL = {
+        coffee_beans: {
+          id: "coffee_beans",
+          name: "Grains de café",
+          unit: "g",
+          currentQty: 5000,
+          minQty: 1000
+        },
+        milk: {
+          id: "milk",
+          name: "Lait",
+          unit: "ml",
+          currentQty: 8000,
+          minQty: 2000
+        },
+        oranges: {
+          id: "oranges",
+          name: "Oranges",
+          unit: "pcs",
+          currentQty: 80,
+          minQty: 20
+        }
+      };
+
+      const MENU_RECIPES = {
+        coffee: { coffee_beans: 8 },
+        coffee_with_milk: { coffee_beans: 8, milk: 120 },
+        machada: { coffee_beans: 8 },
+        nescafe: { coffee_beans: 8 },
+        tea_mint: { coffee_beans: 0 },
+        juice_orange: { oranges: 3 }
+      };
+
+      function buildShiftId(dateStr, period) {
+        return dateStr + "_" + period;
+      }
+
+      function isCoffee(item) {
+        const coffeeNames = ["Coffee", "Coffee with Milk", "NESCAFE", "Machada"];
+        return coffeeNames.includes(item.name);
+      }
+
+      const DICTIONARY = {
+        fr: {
+          appTitle: "Café Halab POS",
+          uiSubtitle: "Aperçu UI · pas encore de backend",
+          all: "Tout",
+          catBreakfast: "Petit Déjeuner",
+          catHot: "Boissons Chaudes",
+          catCold: "Boissons Froides",
+          currentOrder: "Commande en cours",
+          cartEmpty: "Le panier est vide.",
+          subtotal: "Sous-total",
+          tax: "Taxe",
+          total: "Total",
+          mockPlaceOrder: "Simuler l'envoi de la commande",
+          placingOrder: "Envoi en cours...",
+          orderOk: "Commande enregistrée localement (console).",
+          milkLabel: "Lait",
+          milkYes: "Avec lait",
+          milkNo: "Sans lait",
+          sugarLabel: "Sucre",
+          sugarNone: "Sans sucre",
+          sugarMedium: "Moyen",
+          sugarExtra: "Sucré",
+          milkInLine: "lait",
+          sugarInLine: "sucre",
+          addLabel: "Ajouter",
+          langFr: "FR",
+          langAr: "AR"
+        },
+        ar: {
+          appTitle: "نظام مقهى حلب",
+          uiSubtitle: "واجهة فقط · بدون خلفية بعد",
+          all: "الكل",
+          catBreakfast: "فطور",
+          catHot: "مشروبات ساخنة",
+          catCold: "مشروبات باردة",
+          currentOrder: "الطلب الحالي",
+          cartEmpty: "السلة فارغة",
+          subtotal: "المجموع الفرعي",
+          tax: "الضريبة",
+          total: "المجموع",
+          mockPlaceOrder: "تسجيل الطلب محلياً",
+          placingOrder: "جار إرسال الطلب...",
+          orderOk: "تم تسجيل الطلب محلياً (في الكونسول)",
+          milkLabel: "حليب",
+          milkYes: "مع حليب",
+          milkNo: "بدون حليب",
+          sugarLabel: "سكر",
+          sugarNone: "بدون سكر",
+          sugarMedium: "عادي",
+          sugarExtra: "حلو",
+          milkInLine: "حليب",
+          sugarInLine: "سكر",
+          addLabel: "إضافة",
+          langFr: "فر",
+          langAr: "عر"
+        }
+      };
+
+      function LoginPanel({ currentUser, users, onLogin, onLogout }) {
+        const [pin, setPin] = React.useState("");
+        const [error, setError] = React.useState(null);
+
+        function handleSubmit(ev) {
+          ev.preventDefault();
+          const u = users.find((user) => user.pin === pin);
+          if (!u) {
+            setError("PIN incorrect");
+            return;
+          }
+          setError(null);
+          setPin("");
+          onLogin(u);
+        }
+
+        if (currentUser) {
+          return React.createElement(
+            "div",
+            { style: { display: "flex", gap: 8, alignItems: "center" } },
+            React.createElement(
+              "span",
+              null,
+              currentUser.name + " (" + currentUser.role + ")"
+            ),
+            React.createElement(
+              "button",
+              { className: "category-btn", onClick: onLogout },
+              "Logout"
+            )
+          );
+        }
+
+        return React.createElement(
+          "form",
+          {
+            onSubmit: handleSubmit,
+            style: { display: "flex", gap: 4, alignItems: "center" }
+          },
+          React.createElement("input", {
+            type: "password",
+            value: pin,
+            onChange: (e) => setPin(e.target.value),
+            placeholder: "PIN",
+            style: { padding: 4, fontSize: 12, width: 70 }
+          }),
+          React.createElement(
+            "button",
+            { className: "category-btn", type: "submit" },
+            "Login"
+          ),
+          error &&
+            React.createElement(
+              "span",
+              { style: { color: "#b91c1c", fontSize: 11 } },
+              error
+            )
+        );
+      }
+
+      function AdminUsersPanel({ users, onChangePin }) {
+        const editableUsers = users.filter(
+          (u) => u.role === "worker" || u.role === "manager"
+        );
+        const [selectedId, setSelectedId] = React.useState(
+          editableUsers[0]?.id || null
+        );
+        const [newPin, setNewPin] = React.useState("");
+
+        if (!editableUsers.length) {
+          return React.createElement(
+            "p",
+            { style: { fontSize: 12 } },
+            "Aucun utilisateur à modifier."
+          );
+        }
+
+        const current = editableUsers.find((u) => u.id === selectedId) ||
+          editableUsers[0];
+
+        function handleSave() {
+          if (!newPin || newPin.length < 4) {
+            alert("PIN minimum 4 chiffres.");
+            return;
+          }
+          onChangePin(current.id, newPin);
+          setNewPin("");
+        }
+
+        return React.createElement(
+          "div",
+          {
+            style: {
+              fontSize: 12,
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 2fr)",
+              gap: 12
+            }
+          },
+          React.createElement(
+            "div",
+            {
+              style: {
+                borderRadius: 10,
+                background: "linear-gradient(145deg,#eef2ff,#e0f2fe)",
+                border: "1px solid rgba(129,140,248,0.6)",
+                maxHeight: 220,
+                overflowY: "auto"
+              }
+            },
+            editableUsers.map((u) =>
+              React.createElement(
+                "div",
+                {
+                  key: u.id,
+                  onClick: () => setSelectedId(u.id),
+                  style: {
+                    padding: "6px 10px",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    background:
+                      u.id === current.id ? "rgba(129,140,248,0.3)" : "transparent"
+                  }
+                },
+                u.name,
+                " (",
+                u.role,
+                ")"
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            {
+              style: {
+                borderRadius: 12,
+                padding: 10,
+                background: "rgba(15,23,42,0.02)",
+                border: "1px solid #e5e7eb",
+                boxShadow: "0 8px 18px rgba(15,23,42,0.08)"
+              }
+            },
+            React.createElement(
+              "h4",
+              { style: { marginTop: 0, marginBottom: 6 } },
+              "Changer PIN utilisateur"
+            ),
+            React.createElement(
+              "div",
+              { style: { marginBottom: 4 } },
+              "Utilisateur: ",
+              current.name,
+              " (",
+              current.role,
+              ")"
+            ),
+            React.createElement(
+              "div",
+              { style: { marginTop: 6 } },
+              React.createElement(
+                "div",
+                { style: { fontWeight: 600, marginBottom: 2 } },
+                "Nouveau PIN"
+              ),
+              React.createElement("input", {
+                type: "password",
+                value: newPin,
+                onChange: (e) => setNewPin(e.target.value),
+                style: { width: "100%", padding: 4, fontSize: 12 }
+              })
+            ),
+            React.createElement(
+              "button",
+              {
+                type: "button",
+                className: "btn-primary",
+                style: { marginTop: 8 },
+                onClick: handleSave
+              },
+              "Enregistrer le PIN"
+            )
+          )
+        );
+      }
+
+      function ShiftPanel({
+        currentUser,
+        activeShift,
+        shifts,
+        onOpenShift,
+        onCloseShift
+      }) {
+        const [period, setPeriod] = React.useState("morning");
+        const today = new Date().toISOString().slice(0, 10);
+
+        if (
+          !currentUser ||
+          (currentUser.role !== "manager" && currentUser.role !== "admin")
+        ) {
+          return React.createElement(
+            "p",
+            { style: { fontSize: 12 } },
+            "Manager/Admin seulement."
+          );
+        }
+
+        const lastShifts = shifts.slice(-5).reverse();
+
+        function handleOpen() {
+          onOpenShift(today, period);
+        }
+
+        function handleClose() {
+          onCloseShift();
+        }
+
+        return React.createElement(
+          "div",
+          null,
+          React.createElement(
+            "h3",
+            null,
+            "Shift du jour: " + today
+          ),
+          React.createElement(
+            "div",
+            { style: { marginBottom: 8 } },
+            activeShift
+              ? "Ouvert: " + activeShift.date + " (" + activeShift.period + ")"
+              : "Aucun shift ouvert"
+          ),
+          !activeShift &&
+            React.createElement(
+              "div",
+              { style: { display: "flex", gap: 4, marginBottom: 8 } },
+              React.createElement(
+                "select",
+                {
+                  value: period,
+                  onChange: (e) => setPeriod(e.target.value),
+                  style: { padding: 4, fontSize: 12 }
+                },
+                React.createElement("option", { value: "morning" }, "Matin"),
+                React.createElement(
+                  "option",
+                  { value: "afternoon" },
+                  "Après-midi"
+                )
+              ),
+              React.createElement(
+                "button",
+                {
+                  className: "btn-primary",
+                  type: "button",
+                  onClick: handleOpen
+                },
+                "Ouvrir shift"
+              )
+            ),
+          activeShift &&
+            React.createElement(
+              "button",
+              {
+                className: "btn-primary",
+                type: "button",
+                onClick: handleClose
+              },
+              "Fermer shift"
+            ),
+          React.createElement("hr", { style: { margin: "10px 0" } }),
+          React.createElement("h4", null, "Derniers shifts"),
+          lastShifts.length === 0
+            ? React.createElement(
+                "p",
+                { style: { fontSize: 12 } },
+                "Aucun shift."
+              )
+            : lastShifts.map((s) =>
+                React.createElement(
+                  "div",
+                  { key: s.id, style: { fontSize: 12, marginBottom: 4 } },
+                  s.date,
+                  " ",
+                  s.period,
+                  " | statut: ",
+                  s.status,
+                  " | commandes: ",
+                  s.orderCount,
+                  " | CA: ",
+                  s.revenue.toFixed(2),
+                  " DHS | cash attendu: ",
+                  s.expectedCash.toFixed(2),
+                  " DHS"
+                )
+              )
+        );
+      }
+
+      function ManagerStats({ shifts, orders, inventoryLogs }) {
+        if (!shifts.length) {
+          return React.createElement(
+            "p",
+            { style: { fontSize: 12 } },
+            "Aucun shift."
+          );
+        }
+
+        function getShiftStats(shift) {
+          const shiftOrders = orders.filter((o) => o.shiftId === shift.id);
+          const paidOrders = shiftOrders.filter((o) => o.status === "paid");
+          const revenue = paidOrders.reduce(
+            (sum, o) => sum + o.totals.total,
+            0
+          );
+          const orderCount = paidOrders.length;
+          const expectedCash = revenue;
+
+          const logs = inventoryLogs.filter((log) => log.shiftId === shift.id);
+          const byIngredient = {};
+          logs.forEach((log) => {
+            byIngredient[log.ingredientId] =
+              (byIngredient[log.ingredientId] || 0) + log.delta;
+          });
+
+          return { revenue, orderCount, expectedCash, byIngredient };
+        }
+
+        return React.createElement(
+          "div",
+          null,
+          shifts
+            .slice()
+            .reverse()
+            .map((shift) => {
+              const stats = getShiftStats(shift);
+              return React.createElement(
+                "div",
+                {
+                  key: shift.id,
+                  style: {
+                    borderRadius: 12,
+                    padding: 10,
+                    marginBottom: 10,
+                    background:
+                      "linear-gradient(135deg, rgba(56,189,248,0.1), rgba(59,130,246,0.16))",
+                    border: "1px solid rgba(59,130,246,0.35)",
+                    boxShadow: "0 10px 24px rgba(15,23,42,0.15)"
+                  }
+                },
+                React.createElement(
+                  "div",
+                  { style: { fontSize: 13, fontWeight: 600 } },
+                  shift.date,
+                  " ",
+                  shift.period,
+                  " (",
+                  shift.status,
+                  ")"
+                ),
+                React.createElement(
+                  "div",
+                  { style: { fontSize: 12, marginTop: 4 } },
+                  "Commandes payées: ",
+                  stats.orderCount,
+                  " | CA: ",
+                  stats.revenue.toFixed(2),
+                  " DHS | Cash attendu: ",
+                  stats.expectedCash.toFixed(2),
+                  " DHS"
+                ),
+                React.createElement(
+                  "div",
+                  { style: { marginTop: 6, fontSize: 12 } },
+                  "Consommation stock:"
+                ),
+                Object.keys(stats.byIngredient).length === 0
+                  ? React.createElement(
+                      "div",
+                      { style: { fontSize: 11 } },
+                      "Aucun mouvement."
+                    )
+                  : Object.entries(stats.byIngredient).map(
+                      ([ingId, delta]) =>
+                        React.createElement(
+                          "div",
+                          { key: ingId, style: { fontSize: 11 } },
+                          ingId,
+                          ": ",
+                          delta,
+                          " (g/ml/pcs, négatif = utilisation)"
+                        )
+                    )
+              );
+            })
+        );
+      }
+
+      function AdminStats({ shifts, orders, inventoryLogs, inventory }) {
+        if (!shifts.length) {
+          return React.createElement(
+            "p",
+            { style: { fontSize: 12 } },
+            "Aucun shift pour l'instant."
+          );
+        }
+
+        const paidOrders = orders.filter((o) => o.status === "paid");
+        const totalRevenue = paidOrders.reduce(
+          (sum, o) => sum + o.totals.total,
+          0
+        );
+        const totalOrders = paidOrders.length;
+
+        const aggregatedInventory = {};
+        inventoryLogs.forEach((log) => {
+          aggregatedInventory[log.ingredientId] =
+            (aggregatedInventory[log.ingredientId] || 0) + log.delta;
+        });
+
+        function nameForIngredient(id) {
+          return inventory[id]?.name || id;
+        }
+
+        return React.createElement(
+          "div",
+          null,
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                gap: 10,
+                marginBottom: 10
+              }
+            },
+            React.createElement(
+              "div",
+              {
+                style: {
+                  borderRadius: 12,
+                  padding: 10,
+                  background:
+                    "linear-gradient(135deg, #22c55e, #a3e635)",
+                  color: "#0f172a",
+                  boxShadow: "0 10px 24px rgba(34,197,94,0.6)",
+                  fontSize: 12
+                }
+              },
+              React.createElement(
+                "div",
+                { style: { fontWeight: 700, marginBottom: 4 } },
+                "CA total"
+              ),
+              React.createElement(
+                "div",
+                { style: { fontSize: 16 } },
+                totalRevenue.toFixed(2),
+                " DHS"
+              )
+            ),
+            React.createElement(
+              "div",
+              {
+                style: {
+                  borderRadius: 12,
+                  padding: 10,
+                  background:
+                    "linear-gradient(135deg, #38bdf8, #6366f1)",
+                  color: "#f9fafb",
+                  boxShadow: "0 10px 24px rgba(59,130,246,0.6)",
+                  fontSize: 12
+                }
+              },
+              React.createElement(
+                "div",
+                { style: { fontWeight: 700, marginBottom: 4 } },
+                "Commandes payées"
+              ),
+              React.createElement(
+                "div",
+                { style: { fontSize: 16 } },
+                totalOrders
+              )
+            ),
+            React.createElement(
+              "div",
+              {
+                style: {
+                  borderRadius: 12,
+                  padding: 10,
+                  background:
+                    "linear-gradient(135deg, #f97316, #fb7185)",
+                  color: "#f9fafb",
+                  boxShadow: "0 10px 24px rgba(248,113,113,0.5)",
+                  fontSize: 12
+                }
+              },
+              React.createElement(
+                "div",
+                { style: { fontWeight: 700, marginBottom: 4 } },
+                "Nombre de shifts"
+              ),
+              React.createElement(
+                "div",
+                { style: { fontSize: 16 } },
+                shifts.length
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { style: { marginTop: 6, fontSize: 12 } },
+            React.createElement(
+              "div",
+              { style: { fontWeight: 600, marginBottom: 4 } },
+              "Consommation globale de stock"
+            ),
+            Object.keys(aggregatedInventory).length === 0
+              ? React.createElement("div", null, "Aucun mouvement.")
+              : Object.entries(aggregatedInventory).map(([id, delta]) =>
+                  React.createElement(
+                    "div",
+                    { key: id },
+                    nameForIngredient(id),
+                    ": ",
+                    delta,
+                    " (négatif = utilisation)"
+                  )
+                )
+          )
+        );
+      }
+
+      function AdminMenuEditor({ menu, onUpdateMenuItem, onSaveMenu }) {
+        const [selectedId, setSelectedId] = React.useState(menu[0]?.id || null);
+
+        if (!selectedId) {
+          return React.createElement(
+            "p",
+            { style: { fontSize: 12 } },
+            "Aucun article."
+          );
+        }
+
+        const item = menu.find((m) => m.id === selectedId);
+
+        function handleChange(field, value) {
+          onUpdateMenuItem(selectedId, { [field]: value });
+        }
+
+        return React.createElement(
+          "div",
+          {
+            style: {
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 2fr)",
+              gap: 14,
+              alignItems: "flex-start"
+            }
+          },
+          React.createElement(
+            "div",
+            {
+              style: {
+                minWidth: 220,
+                maxHeight: 280,
+                overflowY: "auto",
+                borderRadius: 10,
+                background: "linear-gradient(145deg,#f9fafb,#e5e7eb)",
+                border: "1px solid #e5e7eb"
+              }
+            },
+            menu.map((m) =>
+              React.createElement(
+                "div",
+                {
+                  key: m.id,
+                  onClick: () => setSelectedId(m.id),
+                  style: {
+                    padding: "6px 10px",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    background:
+                      m.id === selectedId ? "#e5e7eb" : "transparent"
+                  }
+                },
+                m.nameFr || m.name,
+                " - ",
+                m.price.toFixed(2),
+                " DHS"
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            {
+              style: {
+                flex: 1,
+                fontSize: 12,
+                padding: 10,
+                borderRadius: 12,
+                background:
+                  "linear-gradient(135deg, rgba(251,251,255,0.98), #e5e7eb)",
+                border: "1px solid rgba(148,163,184,0.5)",
+                boxShadow: "0 10px 24px rgba(15,23,42,0.12)"
+              }
+            },
+            React.createElement(
+              "div",
+              { style: { display: "flex", justifyContent: "space-between" } },
+              React.createElement("h4", null, "Éditer l'article"),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "btn-primary",
+                  style: {
+                    padding: "6px 14px",
+                    fontSize: 11
+                  },
+                  onClick: () => onSaveMenu(menu)
+                },
+                "Enregistrer"
+              )
+            ),
+            React.createElement(
+              "div",
+              { style: { marginTop: 4, fontSize: 11, color: "#6b7280" } },
+              "ID: ",
+              item.id
+            ),
+            React.createElement(
+              "div",
+              { style: { marginTop: 6 } },
+              React.createElement(
+                "div",
+                { style: { fontWeight: 600, marginBottom: 2 } },
+                "Nom FR:"
+              ),
+              React.createElement("input", {
+                value: item.nameFr || "",
+                onChange: (e) => handleChange("nameFr", e.target.value),
+                style: { width: "100%", padding: 4, fontSize: 12 }
+              })
+            ),
+            React.createElement(
+              "div",
+              { style: { marginTop: 6 } },
+              React.createElement(
+                "div",
+                { style: { fontWeight: 600, marginBottom: 2 } },
+                "Nom AR:"
+              ),
+              React.createElement("input", {
+                value: item.nameAr || "",
+                onChange: (e) => handleChange("nameAr", e.target.value),
+                style: { width: "100%", padding: 4, fontSize: 12 }
+              })
+            ),
+            React.createElement(
+              "div",
+              { style: { marginTop: 6 } },
+              React.createElement(
+                "div",
+                { style: { fontWeight: 600, marginBottom: 2 } },
+                "Prix DHS:"
+              ),
+              React.createElement("input", {
+                type: "number",
+                value: item.price,
+                onChange: (e) =>
+                  handleChange("price", parseFloat(e.target.value) || 0),
+                style: { width: "100%", padding: 4, fontSize: 12 }
+              })
+            )
+          )
+        );
+      }
+
+      function POSApp() {
+        const [lang, setLang] = React.useState("fr");
+        const t = DICTIONARY[lang];
+
+        const [activeCategory, setActiveCategory] = React.useState("All");
+        const [menu, setMenu] = React.useState(() => {
+          try {
+            const stored = window.localStorage.getItem("cafe_halab_menu");
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (Array.isArray(parsed) && parsed.length) {
+                return parsed;
+              }
+            }
+          } catch (e) {}
+          return INITIAL_MENU_DATA.slice();
+        });
+        const [users, setUsers] = React.useState(USERS.slice());
+        const [cart, setCart] = React.useState([]);
+        const [submitting, setSubmitting] = React.useState(false);
+        const [status, setStatus] = React.useState(null);
+
+        const [currentUser, setCurrentUser] = React.useState(null);
+        const [view, setView] = React.useState("pos");
+        const [activeShift, setActiveShift] = React.useState(null);
+        const [shifts, setShifts] = React.useState([]);
+        const [orders, setOrders] = React.useState([]);
+        const [inventory, setInventory] = React.useState(INVENTORY_INITIAL);
+        const [inventoryLogs, setInventoryLogs] = React.useState([]);
+
+        const categories = React.useMemo(
+          () => ["All", ...INITIAL_CATEGORIES],
+          []
+        );
+
+        const filteredProducts = React.useMemo(() => {
+          if (activeCategory === "All") return menu;
+          return menu.filter((p) => p.category === activeCategory);
+        }, [activeCategory, menu]);
+
+        function handleAddToCart(product, modifiers) {
+          setCart((prev) => {
+            const key =
+              product.id +
+              (modifiers && (modifiers.milk != null || modifiers.sugar)
+                ? `_${JSON.stringify(modifiers)}`
+                : "");
+            const existing = prev.find((line) => line.key === key);
+            if (existing) {
+              return prev.map((line) =>
+                line.key === key ? { ...line, qty: line.qty + 1 } : line
+              );
+            }
+            return [
+              ...prev,
+              {
+                key,
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                qty: 1,
+                modifiers: modifiers || {}
+              }
+            ];
+          });
+        }
+
+        function updateQty(key, delta) {
+          setCart((prev) =>
+            prev
+              .map((line) =>
+                line.key === key ? { ...line, qty: line.qty + delta } : line
+              )
+              .filter((line) => line.qty > 0)
+          );
+        }
+
+        const totals = React.useMemo(() => {
+          const subtotal = cart.reduce((sum, line) => sum + line.price * line.qty, 0);
+          const taxRate = 0.0;
+          const tax = subtotal * taxRate;
+          const total = subtotal + tax;
+          return { subtotal, tax, total };
+        }, [cart]);
+
+        function accumulateIngredientsForOrder(orderItems) {
+          const result = {};
+          orderItems.forEach((line) => {
+            const recipe = MENU_RECIPES[line.id];
+            if (!recipe) return;
+            const qty = line.qty || 1;
+            Object.entries(recipe).forEach(([ingredientId, perUnit]) => {
+              const delta = -perUnit * qty;
+              result[ingredientId] = (result[ingredientId] || 0) + delta;
+            });
+          });
+          return result;
+        }
+
+        function applyInventoryConsumption(
+          ingredientDeltas,
+          shiftId,
+          orderId,
+          userId
+        ) {
+          setInventory((prev) => {
+            const copy = { ...prev };
+            Object.entries(ingredientDeltas).forEach(([ingId, delta]) => {
+              if (!copy[ingId]) return;
+              copy[ingId] = {
+                ...copy[ingId],
+                currentQty: copy[ingId].currentQty + delta
+              };
+            });
+            return copy;
+          });
+          setInventoryLogs((prev) => [
+            ...prev,
+            ...Object.entries(ingredientDeltas).map(([ingId, delta]) => ({
+              id: "log_" + Date.now() + "_" + Math.random().toString(16).slice(2),
+              ingredientId: ingId,
+              delta,
+              reason: "sale",
+              orderId,
+              shiftId,
+              userId,
+              createdAt: new Date().toISOString()
+            }))
+          ]);
+        }
+
+        function handleLogin(user) {
+          setCurrentUser(user);
+        }
+
+        function handleLogout() {
+          setCurrentUser(null);
+        }
+
+        function handleChangeUserPin(userId, newPin) {
+          setUsers((prev) =>
+            prev.map((u) => (u.id === userId ? { ...u, pin: newPin } : u))
+          );
+        }
+
+        function handleOpenShift(dateStr, period) {
+          const id = buildShiftId(dateStr, period);
+          const newShift = {
+            id,
+            date: dateStr,
+            period,
+            status: "open",
+            openedAt: new Date().toISOString(),
+            closedAt: null,
+            openedBy: currentUser ? currentUser.id : null,
+            closedBy: null,
+            revenue: 0,
+            orderCount: 0,
+            expectedCash: 0
+          };
+          setActiveShift(newShift);
+          setShifts((prev) => [...prev, newShift]);
+        }
+
+        function handleCloseShift() {
+          if (!activeShift) return;
+          setShifts((prev) =>
+            prev.map((s) =>
+              s.id === activeShift.id
+                ? { ...s, status: "closed", closedAt: new Date().toISOString() }
+                : s
+            )
+          );
+          setActiveShift(null);
+        }
+
+        function updateShiftStats(shiftId, amount) {
+          setShifts((prev) =>
+            prev.map((s) =>
+              s.id === shiftId
+                ? {
+                    ...s,
+                    revenue: (s.revenue || 0) + amount,
+                    orderCount: (s.orderCount || 0) + 1,
+                    expectedCash: (s.expectedCash || 0) + amount
+                  }
+                : s
+            )
+          );
+        }
+
+        async function handleSubmitOrder() {
+          if (!cart.length) return;
+          if (!currentUser) {
+            setStatus({
+              type: "err",
+              message: "Connectez-vous (PIN) avant de prendre une commande."
+            });
+            return;
+          }
+          if (!activeShift) {
+            setStatus({
+              type: "err",
+              message: "Aucun shift ouvert. Demandez au manager."
+            });
+            return;
+          }
+
+          setSubmitting(true);
+          setStatus(null);
+
+          const orderId = "local_" + Date.now();
+          const order = {
+            id: orderId,
+            appId: "cafe-halab-pos",
+            items: cart,
+            totals,
+            currency: "DHS",
+            status: "paid",
+            createdAt: new Date().toISOString(),
+            shiftId: activeShift.id,
+            cashierId: currentUser.id
+          };
+
+          const ingredientDeltas = accumulateIngredientsForOrder(cart);
+          applyInventoryConsumption(
+            ingredientDeltas,
+            activeShift.id,
+            orderId,
+            currentUser.id
+          );
+          updateShiftStats(activeShift.id, totals.total);
+
+          setOrders((prev) => [...prev, order]);
+
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          setStatus({ type: "ok", message: "Commande enregistrée localement." });
+          setCart([]);
+          setSubmitting(false);
+        }
+
+        function handleUpdateMenuItem(id, partial) {
+          setMenu((prev) => {
+            const next = prev.map((m) =>
+              m.id === id ? { ...m, ...partial } : m
+            );
+            return next;
+          });
+          const idx = INITIAL_MENU_DATA.findIndex((m) => m.id === id);
+          if (idx !== -1) {
+            INITIAL_MENU_DATA[idx] = { ...INITIAL_MENU_DATA[idx], ...partial };
+          }
+        }
+
+        function handleSaveMenu(currentMenu) {
+          try {
+            window.localStorage.setItem(
+              "cafe_halab_menu",
+              JSON.stringify(currentMenu)
+            );
+            setStatus({ type: "ok", message: "Menu enregistré." });
+          } catch (e) {
+            setStatus({ type: "err", message: "Erreur lors de l'enregistrement." });
+          }
+        }
+
+        function canSeeManager() {
+          return (
+            currentUser &&
+            (currentUser.role === "manager" || currentUser.role === "admin")
+          );
+        }
+
+        function canSeeAdmin() {
+          return currentUser && currentUser.role === "admin";
+        }
+
+        return e(
+          "div",
+          { className: "app-shell" },
+          e(
+            "header",
+            null,
+            e(
+              "div",
+              { className: "brand" },
+              e("img", {
+                src: "./cafe-halab-logo.png",
+                alt: t.appTitle,
+                className: "brand-logo"
+              }),
+              e(
+                "div",
+                null,
+                e("h1", null, t.appTitle),
+                e("span", null, t.uiSubtitle)
+              )
+            ),
+            e(LoginPanel, {
+              currentUser,
+              users,
+              onLogin: handleLogin,
+              onLogout: handleLogout
+            }),
+            e(
+              "div",
+              { style: { marginLeft: "auto", display: "flex", gap: 4 } },
+              e(
+                "button",
+                {
+                  className: "category-btn" + (view === "pos" ? " active" : ""),
+                  onClick: () => setView("pos")
+                },
+                "POS"
+              ),
+              e(
+                "button",
+                {
+                  className:
+                    "category-btn" + (view === "manager" ? " active" : ""),
+                  onClick: () => setView("manager"),
+                  disabled: !canSeeManager()
+                },
+                "Manager"
+              ),
+              e(
+                "button",
+                {
+                  className: "category-btn" + (view === "admin" ? " active" : ""),
+                  onClick: () => setView("admin"),
+                  disabled: !canSeeAdmin()
+                },
+                "Admin"
+              ),
+              e(
+                "button",
+                {
+                  className: "category-btn" + (lang === "fr" ? " active" : ""),
+                  onClick: () => setLang("fr")
+                },
+                t.langFr
+              ),
+              e(
+                "button",
+                {
+                  className: "category-btn" + (lang === "ar" ? " active" : ""),
+                  onClick: () => setLang("ar")
+                },
+                t.langAr
+              )
+            )
+          ),
+          view === "pos" &&
+            e(
+              "main",
+              null,
+              e(
+                "section",
+                { className: "panel" },
+                e(
+                  "div",
+                  { className: "categories" },
+                  categories.map((cat) => {
+                    let label = cat;
+                    if (cat === "All") label = t.all;
+                    else if (cat === "Breakfast") label = t.catBreakfast;
+                    else if (cat === "Hot Drinks") label = t.catHot;
+                    else if (cat === "Cold Drinks") label = t.catCold;
+                    return e(
+                      "button",
+                      {
+                        key: cat,
+                        className:
+                          "category-btn" +
+                          (cat === activeCategory ? " active" : ""),
+                        onClick: () => setActiveCategory(cat)
+                      },
+                      label
+                    );
+                  })
+                ),
+                e(
+                  "div",
+                  { className: "products-grid" },
+                  filteredProducts.map((product) =>
+                    e(ProductCard, {
+                      key: product.id,
+                      product,
+                      onAdd: handleAddToCart,
+                      lang,
+                      t
+                    })
+                  )
+                )
+              ),
+              e(
+                "section",
+                { className: "panel" },
+                e("h3", null, t.currentOrder),
+                cart.length === 0
+                  ? e("p", { style: { fontSize: 12 } }, t.cartEmpty)
+                  : cart.map((line) =>
+                      e(
+                        "div",
+                        { className: "cart-item", key: line.key },
+                        e(
+                          "div",
+                          { className: "cart-item-main" },
+                          e(
+                            "span",
+                            null,
+                            line.name,
+                            line.modifiers &&
+                            (line.modifiers.milk != null || line.modifiers.sugar)
+                              ?
+                                " (" +
+                                [
+                                  line.modifiers.milk != null
+                                    ? `${t.milkInLine}: ${
+                                        line.modifiers.milk ? t.milkYes : t.milkNo
+                                      }`
+                                    : null,
+                                  line.modifiers.sugar
+                                    ? `${t.sugarInLine}: ${line.modifiers.sugar}`
+                                    : null
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ") +
+                                ")"
+                              : ""
+                          ),
+                          e(
+                            "span",
+                            { className: "cart-item-meta" },
+                            `${line.qty} x ${line.price.toFixed(2)} DHS`
+                          )
+                        ),
+                        e(
+                          "div",
+                          { className: "cart-item-controls" },
+                          e(
+                            "button",
+                            {
+                              className: "qty-btn",
+                              onClick: () => updateQty(line.key, -1)
+                            },
+                            "-"
+                          ),
+                          e("span", null, line.qty),
+                          e(
+                            "button",
+                            {
+                              className: "qty-btn",
+                              onClick: () => updateQty(line.key, 1)
+                            },
+                            "+"
+                          )
+                        )
+                      )
+                    ),
+                e(
+                  "div",
+                  { style: { marginTop: 8 } },
+                  e(
+                    "div",
+                    { className: "summary-row" },
+                    e("span", null, t.subtotal),
+                    e("span", null, `${totals.subtotal.toFixed(2)} DHS`)
+                  ),
+                  e(
+                    "div",
+                    { className: "summary-row" },
+                    e("span", null, t.tax),
+                    e("span", null, `${totals.tax.toFixed(2)} DHS`)
+                  ),
+                  e(
+                    "div",
+                    { className: "summary-row total" },
+                    e("span", null, t.total),
+                    e("span", null, `${totals.total.toFixed(2)} DHS`)
+                  )
+                ),
+                e(
+                  "button",
+                  {
+                    className: "btn-primary",
+                    style: { marginTop: 10, width: "100%" },
+                    disabled: submitting || !cart.length,
+                    onClick: handleSubmitOrder
+                  },
+                  submitting ? t.placingOrder : "Encaisser (cash)"
+                ),
+                status &&
+                  e(
+                    "div",
+                    {
+                      className:
+                        "status " + (status.type === "ok" ? "ok" : "err")
+                    },
+                    status.message
+                  )
+              )
+            ),
+          view === "manager" &&
+            e(
+              "main",
+              null,
+              e(
+                "section",
+                { className: "panel" },
+                e(ShiftPanel, {
+                  currentUser,
+                  activeShift,
+                  shifts,
+                  onOpenShift: handleOpenShift,
+                  onCloseShift: handleCloseShift
+                })
+              ),
+              e(
+                "section",
+                { className: "panel" },
+                e("h3", null, "Vue Manager / Shifts"),
+                e(ManagerStats, { shifts, orders, inventoryLogs })
+              )
+            ),
+          view === "admin" &&
+            e(
+              "main",
+              null,
+              e(
+                "section",
+                { className: "panel" },
+                e("h3", null, "Menu (Admin)"),
+                canSeeAdmin()
+                  ? e(AdminMenuEditor, {
+                      menu: menu,
+                      onUpdateMenuItem: handleUpdateMenuItem,
+                      onSaveMenu: handleSaveMenu
+                    })
+                  : e(
+                      "p",
+                      { style: { fontSize: 12 } },
+                      "Admin seulement."
+                    )
+              ),
+              e(
+                "section",
+                { className: "panel" },
+                e("h3", null, "Stats & Inventaire"),
+                e(AdminStats, { shifts, orders, inventoryLogs, inventory }),
+                e("hr", { style: { margin: "10px 0" } }),
+                e("h4", null, "Niveaux de stock"),
+                Object.values(inventory).map((ing) =>
+                  e(
+                    "div",
+                    { key: ing.id, style: { fontSize: 12 } },
+                    ing.name,
+                    ": ",
+                    ing.currentQty,
+                    " ",
+                    ing.unit,
+                    ing.currentQty <= ing.minQty ? " (LOW)" : ""
+                  )
+                ),
+                e("hr", { style: { margin: "10px 0" } }),
+                e("h4", null, "Utilisateurs / PIN"),
+                canSeeAdmin()
+                  ? e(AdminUsersPanel, {
+                      users,
+                      onChangePin: handleChangeUserPin
+                    })
+                  : null
+              )
+            )
+        );
+      }
+
+      function ProductCard({ product, onAdd, lang, t }) {
+        const [milk, setMilk] = React.useState(true); // yes/no for coffee
+        const [sugar, setSugar] = React.useState("medium");
+        const hasMilkModifier = isCoffee(product);
+
+        function handleClick() {
+          onAdd(product, {
+            milk: hasMilkModifier ? milk : null,
+            sugar
+          });
+        }
+
+        return React.createElement(
+          "div",
+          { className: "product-card" },
+          React.createElement(
+            "div",
+            null,
+            product.imageUrl
+              ? React.createElement("img", {
+                  src: product.imageUrl,
+                  alt:
+                    lang === "ar"
+                      ? product.nameAr || product.name
+                      : product.nameFr || product.name,
+                  className: "product-image"
+                })
+              : null,
+            React.createElement(
+              "div",
+              { className: "product-name" },
+              lang === "ar"
+                ? product.nameAr || product.name
+                : product.nameFr || product.name
+            ),
+            React.createElement(
+              "div",
+              { className: "product-price" },
+              `${product.price.toFixed(2)} DHS`
+            ),
+            hasMilkModifier &&
+              React.createElement(
+                "div",
+                { style: { marginTop: 6, fontSize: 12 } },
+                React.createElement("span", null, t.milkLabel + ": "),
+                React.createElement(
+                  "select",
+                  {
+                    className: "milk-select",
+                    value: milk ? "yes" : "no",
+                    onChange: (ev) => setMilk(ev.target.value === "yes")
+                  },
+                  React.createElement(
+                    "option",
+                    { value: "yes" },
+                    t.milkYes
+                  ),
+                  React.createElement(
+                    "option",
+                    { value: "no" },
+                    t.milkNo
+                  )
+                )
+              ),
+            React.createElement(
+              "div",
+              { style: { marginTop: 6, fontSize: 12 } },
+              React.createElement("span", null, t.sugarLabel + ": "),
+              React.createElement(
+                "select",
+                {
+                  className: "milk-select",
+                  value: sugar,
+                  onChange: (ev) => setSugar(ev.target.value)
+                },
+                React.createElement(
+                  "option",
+                  { value: "none" },
+                  t.sugarNone
+                ),
+                React.createElement(
+                  "option",
+                  { value: "medium" },
+                  t.sugarMedium
+                ),
+                React.createElement(
+                  "option",
+                  { value: "extra" },
+                  t.sugarExtra
+                )
+              )
+            )
+          ),
+          React.createElement(
+            "button",
+            {
+              className: "btn-primary",
+              style: { marginTop: 8 },
+              onClick: handleClick
+            },
+            t.addLabel
+          )
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(React.createElement(POSApp));
+    </script>
+  </body>
+</html>
