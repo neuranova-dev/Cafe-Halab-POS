@@ -2507,20 +2507,77 @@
         const t = DICTIONARY[lang];
 
         const [activeCategory, setActiveCategory] = React.useState(null);
-        const [menu, setMenu] = React.useState(() => INITIAL_MENU_DATA.slice());
+        const [menu, setMenu] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_menu");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (Array.isArray(parsed) && parsed.length) return parsed;
+          } catch (e) {}
+          return INITIAL_MENU_DATA.slice();
+        });
         const [users, setUsers] = React.useState(USERS.slice());
         const [cart, setCart] = React.useState([]);
         const [submitting, setSubmitting] = React.useState(false);
         const [status, setStatus] = React.useState(null);
 
         const [adminUser, setAdminUser] = React.useState(null);
-        const [activeWorker, setActiveWorker] = React.useState(null);
+        const [activeWorker, setActiveWorker] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_session");
+            const sess = raw ? JSON.parse(raw) : null;
+            const id = sess && sess.activeWorkerId ? sess.activeWorkerId : null;
+            if (!id) return null;
+            return USERS.find((u) => u.id === id) || null;
+          } catch (e) {
+            return null;
+          }
+        });
         const [view, setView] = React.useState("pos");
-        const [activeShift, setActiveShift] = React.useState(null);
-        const [shifts, setShifts] = React.useState([]);
-        const [orders, setOrders] = React.useState([]);
-        const [inventory, setInventory] = React.useState(INVENTORY_INITIAL);
-        const [inventoryLogs, setInventoryLogs] = React.useState([]);
+        const [activeShift, setActiveShift] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_session");
+            const sess = raw ? JSON.parse(raw) : null;
+            const s = sess && sess.activeShift ? sess.activeShift : null;
+            if (!s || typeof s !== "object") return null;
+            return s;
+          } catch (e) {
+            return null;
+          }
+        });
+        const [shifts, setShifts] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_state");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && Array.isArray(parsed.shifts)) return parsed.shifts;
+          } catch (e) {}
+          return [];
+        });
+        const [orders, setOrders] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_state");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && Array.isArray(parsed.orders)) return parsed.orders;
+          } catch (e) {}
+          return [];
+        });
+        const [inventory, setInventory] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_state");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && parsed.inventory && typeof parsed.inventory === "object") {
+              return parsed.inventory;
+            }
+          } catch (e) {}
+          return INVENTORY_INITIAL;
+        });
+        const [inventoryLogs, setInventoryLogs] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_state");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && Array.isArray(parsed.inventoryLogs)) return parsed.inventoryLogs;
+          } catch (e) {}
+          return [];
+        });
 
         const [firebaseUser, setFirebaseUser] = React.useState(null);
         const [firebaseAuthReady, setFirebaseAuthReady] = React.useState(false);
@@ -2529,11 +2586,100 @@
         const [shiftPin, setShiftPin] = React.useState("");
         const [shiftError, setShiftError] = React.useState(null);
 
-        const [shiftPaused, setShiftPaused] = React.useState(false);
+        const [shiftPaused, setShiftPaused] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_session");
+            const sess = raw ? JSON.parse(raw) : null;
+            return !!(sess && sess.shiftPaused);
+          } catch (e) {
+            return false;
+          }
+        });
         const [pinPromptMode, setPinPromptMode] = React.useState(null);
         const [pinPromptValue, setPinPromptValue] = React.useState("");
         const [pinPromptError, setPinPromptError] = React.useState(null);
         const lastActivityRef = React.useRef(Date.now());
+
+        const CLOUD_APP_ID = "cafe-halab-pos";
+        const cloudEnabled = !!(window.firebaseDb && firebaseUser);
+
+        function makeId(prefix) {
+          return (
+            prefix +
+            "_" +
+            Date.now() +
+            "_" +
+            Math.random().toString(16).slice(2)
+          );
+        }
+
+        const deviceIdRef = React.useRef(null);
+
+        React.useEffect(() => {
+          if (deviceIdRef.current) return;
+          try {
+            const existing = window.localStorage.getItem("cafe_halab_device_id");
+            if (existing) {
+              deviceIdRef.current = existing;
+              return;
+            }
+          } catch (e) {}
+
+          deviceIdRef.current = makeId("dev");
+          try {
+            window.localStorage.setItem("cafe_halab_device_id", deviceIdRef.current);
+          } catch (e) {}
+        }, []);
+
+        function cloudAppDoc() {
+          if (!window.firebaseDb) return null;
+          return window.firebaseDb.collection("posApps").doc(CLOUD_APP_ID);
+        }
+
+        function cloudCol(name) {
+          const root = cloudAppDoc();
+          return root ? root.collection(name) : null;
+        }
+
+        React.useEffect(() => {
+          try {
+            window.localStorage.setItem(
+              "cafe_halab_state",
+              JSON.stringify({
+                shifts,
+                orders,
+                inventory,
+                inventoryLogs
+              })
+            );
+          } catch (e) {}
+        }, [shifts, orders, inventory, inventoryLogs]);
+
+        React.useEffect(() => {
+          try {
+            window.localStorage.setItem(
+              "cafe_halab_session",
+              JSON.stringify({
+                activeWorkerId: activeWorker ? activeWorker.id : null,
+                activeShift: activeShift || null,
+                shiftPaused: !!shiftPaused
+              })
+            );
+          } catch (e) {}
+        }, [activeWorker, activeShift, shiftPaused]);
+
+        React.useEffect(() => {
+          if (!activeShift) return;
+          const found = shifts.find((s) => s && s.id === activeShift.id);
+          if (!found) return;
+          if (found.status && found.status !== "open") {
+            setActiveShift(null);
+            setActiveWorker(null);
+            setShiftPaused(false);
+            return;
+          }
+          setActiveShift(found);
+        }, [shifts]);
 
         React.useEffect(() => {
           if (!window.firebaseAuth || !window.firebaseAuth.onAuthStateChanged) {
@@ -2571,6 +2717,128 @@
           } catch (e) {}
           setFirebaseLoginDismissed(false);
         }
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          const db = window.firebaseDb;
+          if (!db) return;
+
+          const shiftsCol = cloudCol("shifts");
+          const ordersCol = cloudCol("orders");
+          const invCol = cloudCol("inventory");
+          const logsCol = cloudCol("inventoryLogs");
+          if (!shiftsCol || !ordersCol || !invCol || !logsCol) return;
+
+          let cancelled = false;
+
+          invCol
+            .limit(1)
+            .get()
+            .then((snap) => {
+              if (cancelled) return;
+              if (!snap || !snap.empty) return;
+              const batch = db.batch();
+              const nowIso = new Date().toISOString();
+              Object.values(INVENTORY_INITIAL || {}).forEach((ing) => {
+                if (!ing || !ing.id) return;
+                batch.set(
+                  invCol.doc(ing.id),
+                  {
+                    id: ing.id,
+                    name: ing.name || ing.id,
+                    unit: ing.unit || "",
+                    currentQty: ing.currentQty,
+                    minQty: ing.minQty,
+                    updatedAt: nowIso
+                  },
+                  { merge: true }
+                );
+              });
+              return batch.commit();
+            })
+            .catch(() => {});
+
+          const unsubShifts = shiftsCol.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.id || "").localeCompare(String(b.id || "")));
+              setShifts(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
+          const unsubOrders = ordersCol.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+              setOrders(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
+          const unsubInv = invCol.onSnapshot(
+            (snap) => {
+              const merged = { ...INVENTORY_INITIAL };
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                const id = d.id || doc.id;
+                const base = merged[id] && typeof merged[id] === "object" ? merged[id] : { id };
+                merged[id] = { ...base, ...d, id };
+              });
+              setInventory(merged);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
+          const unsubLogs = logsCol.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+              setInventoryLogs(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
+          return () => {
+            cancelled = true;
+            try {
+              if (typeof unsubShifts === "function") unsubShifts();
+            } catch (e) {}
+            try {
+              if (typeof unsubOrders === "function") unsubOrders();
+            } catch (e) {}
+            try {
+              if (typeof unsubInv === "function") unsubInv();
+            } catch (e) {}
+            try {
+              if (typeof unsubLogs === "function") unsubLogs();
+            } catch (e) {}
+          };
+        }, [cloudEnabled]);
 
         const categories = React.useMemo(
           () => INITIAL_CATEGORIES.slice(),
@@ -2845,6 +3113,18 @@
           orderId,
           userId
         ) {
+          const nowIso = new Date().toISOString();
+          const logEntries = Object.entries(ingredientDeltas).map(([ingId, delta]) => ({
+            id: makeId("log"),
+            ingredientId: ingId,
+            delta,
+            reason: "sale",
+            orderId,
+            shiftId,
+            userId,
+            createdAt: nowIso
+          }));
+
           setInventory((prev) => {
             const copy = { ...prev };
             Object.entries(ingredientDeltas).forEach(([ingId, delta]) => {
@@ -2856,23 +3136,50 @@
             });
             return copy;
           });
-          setInventoryLogs((prev) => [
-            ...prev,
-            ...Object.entries(ingredientDeltas).map(([ingId, delta]) => ({
-              id: "log_" + Date.now() + "_" + Math.random().toString(16).slice(2),
-              ingredientId: ingId,
-              delta,
-              reason: "sale",
-              orderId,
-              shiftId,
-              userId,
-              createdAt: new Date().toISOString()
-            }))
-          ]);
+          setInventoryLogs((prev) => [...prev, ...logEntries]);
+
+          if (!cloudEnabled) return;
+          const db = window.firebaseDb;
+          const invCol = cloudCol("inventory");
+          const logsCol = cloudCol("inventoryLogs");
+          if (!db || !invCol || !logsCol) return;
+
+          try {
+            const batch = db.batch();
+            const inc = firebase.firestore.FieldValue.increment;
+            Object.entries(ingredientDeltas).forEach(([ingId, delta]) => {
+              if (!ingId || !delta) return;
+              batch.set(
+                invCol.doc(ingId),
+                {
+                  id: ingId,
+                  currentQty: inc(delta),
+                  updatedAt: nowIso
+                },
+                { merge: true }
+              );
+            });
+
+            logEntries.forEach((entry) => {
+              if (!entry || !entry.id) return;
+              batch.set(
+                logsCol.doc(entry.id),
+                {
+                  ...entry,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current
+                },
+                { merge: true }
+              );
+            });
+            batch.commit().catch(() => {});
+          } catch (e) {}
         }
 
         function handleInventoryAdjust(ingredientId, delta) {
           if (!ingredientId || !delta) return;
+          const nowIso = new Date().toISOString();
+          const logId = makeId("log");
           setInventory((prev) => {
             if (!prev[ingredientId]) return prev;
             return {
@@ -2886,20 +3193,59 @@
           setInventoryLogs((prev) => [
             ...prev,
             {
-              id: "log_" + Date.now() + "_" + Math.random().toString(16).slice(2),
+              id: logId,
               ingredientId,
               delta,
               reason: "adjust",
               orderId: null,
               shiftId: activeShift ? activeShift.id : null,
               userId: adminUser ? adminUser.id : null,
-              createdAt: new Date().toISOString()
+              createdAt: nowIso
             }
           ]);
+
+          if (!cloudEnabled) return;
+          const db = window.firebaseDb;
+          const invCol = cloudCol("inventory");
+          const logsCol = cloudCol("inventoryLogs");
+          if (!db || !invCol || !logsCol) return;
+
+          try {
+            const batch = db.batch();
+            const inc = firebase.firestore.FieldValue.increment;
+            batch.set(
+              invCol.doc(ingredientId),
+              {
+                id: ingredientId,
+                currentQty: inc(delta),
+                updatedAt: nowIso
+              },
+              { merge: true }
+            );
+            batch.set(
+              logsCol.doc(logId),
+              {
+                id: logId,
+                ingredientId,
+                delta,
+                reason: "adjust",
+                orderId: null,
+                shiftId: activeShift ? activeShift.id : null,
+                userId: adminUser ? adminUser.id : null,
+                appId: CLOUD_APP_ID,
+                deviceId: deviceIdRef.current,
+                createdAt: nowIso
+              },
+              { merge: true }
+            );
+            batch.commit().catch(() => {});
+          } catch (e) {}
         }
 
         function handleInventoryUpdate(ingredientId, currentQty, minQty) {
           if (!ingredientId) return;
+          const nowIso = new Date().toISOString();
+          const logId = makeId("log");
           setInventory((prev) => {
             const ing = prev[ingredientId];
             if (!ing) return prev;
@@ -2920,17 +3266,59 @@
             return [
               ...prev,
               {
-                id: "log_" + Date.now() + "_" + Math.random().toString(16).slice(2),
+                id: logId,
                 ingredientId,
                 delta: diff,
                 reason: "adjust",
                 orderId: null,
                 shiftId: activeShift ? activeShift.id : null,
                 userId: adminUser ? adminUser.id : null,
-                createdAt: new Date().toISOString()
+                createdAt: nowIso
               }
             ];
           });
+
+          if (!cloudEnabled) return;
+          const db = window.firebaseDb;
+          const invCol = cloudCol("inventory");
+          const logsCol = cloudCol("inventoryLogs");
+          if (!db || !invCol || !logsCol) return;
+
+          try {
+            db
+              .runTransaction((tx) => {
+                const invRef = invCol.doc(ingredientId);
+                return tx.get(invRef).then((snap) => {
+                  const data = snap && snap.data ? snap.data() : null;
+                  const prevQty = data && typeof data.currentQty === "number" ? data.currentQty : null;
+                  const delta = prevQty == null ? 0 : currentQty - prevQty;
+                  tx.set(
+                    invRef,
+                    { id: ingredientId, currentQty, minQty, updatedAt: nowIso },
+                    { merge: true }
+                  );
+                  if (delta) {
+                    tx.set(
+                      logsCol.doc(logId),
+                      {
+                        id: logId,
+                        ingredientId,
+                        delta,
+                        reason: "adjust",
+                        orderId: null,
+                        shiftId: activeShift ? activeShift.id : null,
+                        userId: adminUser ? adminUser.id : null,
+                        appId: CLOUD_APP_ID,
+                        deviceId: deviceIdRef.current,
+                        createdAt: nowIso
+                      },
+                      { merge: true }
+                    );
+                  }
+                });
+              })
+              .catch(() => {});
+          } catch (e) {}
         }
 
         function handleAdminLogin(user) {
@@ -2963,18 +3351,61 @@
             expectedCash: 0
           };
           setActiveShift(newShift);
-          setShifts((prev) => [...prev, newShift]);
+          setShifts((prev) => {
+            const exists = prev.some((s) => s && s.id === newShift.id);
+            if (!exists) return [...prev, newShift];
+            return prev.map((s) => (s && s.id === newShift.id ? { ...s, ...newShift } : s));
+          });
+
+          if (cloudEnabled) {
+            const shiftsCol = cloudCol("shifts");
+            if (shiftsCol) {
+              const nowIso = newShift.openedAt;
+              shiftsCol
+                .doc(id)
+                .set(
+                  {
+                    ...newShift,
+                    appId: CLOUD_APP_ID,
+                    deviceId: deviceIdRef.current,
+                    updatedAt: nowIso
+                  },
+                  { merge: true }
+                )
+                .catch(() => {});
+            }
+          }
         }
 
         function handleCloseShift() {
           if (!activeShift) return;
+          const closedAt = new Date().toISOString();
           setShifts((prev) =>
             prev.map((s) =>
               s.id === activeShift.id
-                ? { ...s, status: "closed", closedAt: new Date().toISOString() }
+                ? { ...s, status: "closed", closedAt }
                 : s
             )
           );
+
+          if (cloudEnabled) {
+            const shiftsCol = cloudCol("shifts");
+            if (shiftsCol) {
+              shiftsCol
+                .doc(activeShift.id)
+                .set(
+                  {
+                    id: activeShift.id,
+                    status: "closed",
+                    closedAt,
+                    closedBy: adminUser ? adminUser.id : null,
+                    updatedAt: closedAt
+                  },
+                  { merge: true }
+                )
+                .catch(() => {});
+            }
+          }
           setActiveShift(null);
         }
 
@@ -3022,7 +3453,7 @@
           setSubmitting(true);
           setStatus(null);
 
-          const orderId = "local_" + Date.now();
+          const orderId = makeId("ord");
           const order = {
             id: orderId,
             appId: "cafe-halab-pos",
@@ -3052,6 +3483,25 @@
 
           setOrders((prev) => [...prev, order]);
 
+          if (cloudEnabled) {
+            const ordersCol = cloudCol("orders");
+            if (ordersCol) {
+              const nowIso = order.createdAt;
+              ordersCol
+                .doc(orderId)
+                .set(
+                  {
+                    ...order,
+                    appId: CLOUD_APP_ID,
+                    deviceId: deviceIdRef.current,
+                    updatedAt: nowIso
+                  },
+                  { merge: true }
+                )
+                .catch(() => {});
+            }
+          }
+
           await new Promise((resolve) => setTimeout(resolve, 300));
           setStatus({
             type: "ok",
@@ -3062,19 +3512,52 @@
         }
 
         function handleMarkOrderPaid(orderId) {
-          setOrders((prev) => {
-            const order = prev.find((o) => o.id === orderId);
-            if (!order || order.status === "paid") {
-              return prev;
-            }
-            const next = prev.map((o) =>
-              o.id === orderId
-                ? { ...o, status: "paid", paidAt: new Date().toISOString() }
-                : o
-            );
-            updateShiftStats(order.shiftId, order.totals.total);
-            return next;
-          });
+          const order = orders.find((o) => o && o.id === orderId);
+          if (!order || order.status === "paid") return;
+          const paidAt = new Date().toISOString();
+
+          setOrders((prev) =>
+            prev.map((o) =>
+              o && o.id === orderId ? { ...o, status: "paid", paidAt } : o
+            )
+          );
+          updateShiftStats(order.shiftId, order.totals.total);
+
+          if (!cloudEnabled) return;
+          const db = window.firebaseDb;
+          const ordersCol = cloudCol("orders");
+          const shiftsCol = cloudCol("shifts");
+          if (!db || !ordersCol || !shiftsCol) return;
+
+          try {
+            const orderRef = ordersCol.doc(orderId);
+            const shiftRef = shiftsCol.doc(order.shiftId);
+            const inc = firebase.firestore.FieldValue.increment;
+            db
+              .runTransaction((tx) =>
+                tx.get(orderRef).then((snap) => {
+                  const data = snap && snap.data ? snap.data() : null;
+                  if (data && data.status === "paid") return;
+                  tx.set(
+                    orderRef,
+                    { status: "paid", paidAt, updatedAt: paidAt },
+                    { merge: true }
+                  );
+                  tx.set(
+                    shiftRef,
+                    {
+                      id: order.shiftId,
+                      revenue: inc(order.totals.total),
+                      orderCount: inc(1),
+                      expectedCash: inc(order.totals.total),
+                      updatedAt: paidAt
+                    },
+                    { merge: true }
+                  );
+                })
+              )
+              .catch(() => {});
+          } catch (e) {}
         }
 
         function handleUpdateMenuItem(id, partial) {
@@ -3126,13 +3609,38 @@
             date: today,
             period: "default",
             status: "open",
+            openedAt: new Date().toISOString(),
+            closedAt: null,
             orderCount: 0,
             revenue: 0,
             expectedCash: 0,
             openedBy: worker.id
           };
           setActiveShift(newShift);
-          setShifts((prev) => [...prev, newShift]);
+          setShifts((prev) => {
+            const exists = prev.some((s) => s && s.id === newShift.id);
+            if (!exists) return [...prev, newShift];
+            return prev.map((s) => (s && s.id === newShift.id ? { ...s, ...newShift } : s));
+          });
+
+          if (cloudEnabled) {
+            const shiftsCol = cloudCol("shifts");
+            if (shiftsCol) {
+              const nowIso = newShift.openedAt;
+              shiftsCol
+                .doc(shiftId)
+                .set(
+                  {
+                    ...newShift,
+                    appId: CLOUD_APP_ID,
+                    deviceId: deviceIdRef.current,
+                    updatedAt: nowIso
+                  },
+                  { merge: true }
+                )
+                .catch(() => {});
+            }
+          }
           setActiveWorker(worker);
           setShiftPaused(false);
           lastActivityRef.current = Date.now();
@@ -3143,6 +3651,37 @@
         }
 
         function handleCloseWaiterShift() {
+          if (activeShift) {
+            const closedAt = new Date().toISOString();
+            const closedBy = activeWorker ? activeWorker.id : null;
+            setShifts((prev) =>
+              prev.map((s) =>
+                s && s.id === activeShift.id
+                  ? { ...s, status: "closed", closedAt, closedBy }
+                  : s
+              )
+            );
+
+            if (cloudEnabled) {
+              const shiftsCol = cloudCol("shifts");
+              if (shiftsCol) {
+                shiftsCol
+                  .doc(activeShift.id)
+                  .set(
+                    {
+                      id: activeShift.id,
+                      status: "closed",
+                      closedAt,
+                      closedBy,
+                      updatedAt: closedAt
+                    },
+                    { merge: true }
+                  )
+                  .catch(() => {});
+              }
+            }
+          }
+
           setActiveShift(null);
           setActiveWorker(null);
           setCart([]);
