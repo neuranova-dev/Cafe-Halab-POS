@@ -63,6 +63,7 @@
         padding: 14px 16px 18px;
         box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
         border: 1px solid rgba(148, 163, 184, 0.35);
+        -webkit-backdrop-filter: blur(6px);
         backdrop-filter: blur(6px);
       }
       .categories {
@@ -207,6 +208,29 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAcMZVPiMQKNqb2rcrV1WqmixIo1xFK2CE",
+        authDomain: "cafe-halab.firebaseapp.com",
+        projectId: "cafe-halab",
+        storageBucket: "cafe-halab.firebasestorage.app",
+        messagingSenderId: "915112396018",
+        appId: "1:915112396018:web:4aa8dbadbc6651c3f6bc6b"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      window.firebaseAuth = auth;
+      window.firebaseDb = db;
+
+      db.enablePersistence().catch(() => {});
+    </script>
+
     <!-- Inline POS App (no modules, works via file://) -->
     <script>
       const e = React.createElement;
@@ -219,8 +243,7 @@
           nameAr: "أومليت بالجبن",
           price: 26.0,
           category: "Breakfast",
-          imageUrl:
-            "https://images.unsplash.com/photo-1604909052743-94e838986d0e?auto=format&fit=crop&w=600&q=80",
+          image: "Omelette au Fromage.jpg",
           modifiers: []
         },
         {
@@ -230,8 +253,7 @@
           nameAr: "أومليت بالديك الرومي المدخن",
           price: 28.0,
           category: "Breakfast",
-          imageUrl:
-            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80",
+          image: "Omelette à la Dinde Fumée.jpg",
           modifiers: []
         },
         {
@@ -241,8 +263,7 @@
           nameAr: "أومليت بالكاشير",
           price: 24.0,
           category: "Breakfast",
-          imageUrl:
-            "https://images.unsplash.com/photo-1546069901-d5bfd2cbfb1f?auto=format&fit=crop&w=600&q=80",
+          image: "Omelette au Kashir.jpg",
           modifiers: []
         },
         {
@@ -252,6 +273,7 @@
           nameAr: "فطور مراكشي",
           price: 26.0,
           category: "Breakfast",
+          image: "Petit Déjeuner Marrakchi.jpg",
           modifiers: []
         },
         {
@@ -261,8 +283,7 @@
           nameAr: "فطور كاتالان",
           price: 29.0,
           category: "Breakfast",
-          imageUrl:
-            "https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=600&q=80",
+          image: "Petit Déjeuner Catalan.jpg",
           modifiers: []
         },
         {
@@ -270,19 +291,9 @@
           name: "Fried Eggs (Mirror)",
           nameFr: "Œufs au plat miroir",
           nameAr: "فطور بيض عوينات",
-          price: 20.0,
+          price: 22.0,
           category: "Breakfast",
-          imageUrl:
-            "https://images.unsplash.com/photo-1588167865096-71c620227d92?auto=format&fit=crop&w=600&q=80",
-          modifiers: []
-        },
-        {
-          id: "single_egg",
-          name: "Single Egg",
-          nameFr: "Un œuf",
-          nameAr: "بيضة واحدة",
-          price: 20.0,
-          category: "Breakfast",
+          image: "Œufs au plat miroir.jpg",
           modifiers: []
         },
         {
@@ -292,6 +303,7 @@
           nameAr: "فطور كرواسون",
           price: 20.0,
           category: "Breakfast",
+          image: "Petit-déjeuner au croissant.jpg",
           modifiers: []
         },
 
@@ -302,8 +314,7 @@
           nameAr: "قهوة",
           price: 11.0,
           category: "Hot Drinks",
-          imageUrl:
-            "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80",
+          image: "Café.jpg",
           modifiers: []
         },
         {
@@ -313,6 +324,7 @@
           nameAr: "قهوة بالحليب",
           price: 11.0,
           category: "Hot Drinks",
+          image: "Café au lait.jpg",
           modifiers: []
         },
         {
@@ -322,6 +334,7 @@
           nameAr: "ماشادا",
           price: 11.0,
           category: "Hot Drinks",
+          image: "Machada.jpg",
           modifiers: []
         },
         {
@@ -331,6 +344,7 @@
           nameAr: "نسكافيه",
           price: 11.0,
           category: "Hot Drinks",
+          image: "NESCAFÉ.jpg",
           modifiers: []
         },
         {
@@ -340,6 +354,7 @@
           nameAr: "شاي ليبتون",
           price: 11.0,
           category: "Hot Drinks",
+          image: null,
           modifiers: []
         },
         {
@@ -349,8 +364,7 @@
           nameAr: "شاي بالنعناع",
           price: 7.0,
           category: "Hot Drinks",
-          imageUrl:
-            "https://images.unsplash.com/photo-1523906630133-f6934a1ab1b4?auto=format&fit=crop&w=600&q=80",
+          image: "Thé à la Menthe.jpg",
           modifiers: []
         },
         {
@@ -360,8 +374,7 @@
           nameAr: "براد شاي",
           price: 9.0,
           category: "Hot Drinks",
-          imageUrl:
-            "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=600&q=80",
+          image: "Thé Berrad.jpg",
           modifiers: []
         },
 
@@ -372,8 +385,7 @@
           nameAr: "عصير البرتقال",
           price: 17.0,
           category: "Cold Drinks",
-          imageUrl:
-            "https://images.unsplash.com/photo-1542444459-db63c79b0d7a?auto=format&fit=crop&w=600&q=80",
+          image: "Jus d'orange.jpg",
           modifiers: []
         },
         {
@@ -383,8 +395,7 @@
           nameAr: "عصير التفاح",
           price: 20.0,
           category: "Cold Drinks",
-          imageUrl:
-            "https://images.unsplash.com/photo-1577803645773-f96470509666?auto=format&fit=crop&w=600&q=80",
+          image: null,
           modifiers: []
         },
         {
@@ -394,6 +405,7 @@
           nameAr: "عصير الليمون",
           price: 20.0,
           category: "Cold Drinks",
+          image: null,
           modifiers: []
         },
         {
@@ -403,6 +415,7 @@
           nameAr: "عصير الموز",
           price: 20.0,
           category: "Cold Drinks",
+          image: "Jus de banane.jpg",
           modifiers: []
         },
         {
@@ -412,34 +425,211 @@
           nameAr: "عصير الأفوكادو",
           price: 27.0,
           category: "Cold Drinks",
-          imageUrl:
-            "https://images.unsplash.com/photo-1497534446932-c925b458314e?auto=format&fit=crop&w=600&q=80",
+          image: "Jus d'avocat.jpg",
+          modifiers: []
+        },
+
+        // Sodas
+        {
+          id: "soda_cocacola",
+          name: "Coca-Cola",
+          nameFr: "Coca-Cola",
+          nameAr: "كوكا كولا",
+          price: 12.0,
+          category: "Cold Drinks",
+          image: "Coca-Cola.jpg",
+          modifiers: []
+        },
+        {
+          id: "soda_hawai",
+          name: "Hawai",
+          nameFr: "Hawai",
+          nameAr: "هاواي",
+          price: 12.0,
+          category: "Cold Drinks",
+          image: "Hawai.jpg",
+          modifiers: []
+        },
+        {
+          id: "soda_poms",
+          name: "Poms",
+          nameFr: "Poms",
+          nameAr: "بومس",
+          price: 12.0,
+          category: "Cold Drinks",
+          image: "Poms.jpg",
+          modifiers: []
+        },
+        {
+          id: "soda_sprite",
+          name: "Sprite",
+          nameFr: "Sprite",
+          nameAr: "سبرايت",
+          price: 12.0,
+          category: "Cold Drinks",
+          image: "Sprite.jpg",
+          modifiers: []
+        },
+        {
+          id: "soda_schweppes_citron",
+          name: "Schweppes Citron",
+          nameFr: "Schweppes Citron",
+          nameAr: "شويبس ليمون",
+          price: 12.0,
+          category: "Cold Drinks",
+          image: "Schweppes Citron.jpg",
+          modifiers: []
+        },
+        {
+          id: "soda_schweppes_tonic",
+          name: "Schweppes Tonic",
+          nameFr: "Schweppes Tonic",
+          nameAr: "شويبس تونيك",
+          price: 12.0,
+          category: "Cold Drinks",
+          image: "Schweppes Tonic.jpg",
+          modifiers: []
+        },
+        {
+          id: "soda_schweppes_mojito",
+          name: "Schweppes Mojito",
+          nameFr: "Schweppes Mojito",
+          nameAr: "شويبس موهيتو",
+          price: 14.0,
+          category: "Cold Drinks",
+          image: null,
+          modifiers: []
+        },
+        {
+          id: "water_oulmes_regular",
+          name: "Oulmès",
+          nameFr: "Oulmès",
+          nameAr: "أولماس",
+          price: 10.0,
+          category: "Cold Drinks",
+          image: null,
+          modifiers: []
+        },
+        {
+          id: "water_oulmes_yellow",
+          name: "Oulmès Jaune",
+          nameFr: "Oulmès Jaune",
+          nameAr: "أولماس أصفر",
+          price: 10.0,
+          category: "Cold Drinks",
+          image: null,
+          modifiers: []
+        },
+
+        // Others / Autres
+        {
+          id: "other_muffin",
+          name: "Muffin",
+          nameFr: "Muffin",
+          nameAr: "مفن",
+          price: 3.0,
+          category: "Others",
+          image: null,
+          modifiers: []
+        },
+        {
+          id: "other_raib",
+          name: "Raib",
+          nameFr: "Raib",
+          nameAr: "رايب",
+          price: 9.0,
+          category: "Others",
+          image: null,
+          modifiers: []
+        },
+        {
+          id: "other_flan",
+          name: "Flan",
+          nameFr: "Flan",
+          nameAr: "فلان",
+          price: 8.0,
+          category: "Others",
+          image: null,
           modifiers: []
         }
       ];
 
-      const INITIAL_CATEGORIES = ["Breakfast", "Hot Drinks", "Cold Drinks"];
+      const INITIAL_CATEGORIES = [
+        "Breakfast",
+        "Hot Drinks",
+        "Cold Drinks",
+        "Others"
+      ];
 
       const USERS = [
-        { id: "worker_fatima", name: "Fatima", role: "worker", pin: "1111" },
-        { id: "manager_ali", name: "Ali", role: "manager", pin: "2222" },
-        { id: "admin_sara", name: "Sara", role: "admin", pin: "3333" }
+        { id: "worker_med", name: "MED", role: "worker", pin: "1111" },
+        { id: "worker_aya", name: "AYA", role: "worker", pin: "2222" },
+        { id: "admin_nouri", name: "Nouri", role: "admin", pin: "3333" }
       ];
 
       const INVENTORY_INITIAL = {
         coffee_beans: {
           id: "coffee_beans",
-          name: "Grains de café",
-          unit: "g",
-          currentQty: 5000,
-          minQty: 1000
+          name: "Café (grains)",
+          unit: "kg",
+          currentQty: 5.0,
+          minQty: 1.0
         },
         milk: {
           id: "milk",
           name: "Lait",
-          unit: "ml",
-          currentQty: 8000,
-          minQty: 2000
+          unit: "L",
+          currentQty: 8.0,
+          minQty: 2.0
+        },
+        tea_leaves: {
+          id: "tea_leaves",
+          name: "Thé (en vrac)",
+          unit: "kg",
+          currentQty: 2.0,
+          minQty: 0.5
+        },
+        sugar_powder: {
+          id: "sugar_powder",
+          name: "Sucre (poudre)",
+          unit: "kg",
+          currentQty: 4.0,
+          minQty: 1.0
+        },
+        sugar_cubes: {
+          id: "sugar_cubes",
+          name: "Sucre (morceaux)",
+          unit: "kg",
+          currentQty: 3.0,
+          minQty: 1.0
+        },
+        eggs: {
+          id: "eggs",
+          name: "Œufs",
+          unit: "pcs",
+          currentQty: 120,
+          minQty: 24
+        },
+        cheese: {
+          id: "cheese",
+          name: "Fromage",
+          unit: "kg",
+          currentQty: 2.0,
+          minQty: 0.5
+        },
+        turkey_smoked: {
+          id: "turkey_smoked",
+          name: "Dinde fumée",
+          unit: "kg",
+          currentQty: 2.0,
+          minQty: 0.5
+        },
+        kashir: {
+          id: "kashir",
+          name: "Kashir",
+          unit: "kg",
+          currentQty: 2.0,
+          minQty: 0.5
         },
         oranges: {
           id: "oranges",
@@ -447,16 +637,159 @@
           unit: "pcs",
           currentQty: 80,
           minQty: 20
+        },
+        apples: {
+          id: "apples",
+          name: "Pommes",
+          unit: "pcs",
+          currentQty: 60,
+          minQty: 15
+        },
+        lemons: {
+          id: "lemons",
+          name: "Citrons",
+          unit: "pcs",
+          currentQty: 60,
+          minQty: 15
+        },
+        bananas: {
+          id: "bananas",
+          name: "Bananes",
+          unit: "pcs",
+          currentQty: 60,
+          minQty: 15
+        },
+        avocados: {
+          id: "avocados",
+          name: "Avocats",
+          unit: "pcs",
+          currentQty: 40,
+          minQty: 10
+        },
+
+        soda_cocacola: {
+          id: "soda_cocacola",
+          name: "Coca-Cola",
+          unit: "pcs",
+          currentQty: 48,
+          minQty: 12
+        },
+        soda_hawai: {
+          id: "soda_hawai",
+          name: "Hawai",
+          unit: "pcs",
+          currentQty: 48,
+          minQty: 12
+        },
+        soda_poms: {
+          id: "soda_poms",
+          name: "Poms",
+          unit: "pcs",
+          currentQty: 48,
+          minQty: 12
+        },
+        soda_sprite: {
+          id: "soda_sprite",
+          name: "Sprite",
+          unit: "pcs",
+          currentQty: 48,
+          minQty: 12
+        },
+        soda_schweppes_citron: {
+          id: "soda_schweppes_citron",
+          name: "Schweppes Citron",
+          unit: "pcs",
+          currentQty: 48,
+          minQty: 12
+        },
+        soda_schweppes_tonic: {
+          id: "soda_schweppes_tonic",
+          name: "Schweppes Tonic",
+          unit: "pcs",
+          currentQty: 48,
+          minQty: 12
+        },
+        soda_schweppes_mojito: {
+          id: "soda_schweppes_mojito",
+          name: "Schweppes Mojito",
+          unit: "pcs",
+          currentQty: 48,
+          minQty: 12
+        },
+        water_oulmes_regular: {
+          id: "water_oulmes_regular",
+          name: "Oulmès",
+          unit: "pcs",
+          currentQty: 48,
+          minQty: 12
+        },
+        water_oulmes_yellow: {
+          id: "water_oulmes_yellow",
+          name: "Oulmès Jaune",
+          unit: "pcs",
+          currentQty: 48,
+          minQty: 12
+        },
+
+        muffin: {
+          id: "muffin",
+          name: "Muffin",
+          unit: "pcs",
+          currentQty: 60,
+          minQty: 15
+        },
+        raib: {
+          id: "raib",
+          name: "Raib",
+          unit: "pcs",
+          currentQty: 60,
+          minQty: 15
+        },
+        flan: {
+          id: "flan",
+          name: "Flan",
+          unit: "pcs",
+          currentQty: 60,
+          minQty: 15
         }
       };
 
       const MENU_RECIPES = {
-        coffee: { coffee_beans: 8 },
-        coffee_with_milk: { coffee_beans: 8, milk: 120 },
-        machada: { coffee_beans: 8 },
-        nescafe: { coffee_beans: 8 },
-        tea_mint: { coffee_beans: 0 },
-        juice_orange: { oranges: 3 }
+        omelette_cheese: { eggs: 2, cheese: 0.036 },
+        omelette_turkey: { eggs: 2, turkey_smoked: 0.04 },
+        omelette_kashir: { eggs: 2, kashir: 0.04 },
+        breakfast_marrakchi: { eggs: 2 },
+        breakfast_catalan: { eggs: 2 },
+        croissant_breakfast: { eggs: 2 },
+        fried_eggs: { eggs: 2 },
+
+        coffee: { coffee_beans: 0.01 },
+        coffee_with_milk: { coffee_beans: 0.01, milk: 0.18 },
+        machada: { coffee_beans: 0.01 },
+        nescafe: { coffee_beans: 0.01 },
+        tea_lipton: { tea_leaves: 0.006 },
+        tea_mint: { tea_leaves: 0.006 },
+        tea_berrad: { tea_leaves: 0.012 },
+
+        juice_orange: { oranges: 3 },
+        juice_apple: { apples: 2 },
+        juice_lemon: { lemons: 3 },
+        juice_banana: { bananas: 2, milk: 0.2 },
+        juice_avocado: { avocados: 1, milk: 0.25 },
+
+        soda_cocacola: { soda_cocacola: 1 },
+        soda_hawai: { soda_hawai: 1 },
+        soda_poms: { soda_poms: 1 },
+        soda_sprite: { soda_sprite: 1 },
+        soda_schweppes_citron: { soda_schweppes_citron: 1 },
+        soda_schweppes_tonic: { soda_schweppes_tonic: 1 },
+        soda_schweppes_mojito: { soda_schweppes_mojito: 1 },
+        water_oulmes_regular: { water_oulmes_regular: 1 },
+        water_oulmes_yellow: { water_oulmes_yellow: 1 },
+
+        other_muffin: { muffin: 1 },
+        other_raib: { raib: 1 },
+        other_flan: { flan: 1 }
       };
 
       function buildShiftId(dateStr, period) {
@@ -464,8 +797,8 @@
       }
 
       function isCoffee(item) {
-        const coffeeNames = ["Coffee", "Coffee with Milk", "NESCAFE", "Machada"];
-        return coffeeNames.includes(item.name);
+        const ids = ["coffee", "coffee_with_milk", "nescafe", "machada"];
+        return ids.includes(item.id);
       }
 
       const DICTIONARY = {
@@ -476,6 +809,7 @@
           catBreakfast: "Petit Déjeuner",
           catHot: "Boissons Chaudes",
           catCold: "Boissons Froides",
+          catOthers: "Autres",
           currentOrder: "Commande en cours",
           cartEmpty: "Le panier est vide.",
           subtotal: "Sous-total",
@@ -489,13 +823,89 @@
           milkNo: "Sans lait",
           sugarLabel: "Sucre",
           sugarNone: "Sans sucre",
+          sugarLow: "Peu sucré",
           sugarMedium: "Moyen",
           sugarExtra: "Sucré",
+          drinkLabel: "Boisson chaude",
+          drinkTea: "Thé",
+          drinkCoffeeMilk: "Café au lait",
           milkInLine: "lait",
           sugarInLine: "sucre",
+          drinkInLine: "boisson",
+          eggsInLine: "œufs",
+          drinkInLine: "boisson",
           addLabel: "Ajouter",
           langFr: "FR",
-          langAr: "AR"
+          langAr: "AR",
+          ordersInProgress: "Commandes en attente de paiement",
+          noOrdersInProgress: "Aucune commande en attente.",
+          markPaid: "Déclarer payé",
+          shiftOpenTitle: "Ouvrir un shift",
+          shiftOpenSubtitle:
+            "Saisir le code PIN du serveur pour démarrer son shift.",
+          backToMenus: "Retour aux menus",
+          openShiftBtn: "Ouvrir le shift",
+          closeShiftBtn: "Fermer le shift",
+          pauseShiftBtn: "Pause",
+          resumeShiftBtn: "Reprendre",
+          confirmPinBtn: "Confirmer",
+          pinLabel: "PIN",
+          confirmPauseTitle: "Confirmer la pause",
+          confirmPauseSubtitle: "Saisir votre PIN pour mettre le shift en pause.",
+          shiftPausedTitle: "Shift en pause",
+          shiftPausedSubtitle: "Saisir le PIN du serveur pour reprendre.",
+          autoPausedMessage: "Shift mis en pause automatiquement (inactivité).",
+          pinIncorrect: "PIN incorrect",
+          orderAddedPending: "Commande ajoutée aux commandes en attente.",
+          shiftPausedBlocking: "Shift en pause. Reprenez pour continuer.",
+          closeBtn: "Fermer",
+          needWorkerLogin: "Ouvrez un shift (PIN serveur) avant de prendre une commande.",
+          noShiftOpen: "Aucun shift ouvert.",
+          shiftSummaryTitle: "Shift",
+          shiftSummaryNone: "Aucun shift ouvert.",
+          virtualTicketsTitle: "Tickets des commandes",
+          paidOrdersTitle: "Commandes payées",
+          unpaidOrdersTitle: "Commandes non payées",
+          noPaidOrders: "Aucune commande payée.",
+          noUnpaidOrders: "Aucune commande non payée.",
+          orderLabel: "Commande",
+          waiterLabel: "Serveur",
+          createdAtLabel: "Créée",
+          paidAtLabel: "Payée",
+          statusPaid: "Payée",
+          statusUnpaid: "Non payée",
+          detailsBtn: "Détails",
+          hideDetailsBtn: "Masquer",
+          inventoryTitle: "Inventaire",
+          inventoryItemsTitle: "Articles",
+          inventoryEditTitle: "Modifier",
+          inventorySelectItem: "Sélectionner un article",
+          inventoryCurrentQty: "Quantité actuelle",
+          inventoryMinQty: "Seuil minimum",
+          inventoryUnitLabel: "Unité",
+          inventoryAdjustLabel: "Ajustement",
+          inventoryAddBtn: "Ajouter",
+          inventoryRemoveBtn: "Retirer",
+          inventoryUpdateBtn: "Mettre à jour",
+          inventoryTableTitle: "Tableau du stock",
+          inventoryTableIngredient: "Ingrédient",
+          inventoryTableLastShift: "Consommation (dernier shift)",
+          inventoryTableTotal: "Consommation (total)",
+          inventoryTableInitial: "Quantité initiale",
+          inventoryTableRemaining: "Quantité restante",
+          inventoryTableLastUpdate: "Dernière mise à jour",
+          firebaseLoginTitle: "Connexion Cloud",
+          firebaseLoginSubtitle:
+            "Connectez-vous pour synchroniser les données du POS (commandes, shifts, stock) vers le cloud.",
+          firebaseEmailLabel: "Email",
+          firebasePasswordLabel: "Mot de passe",
+          firebaseLoginBtn: "Se connecter",
+          firebaseLoggingIn: "Connexion...",
+          firebaseOfflineBtn: "Continuer hors ligne",
+          firebaseCloudConnected: "Cloud: connecté",
+          firebaseCloudDisconnected: "Cloud: non connecté",
+          firebaseCloudConnectBtn: "Connexion",
+          firebaseLogoutBtn: "Déconnexion"
         },
         ar: {
           appTitle: "نظام مقهى حلب",
@@ -504,6 +914,7 @@
           catBreakfast: "فطور",
           catHot: "مشروبات ساخنة",
           catCold: "مشروبات باردة",
+          catOthers: "أخرى",
           currentOrder: "الطلب الحالي",
           cartEmpty: "السلة فارغة",
           subtotal: "المجموع الفرعي",
@@ -517,13 +928,88 @@
           milkNo: "بدون حليب",
           sugarLabel: "سكر",
           sugarNone: "بدون سكر",
+          sugarLow: "قليل السكر",
           sugarMedium: "عادي",
           sugarExtra: "حلو",
+          drinkLabel: "مشروب ساخن",
+          drinkTea: "شاي",
+          drinkCoffeeMilk: "قهوة بالحليب",
           milkInLine: "حليب",
           sugarInLine: "سكر",
+          drinkInLine: "مشروب",
+          eggsInLine: "بيض",
+          drinkInLine: "مشروب",
           addLabel: "إضافة",
           langFr: "فر",
-          langAr: "عر"
+          langAr: "عر",
+          ordersInProgress: "طلبات غير مدفوعة",
+          noOrdersInProgress: "لا توجد طلبات غير مدفوعة.",
+          markPaid: "تأكيد الدفع",
+          shiftOpenTitle: "فتح نوبة عمل",
+          shiftOpenSubtitle: "أدخل رمز النادل لبدء النوبة.",
+          backToMenus: "الرجوع إلى القوائم",
+          openShiftBtn: "فتح النوبة",
+          closeShiftBtn: "إنهاء النوبة",
+          pauseShiftBtn: "إيقاف مؤقت",
+          resumeShiftBtn: "استئناف",
+          confirmPinBtn: "تأكيد",
+          pinLabel: "رمز PIN",
+          confirmPauseTitle: "تأكيد الإيقاف المؤقت",
+          confirmPauseSubtitle: "أدخل رمز PIN لإيقاف النوبة مؤقتاً.",
+          shiftPausedTitle: "النوبة متوقفة",
+          shiftPausedSubtitle: "أدخل رمز النادل لاستئناف العمل.",
+          autoPausedMessage: "تم إيقاف النوبة تلقائياً بسبب عدم النشاط.",
+          pinIncorrect: "رمز PIN غير صحيح",
+          orderAddedPending: "تمت إضافة الطلب إلى قائمة الانتظار.",
+          shiftPausedBlocking: "النوبة متوقفة. استأنف للمتابعة.",
+          closeBtn: "إغلاق",
+          needWorkerLogin: "افتح نوبة (رمز النادل) قبل تسجيل طلب.",
+          noShiftOpen: "لا توجد نوبة مفتوحة.",
+          shiftSummaryTitle: "النوبة",
+          shiftSummaryNone: "لا توجد نوبة مفتوحة.",
+          virtualTicketsTitle: "تذاكر الطلبات",
+          paidOrdersTitle: "طلبات مدفوعة",
+          unpaidOrdersTitle: "طلبات غير مدفوعة",
+          noPaidOrders: "لا توجد طلبات مدفوعة.",
+          noUnpaidOrders: "لا توجد طلبات غير مدفوعة.",
+          orderLabel: "طلب",
+          waiterLabel: "النادل",
+          createdAtLabel: "وقت الإنشاء",
+          paidAtLabel: "وقت الدفع",
+          statusPaid: "مدفوع",
+          statusUnpaid: "غير مدفوع",
+          detailsBtn: "تفاصيل",
+          hideDetailsBtn: "إخفاء",
+          inventoryTitle: "المخزون",
+          inventoryItemsTitle: "العناصر",
+          inventoryEditTitle: "تعديل",
+          inventorySelectItem: "اختر عنصراً",
+          inventoryCurrentQty: "الكمية الحالية",
+          inventoryMinQty: "الحد الأدنى",
+          inventoryUnitLabel: "الوحدة",
+          inventoryAdjustLabel: "تعديل",
+          inventoryAddBtn: "إضافة",
+          inventoryRemoveBtn: "خصم",
+          inventoryUpdateBtn: "تحديث",
+          inventoryTableTitle: "جدول المخزون",
+          inventoryTableIngredient: "المكوّن",
+          inventoryTableLastShift: "استهلاك آخر نوبة",
+          inventoryTableTotal: "الاستهلاك الإجمالي",
+          inventoryTableInitial: "الكمية الابتدائية",
+          inventoryTableRemaining: "الكمية المتبقية",
+          inventoryTableLastUpdate: "آخر تحديث",
+          firebaseLoginTitle: "تسجيل الدخول إلى السحابة",
+          firebaseLoginSubtitle:
+            "سجّل الدخول لمزامنة بيانات النظام (الطلبات، النوبات، المخزون) إلى السحابة.",
+          firebaseEmailLabel: "البريد الإلكتروني",
+          firebasePasswordLabel: "كلمة المرور",
+          firebaseLoginBtn: "تسجيل الدخول",
+          firebaseLoggingIn: "جارٍ تسجيل الدخول...",
+          firebaseOfflineBtn: "متابعة بدون اتصال",
+          firebaseCloudConnected: "السحابة: متصل",
+          firebaseCloudDisconnected: "السحابة: غير متصل",
+          firebaseCloudConnectBtn: "اتصال",
+          firebaseLogoutBtn: "تسجيل الخروج"
         }
       };
 
@@ -584,6 +1070,645 @@
               { style: { color: "#b91c1c", fontSize: 11 } },
               error
             )
+        );
+      }
+
+      function FirebaseLoginOverlay({ t, lang, onSignedIn, onDismiss }) {
+        const [email, setEmail] = React.useState("");
+        const [password, setPassword] = React.useState("");
+        const [loading, setLoading] = React.useState(false);
+        const [error, setError] = React.useState(null);
+
+        async function handleSubmit(ev) {
+          ev.preventDefault();
+          if (!window.firebaseAuth) return;
+          setLoading(true);
+          setError(null);
+          try {
+            const res = await window.firebaseAuth.signInWithEmailAndPassword(
+              String(email || "").trim(),
+              String(password || "")
+            );
+            setPassword("");
+            setLoading(false);
+            if (onSignedIn) onSignedIn(res && res.user ? res.user : null);
+          } catch (e) {
+            const msg =
+              (e && e.code ? e.code + ": " : "") +
+              (e && e.message ? e.message : "");
+            setError(msg || "Erreur");
+            setLoading(false);
+          }
+        }
+
+        return React.createElement(
+          "div",
+          {
+            style: {
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15,23,42,0.55)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+              zIndex: 9999
+            }
+          },
+          React.createElement(
+            "section",
+            {
+              className: "panel",
+              style: {
+                maxWidth: 460,
+                width: "100%",
+                textAlign: lang === "ar" ? "right" : "left"
+              }
+            },
+            React.createElement(
+              "h3",
+              { style: { marginTop: 0 } },
+              (t && t.firebaseLoginTitle) || "Connexion Cloud"
+            ),
+            React.createElement(
+              "p",
+              { style: { fontSize: 13, marginTop: 6, color: "#334155" } },
+              (t && t.firebaseLoginSubtitle) ||
+                "Connectez-vous pour synchroniser les données du POS vers le cloud."
+            ),
+            React.createElement(
+              "form",
+              {
+                onSubmit: handleSubmit,
+                style: {
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  marginTop: 12
+                }
+              },
+              React.createElement("input", {
+                type: "email",
+                autoComplete: "email",
+                value: email,
+                onChange: (e) => setEmail(e.target.value),
+                placeholder: (t && t.firebaseEmailLabel) || "Email",
+                style: { padding: 10, fontSize: 14 }
+              }),
+              React.createElement("input", {
+                type: "password",
+                autoComplete: "current-password",
+                value: password,
+                onChange: (e) => setPassword(e.target.value),
+                placeholder: (t && t.firebasePasswordLabel) || "Mot de passe",
+                style: { padding: 10, fontSize: 14 }
+              }),
+              React.createElement(
+                "div",
+                { style: { display: "flex", gap: 8, marginTop: 4 } },
+                React.createElement(
+                  "button",
+                  { className: "btn-primary", type: "submit", disabled: loading },
+                  loading
+                    ? (t && t.firebaseLoggingIn) || "Connexion..."
+                    : (t && t.firebaseLoginBtn) || "Se connecter"
+                ),
+                React.createElement(
+                  "button",
+                  {
+                    className: "category-btn",
+                    type: "button",
+                    onClick: onDismiss
+                  },
+                  (t && t.firebaseOfflineBtn) || "Continuer hors ligne"
+                )
+              ),
+              error &&
+                React.createElement(
+                  "div",
+                  { style: { fontSize: 12, color: "#b91c1c", marginTop: 6 } },
+                  error
+                )
+            )
+          )
+        );
+      }
+
+      function FirebaseAuthBadge({ t, lang, firebaseUser, dismissed, onOpenLogin, onLogout }) {
+        if (!window.firebaseAuth) return null;
+        const label = firebaseUser
+          ? (t && t.firebaseCloudConnected) || "Cloud: connecté"
+          : (t && t.firebaseCloudDisconnected) || "Cloud: non connecté";
+
+        return React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              marginLeft: 10,
+              padding: "6px 10px",
+              borderRadius: 999,
+              background: "rgba(15,23,42,0.06)",
+              border: "1px solid rgba(148,163,184,0.4)",
+              fontSize: 12,
+              whiteSpace: "nowrap"
+            }
+          },
+          React.createElement(
+            "span",
+            { style: { fontWeight: 700 } },
+            label
+          ),
+          firebaseUser &&
+            React.createElement(
+              "span",
+              { style: { color: "#475569" } },
+              firebaseUser.email
+            ),
+          firebaseUser
+            ? React.createElement(
+                "button",
+                { className: "category-btn", onClick: onLogout, type: "button" },
+                (t && t.firebaseLogoutBtn) || "Déconnexion"
+              )
+            : dismissed
+              ? React.createElement(
+                  "button",
+                  {
+                    className: "category-btn",
+                    onClick: onOpenLogin,
+                    type: "button"
+                  },
+                  (t && t.firebaseCloudConnectBtn) || "Connexion"
+                )
+              : null
+        );
+      }
+
+      function AdminInventoryEditor({ inventory, t, onAdjust, onUpdate }) {
+        const items = Object.values(inventory)
+          .slice()
+          .sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+        const [selectedId, setSelectedId] = React.useState(items[0]?.id || null);
+        const [adjustValue, setAdjustValue] = React.useState("");
+        const selected = selectedId ? inventory[selectedId] : null;
+        const [currentQty, setCurrentQty] = React.useState(
+          selected ? String(selected.currentQty) : ""
+        );
+        const [minQty, setMinQty] = React.useState(
+          selected ? String(selected.minQty) : ""
+        );
+
+        React.useEffect(() => {
+          const s = selectedId ? inventory[selectedId] : null;
+          setCurrentQty(s ? String(s.currentQty) : "");
+          setMinQty(s ? String(s.minQty) : "");
+        }, [selectedId, inventory]);
+
+        function parseNum(v) {
+          const n = Number(String(v).replace(",", "."));
+          return Number.isFinite(n) ? n : null;
+        }
+
+        function handleAdd() {
+          if (!selectedId) return;
+          const n = parseNum(adjustValue);
+          if (n == null || n <= 0) return;
+          onAdjust(selectedId, n);
+          setAdjustValue("");
+        }
+
+        function handleRemove() {
+          if (!selectedId) return;
+          const n = parseNum(adjustValue);
+          if (n == null || n <= 0) return;
+          onAdjust(selectedId, -n);
+          setAdjustValue("");
+        }
+
+        function handleUpdate() {
+          if (!selectedId) return;
+          const c = parseNum(currentQty);
+          const m = parseNum(minQty);
+          if (c == null || m == null) return;
+          onUpdate(selectedId, c, m);
+        }
+
+        if (!items.length) {
+          return React.createElement(
+            "div",
+            { style: { fontSize: 12 } },
+            t.inventorySelectItem || "Sélectionner un article"
+          );
+        }
+
+        return React.createElement(
+          "div",
+          {
+            style: {
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 2fr)",
+              gap: 14,
+              alignItems: "flex-start"
+            }
+          },
+          React.createElement(
+            "div",
+            {
+              style: {
+                borderRadius: 10,
+                background: "linear-gradient(145deg,#eef2ff,#e0f2fe)",
+                border: "1px solid rgba(129,140,248,0.6)",
+                maxHeight: 260,
+                overflowY: "auto"
+              }
+            },
+            items.map((ing) =>
+              React.createElement(
+                "div",
+                {
+                  key: ing.id,
+                  onClick: () => setSelectedId(ing.id),
+                  style: {
+                    padding: "8px 10px",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    background:
+                      ing.id === selectedId
+                        ? "rgba(129,140,248,0.3)"
+                        : "transparent"
+                  }
+                },
+                React.createElement(
+                  "div",
+                  { style: { fontWeight: 700 } },
+                  ing.name || ing.id
+                ),
+                React.createElement(
+                  "div",
+                  { style: { fontSize: 11, color: "#475569" } },
+                  ing.currentQty,
+                  " ",
+                  ing.unit,
+                  ing.currentQty <= ing.minQty ? " (LOW)" : ""
+                )
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            {
+              style: {
+                borderRadius: 12,
+                padding: 12,
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(224,231,255,0.72))",
+                border: "1px solid rgba(148,163,184,0.55)"
+              }
+            },
+            React.createElement(
+              "div",
+              { style: { fontSize: 13, fontWeight: 800, marginBottom: 8 } },
+              t.inventoryEditTitle || "Modifier"
+            ),
+            selected &&
+              React.createElement(
+                "div",
+                { style: { fontSize: 12, marginBottom: 10 } },
+                React.createElement(
+                  "div",
+                  { style: { fontWeight: 700 } },
+                  selected.name || selected.id
+                ),
+                React.createElement(
+                  "div",
+                  { style: { color: "#475569", marginTop: 2 } },
+                  (t.inventoryUnitLabel || "Unité") + ": ",
+                  selected.unit
+                )
+              ),
+            React.createElement(
+              "div",
+              { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 } },
+              React.createElement(
+                "label",
+                { style: { fontSize: 12 } },
+                React.createElement(
+                  "div",
+                  { style: { fontSize: 11, color: "#475569", marginBottom: 4 } },
+                  t.inventoryCurrentQty || "Quantité actuelle"
+                ),
+                React.createElement("input", {
+                  value: currentQty,
+                  onChange: (e) => setCurrentQty(e.target.value),
+                  style: { width: "100%", padding: 6, fontSize: 12 },
+                  inputMode: "decimal"
+                })
+              ),
+              React.createElement(
+                "label",
+                { style: { fontSize: 12 } },
+                React.createElement(
+                  "div",
+                  { style: { fontSize: 11, color: "#475569", marginBottom: 4 } },
+                  t.inventoryMinQty || "Seuil minimum"
+                ),
+                React.createElement("input", {
+                  value: minQty,
+                  onChange: (e) => setMinQty(e.target.value),
+                  style: { width: "100%", padding: 6, fontSize: 12 },
+                  inputMode: "decimal"
+                })
+              )
+            ),
+            React.createElement(
+              "div",
+              { style: { marginTop: 10 } },
+              React.createElement(
+                "div",
+                { style: { fontSize: 11, color: "#475569", marginBottom: 4 } },
+                t.inventoryAdjustLabel || "Ajustement"
+              ),
+              React.createElement(
+                "div",
+                { style: { display: "flex", gap: 6, alignItems: "center" } },
+                React.createElement("input", {
+                  value: adjustValue,
+                  onChange: (e) => setAdjustValue(e.target.value),
+                  style: { flex: 1, padding: 6, fontSize: 12 },
+                  inputMode: "decimal"
+                }),
+                React.createElement(
+                  "button",
+                  { className: "category-btn", type: "button", onClick: handleAdd },
+                  t.inventoryAddBtn || "Ajouter"
+                ),
+                React.createElement(
+                  "button",
+                  {
+                    className: "category-btn",
+                    type: "button",
+                    onClick: handleRemove
+                  },
+                  t.inventoryRemoveBtn || "Retirer"
+                )
+              )
+            ),
+            React.createElement(
+              "button",
+              {
+                className: "btn-primary",
+                type: "button",
+                style: { marginTop: 10 },
+                onClick: handleUpdate
+              },
+              t.inventoryUpdateBtn || "Mettre à jour"
+            )
+          )
+        );
+      }
+
+      function AdminOrdersTickets({ orders, users, lang, t, activeShiftId }) {
+        const [expanded, setExpanded] = React.useState({});
+
+        function formatTime(iso) {
+          try {
+            const d = new Date(iso);
+            return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          } catch (e) {
+            return "";
+          }
+        }
+
+        function formatDate(iso) {
+          try {
+            const d = new Date(iso);
+            return d.toLocaleDateString();
+          } catch (e) {
+            return "";
+          }
+        }
+
+        function displayOrderNumber(orderId) {
+          if (!orderId) return "";
+          const digits = String(orderId).replace(/\D/g, "");
+          if (digits.length) return digits.slice(-4);
+          return String(orderId).slice(-4);
+        }
+
+        function userNameById(userId) {
+          const u = users.find((x) => x.id === userId);
+          return u ? u.name : userId;
+        }
+
+        function lineLabel(line) {
+          const base = lang === "ar" ? line.nameAr || line.name : line.nameFr || line.name;
+          return base;
+        }
+
+        function lineModifiersLabel(line) {
+          const mods = line.modifiers || {};
+          const parts = [];
+          if (mods.milk != null) {
+            parts.push(`${t.milkInLine}: ${mods.milk ? t.milkYes : t.milkNo}`);
+          }
+          if (mods.sugar) {
+            parts.push(`${t.sugarInLine}: ${mods.sugar}`);
+          }
+          if (mods.drink) {
+            parts.push(`${t.drinkInLine}: ${mods.drink}`);
+          }
+          if (mods.eggCount) {
+            parts.push(`${t.eggsInLine}: ${mods.eggCount}`);
+          }
+          return parts.length ? "(" + parts.join(", ") + ")" : "";
+        }
+
+        const scopedOrders = activeShiftId
+          ? orders.filter((o) => o.shiftId === activeShiftId)
+          : orders;
+
+        const unpaidOrders = scopedOrders
+          .filter((o) => o.status !== "paid")
+          .slice()
+          .reverse();
+        const paidOrders = scopedOrders
+          .filter((o) => o.status === "paid")
+          .slice()
+          .reverse();
+
+        function toggle(id) {
+          setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+        }
+
+        function TicketCard(order, statusLabel) {
+          const isExpanded = !!expanded[order.id];
+          return React.createElement(
+            "div",
+            {
+              key: order.id,
+              style: {
+                borderRadius: 14,
+                border: "1px solid rgba(148,163,184,0.55)",
+                background:
+                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(224,231,255,0.72))",
+                boxShadow: "0 10px 22px rgba(15,23,42,0.10)",
+                padding: 10,
+                marginBottom: 10
+              }
+            },
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 10
+                }
+              },
+              React.createElement(
+                "div",
+                { style: { fontSize: 12, fontWeight: 800 } },
+                (t.orderLabel || "Commande") +
+                  " #" +
+                  displayOrderNumber(order.id) +
+                  " · " +
+                  statusLabel
+              ),
+              React.createElement(
+                "button",
+                {
+                  className: "category-btn",
+                  type: "button",
+                  onClick: () => toggle(order.id)
+                },
+                isExpanded
+                  ? t.hideDetailsBtn || "Masquer"
+                  : t.detailsBtn || "Détails"
+              )
+            ),
+            React.createElement(
+              "div",
+              { style: { fontSize: 11, color: "#6b7280", marginTop: 4 } },
+              (t.waiterLabel || "Serveur") + ": " + userNameById(order.cashierId)
+            ),
+            React.createElement(
+              "div",
+              { style: { fontSize: 11, color: "#6b7280", marginTop: 2 } },
+              (t.createdAtLabel || "Créée") +
+                ": " +
+                formatDate(order.createdAt) +
+                " " +
+                formatTime(order.createdAt)
+            ),
+            order.status === "paid" &&
+              order.paidAt &&
+              React.createElement(
+                "div",
+                { style: { fontSize: 11, color: "#6b7280", marginTop: 2 } },
+                (t.paidAtLabel || "Payée") +
+                  ": " +
+                  formatDate(order.paidAt) +
+                  " " +
+                  formatTime(order.paidAt)
+              ),
+            isExpanded &&
+              React.createElement(
+                "div",
+                { style: { marginTop: 8 } },
+                order.items.map((line) =>
+                  React.createElement(
+                    "div",
+                    {
+                      key: line.key,
+                      style: {
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        fontSize: 12,
+                        padding: "2px 0"
+                      }
+                    },
+                    React.createElement(
+                      "div",
+                      { style: { flex: 1 } },
+                      `${line.qty}× `,
+                      lineLabel(line),
+                      " ",
+                      React.createElement(
+                        "span",
+                        { style: { fontSize: 11, color: "#6b7280" } },
+                        lineModifiersLabel(line)
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { style: { whiteSpace: "nowrap" } },
+                      `${(line.price * line.qty).toFixed(2)} DHS`
+                    )
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginTop: 10
+                    }
+                  },
+                  React.createElement(
+                    "div",
+                    { style: { fontWeight: 800, fontSize: 12 } },
+                    `${order.totals.total.toFixed(2)} DHS`
+                  ),
+                  React.createElement(
+                    "div",
+                    { style: { fontSize: 11, color: "#6b7280" } },
+                    "ID: ",
+                    order.id
+                  )
+                )
+              )
+          );
+        }
+
+        return React.createElement(
+          "div",
+          null,
+          React.createElement(
+            "h3",
+            { style: { marginTop: 0 } },
+            t.virtualTicketsTitle || "Tickets"
+          ),
+          React.createElement(
+            "h4",
+            { style: { margin: "10px 0 8px", fontSize: 13 } },
+            t.unpaidOrdersTitle || "Commandes non payées"
+          ),
+          unpaidOrders.length === 0
+            ? React.createElement(
+                "div",
+                { style: { fontSize: 12, color: "#6b7280" } },
+                t.noUnpaidOrders || "Aucune commande non payée."
+              )
+            : unpaidOrders.map((o) => TicketCard(o, t.statusUnpaid || "Non payée")),
+          React.createElement(
+            "h4",
+            { style: { margin: "14px 0 8px", fontSize: 13 } },
+            t.paidOrdersTitle || "Commandes payées"
+          ),
+          paidOrders.length === 0
+            ? React.createElement(
+                "div",
+                { style: { fontSize: 12, color: "#6b7280" } },
+                t.noPaidOrders || "Aucune commande payée."
+              )
+            : paidOrders.map((o) => TicketCard(o, t.statusPaid || "Payée"))
         );
       }
 
@@ -729,7 +1854,7 @@
           return React.createElement(
             "p",
             { style: { fontSize: 12 } },
-            "Manager/Admin seulement."
+            "Admin seulement."
           );
         }
 
@@ -825,13 +1950,17 @@
         );
       }
 
-      function ManagerStats({ shifts, orders, inventoryLogs }) {
+      function ManagerStats({ shifts, orders, inventoryLogs, inventory }) {
         if (!shifts.length) {
           return React.createElement(
             "p",
             { style: { fontSize: 12 } },
             "Aucun shift."
           );
+        }
+
+        function unitForIngredient(id) {
+          return inventory && inventory[id] ? inventory[id].unit : "";
         }
 
         function getShiftStats(shift) {
@@ -844,7 +1973,9 @@
           const orderCount = paidOrders.length;
           const expectedCash = revenue;
 
-          const logs = inventoryLogs.filter((log) => log.shiftId === shift.id);
+          const logs = inventoryLogs.filter(
+            (log) => log.shiftId === shift.id && log.reason === "sale"
+          );
           const byIngredient = {};
           logs.forEach((log) => {
             byIngredient[log.ingredientId] =
@@ -908,23 +2039,23 @@
                       { style: { fontSize: 11 } },
                       "Aucun mouvement."
                     )
-                  : Object.entries(stats.byIngredient).map(
-                      ([ingId, delta]) =>
-                        React.createElement(
-                          "div",
-                          { key: ingId, style: { fontSize: 11 } },
-                          ingId,
-                          ": ",
-                          delta,
-                          " (g/ml/pcs, négatif = utilisation)"
-                        )
+                  : Object.entries(stats.byIngredient).map(([ingId, delta]) =>
+                      React.createElement(
+                        "div",
+                        { key: ingId, style: { fontSize: 11 } },
+                        ingId,
+                        ": ",
+                        delta,
+                        " ",
+                        unitForIngredient(ingId)
+                      )
                     )
               );
             })
         );
       }
 
-      function AdminStats({ shifts, orders, inventoryLogs, inventory }) {
+      function AdminStats({ shifts, orders, inventoryLogs, inventory, t, lang }) {
         if (!shifts.length) {
           return React.createElement(
             "p",
@@ -940,15 +2071,98 @@
         );
         const totalOrders = paidOrders.length;
 
-        const aggregatedInventory = {};
-        inventoryLogs.forEach((log) => {
-          aggregatedInventory[log.ingredientId] =
-            (aggregatedInventory[log.ingredientId] || 0) + log.delta;
-        });
-
         function nameForIngredient(id) {
           return inventory[id]?.name || id;
         }
+
+        function unitForIngredient(id) {
+          return inventory[id]?.unit || "";
+        }
+
+        function formatQty(value, unit) {
+          if (value == null || Number.isNaN(value)) return "";
+          if (unit === "pcs") {
+            const v = Math.round(value);
+            return String(v);
+          }
+          const rounded = Math.round(value * 1000) / 1000;
+          return String(rounded).replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
+        }
+
+        function formatDateTime(iso) {
+          if (!iso) return "";
+          try {
+            const d = new Date(iso);
+            return d.toLocaleString(lang === "ar" ? "ar-MA" : "fr-FR", {
+              year: "2-digit",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+          } catch (e) {
+            return "";
+          }
+        }
+
+        const lastShift = shifts[shifts.length - 1];
+        const lastShiftId = lastShift ? lastShift.id : null;
+
+        const totalSaleByIngredient = {};
+        const lastShiftSaleByIngredient = {};
+        const lastUpdateByIngredient = {};
+        inventoryLogs.forEach((log) => {
+          if (!log || !log.ingredientId) return;
+
+          const prevIso = lastUpdateByIngredient[log.ingredientId];
+          if (!prevIso || (log.createdAt && log.createdAt > prevIso)) {
+            lastUpdateByIngredient[log.ingredientId] = log.createdAt;
+          }
+
+          if (log.reason === "sale") {
+            totalSaleByIngredient[log.ingredientId] =
+              (totalSaleByIngredient[log.ingredientId] || 0) + (log.delta || 0);
+            if (lastShiftId && log.shiftId === lastShiftId) {
+              lastShiftSaleByIngredient[log.ingredientId] =
+                (lastShiftSaleByIngredient[log.ingredientId] || 0) + (log.delta || 0);
+            }
+          }
+        });
+
+        const ingredientIds = Object.keys(inventory || {}).sort((a, b) =>
+          nameForIngredient(a).localeCompare(nameForIngredient(b))
+        );
+
+        const tableTitle =
+          (t && t.inventoryTableTitle) || "Tableau du stock";
+        const colIngredient =
+          (t && t.inventoryTableIngredient) || "Ingrédient";
+        const colLastShift =
+          (t && t.inventoryTableLastShift) || "Consommation (dernier shift)";
+        const colTotal = (t && t.inventoryTableTotal) || "Consommation (total)";
+        const colInitial = (t && t.inventoryTableInitial) || "Quantité initiale";
+        const colRemaining =
+          (t && t.inventoryTableRemaining) || "Quantité restante";
+        const colLastUpdate =
+          (t && t.inventoryTableLastUpdate) || "Dernière mise à jour";
+
+        const thStyle = {
+          textAlign: lang === "ar" ? "right" : "left",
+          padding: "8px 8px",
+          fontSize: 11,
+          fontWeight: 700,
+          color: "#0f172a",
+          borderBottom: "1px solid rgba(148,163,184,0.6)",
+          background: "rgba(226,232,240,0.8)",
+          position: "sticky",
+          top: 0
+        };
+        const tdStyle = {
+          padding: "7px 8px",
+          fontSize: 11,
+          borderBottom: "1px solid rgba(148,163,184,0.25)",
+          verticalAlign: "top"
+        };
 
         return React.createElement(
           "div",
@@ -1043,20 +2257,101 @@
             React.createElement(
               "div",
               { style: { fontWeight: 600, marginBottom: 4 } },
-              "Consommation globale de stock"
+              tableTitle
             ),
-            Object.keys(aggregatedInventory).length === 0
-              ? React.createElement("div", null, "Aucun mouvement.")
-              : Object.entries(aggregatedInventory).map(([id, delta]) =>
+            React.createElement(
+              "div",
+              {
+                style: {
+                  marginTop: 6,
+                  borderRadius: 12,
+                  overflow: "auto",
+                  border: "1px solid rgba(148,163,184,0.5)",
+                  background: "rgba(255,255,255,0.85)"
+                }
+              },
+              React.createElement(
+                "table",
+                {
+                  style: {
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    minWidth: 720
+                  }
+                },
+                React.createElement(
+                  "thead",
+                  null,
                   React.createElement(
-                    "div",
-                    { key: id },
-                    nameForIngredient(id),
-                    ": ",
-                    delta,
-                    " (négatif = utilisation)"
+                    "tr",
+                    null,
+                    React.createElement("th", { style: thStyle }, colIngredient),
+                    React.createElement("th", { style: thStyle }, colLastShift),
+                    React.createElement("th", { style: thStyle }, colTotal),
+                    React.createElement("th", { style: thStyle }, colInitial),
+                    React.createElement("th", { style: thStyle }, colRemaining),
+                    React.createElement("th", { style: thStyle }, colLastUpdate)
                   )
+                ),
+                React.createElement(
+                  "tbody",
+                  null,
+                  ingredientIds.map((id) => {
+                    const unit = unitForIngredient(id);
+                    const initialQty =
+                      (INVENTORY_INITIAL[id] && INVENTORY_INITIAL[id].currentQty) != null
+                        ? INVENTORY_INITIAL[id].currentQty
+                        : inventory[id]?.currentQty;
+                    const remainingQty = inventory[id]?.currentQty;
+
+                    const totalDelta = totalSaleByIngredient[id] || 0;
+                    const lastShiftDelta = lastShiftSaleByIngredient[id] || 0;
+                    const totalConsumed = totalDelta < 0 ? -totalDelta : 0;
+                    const lastShiftConsumed = lastShiftDelta < 0 ? -lastShiftDelta : 0;
+                    const lastUpdate = formatDateTime(lastUpdateByIngredient[id]);
+
+                    return React.createElement(
+                      "tr",
+                      { key: id },
+                      React.createElement(
+                        "td",
+                        { style: tdStyle },
+                        nameForIngredient(id)
+                      ),
+                      React.createElement(
+                        "td",
+                        { style: tdStyle },
+                        formatQty(lastShiftConsumed, unit),
+                        " ",
+                        unit
+                      ),
+                      React.createElement(
+                        "td",
+                        { style: tdStyle },
+                        formatQty(totalConsumed, unit),
+                        " ",
+                        unit
+                      ),
+                      React.createElement(
+                        "td",
+                        { style: tdStyle },
+                        formatQty(initialQty, unit),
+                        " ",
+                        unit
+                      ),
+                      React.createElement(
+                        "td",
+                        { style: tdStyle },
+                        formatQty(remainingQty, unit),
+                        " ",
+                        unit
+                      ),
+                      React.createElement("td", { style: tdStyle }, lastUpdate)
+                    );
+                  })
                 )
+              )
+            )
           )
         );
       }
@@ -1211,25 +2506,15 @@
         const [lang, setLang] = React.useState("fr");
         const t = DICTIONARY[lang];
 
-        const [activeCategory, setActiveCategory] = React.useState("All");
-        const [menu, setMenu] = React.useState(() => {
-          try {
-            const stored = window.localStorage.getItem("cafe_halab_menu");
-            if (stored) {
-              const parsed = JSON.parse(stored);
-              if (Array.isArray(parsed) && parsed.length) {
-                return parsed;
-              }
-            }
-          } catch (e) {}
-          return INITIAL_MENU_DATA.slice();
-        });
+        const [activeCategory, setActiveCategory] = React.useState(null);
+        const [menu, setMenu] = React.useState(() => INITIAL_MENU_DATA.slice());
         const [users, setUsers] = React.useState(USERS.slice());
         const [cart, setCart] = React.useState([]);
         const [submitting, setSubmitting] = React.useState(false);
         const [status, setStatus] = React.useState(null);
 
-        const [currentUser, setCurrentUser] = React.useState(null);
+        const [adminUser, setAdminUser] = React.useState(null);
+        const [activeWorker, setActiveWorker] = React.useState(null);
         const [view, setView] = React.useState("pos");
         const [activeShift, setActiveShift] = React.useState(null);
         const [shifts, setShifts] = React.useState([]);
@@ -1237,21 +2522,199 @@
         const [inventory, setInventory] = React.useState(INVENTORY_INITIAL);
         const [inventoryLogs, setInventoryLogs] = React.useState([]);
 
+        const [firebaseUser, setFirebaseUser] = React.useState(null);
+        const [firebaseAuthReady, setFirebaseAuthReady] = React.useState(false);
+        const [firebaseLoginDismissed, setFirebaseLoginDismissed] = React.useState(false);
+
+        const [shiftPin, setShiftPin] = React.useState("");
+        const [shiftError, setShiftError] = React.useState(null);
+
+        const [shiftPaused, setShiftPaused] = React.useState(false);
+        const [pinPromptMode, setPinPromptMode] = React.useState(null);
+        const [pinPromptValue, setPinPromptValue] = React.useState("");
+        const [pinPromptError, setPinPromptError] = React.useState(null);
+        const lastActivityRef = React.useRef(Date.now());
+
+        React.useEffect(() => {
+          if (!window.firebaseAuth || !window.firebaseAuth.onAuthStateChanged) {
+            setFirebaseAuthReady(true);
+            return;
+          }
+          const unsub = window.firebaseAuth.onAuthStateChanged((u) => {
+            setFirebaseUser(u || null);
+            setFirebaseAuthReady(true);
+          });
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, []);
+
+        function openFirebaseLogin() {
+          setFirebaseLoginDismissed(false);
+        }
+
+        function dismissFirebaseLogin() {
+          setFirebaseLoginDismissed(true);
+        }
+
+        function handleFirebaseSignedIn(u) {
+          setFirebaseUser(u || (window.firebaseAuth ? window.firebaseAuth.currentUser : null));
+          setFirebaseLoginDismissed(false);
+        }
+
+        function handleFirebaseLogout() {
+          if (!window.firebaseAuth) return;
+          try {
+            window.firebaseAuth.signOut();
+          } catch (e) {}
+          setFirebaseLoginDismissed(false);
+        }
+
         const categories = React.useMemo(
-          () => ["All", ...INITIAL_CATEGORIES],
+          () => INITIAL_CATEGORIES.slice(),
           []
         );
 
         const filteredProducts = React.useMemo(() => {
-          if (activeCategory === "All") return menu;
+          if (!activeCategory) return [];
           return menu.filter((p) => p.category === activeCategory);
         }, [activeCategory, menu]);
 
+        const unpaidOrders = React.useMemo(() => {
+          if (!activeShift) return [];
+          return orders.filter(
+            (o) => o.shiftId === activeShift.id && o.status !== "paid"
+          );
+        }, [orders, activeShift]);
+
+        function formatTime(iso) {
+          try {
+            const d = new Date(iso);
+            return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          } catch (e) {
+            return "";
+          }
+        }
+
+        function displayOrderNumber(orderId) {
+          if (!orderId) return "";
+          const digits = String(orderId).replace(/\D/g, "");
+          if (digits.length) return digits.slice(-4);
+          return String(orderId).slice(-4);
+        }
+
+        function userNameById(userId) {
+          const u = users.find((x) => x.id === userId);
+          return u ? u.name : userId;
+        }
+
+        function lineLabel(line) {
+          const base = lang === "ar" ? line.nameAr || line.name : line.nameFr || line.name;
+          return base;
+        }
+
+        function lineModifiersLabel(line) {
+          const mods = line.modifiers || {};
+          const parts = [];
+          if (mods.milk != null) {
+            parts.push(`${t.milkInLine}: ${mods.milk ? t.milkYes : t.milkNo}`);
+          }
+          if (mods.sugar) {
+            parts.push(`${t.sugarInLine}: ${mods.sugar}`);
+          }
+          if (mods.drink) {
+            parts.push(`${t.drinkInLine}: ${mods.drink}`);
+          }
+          if (mods.eggCount) {
+            parts.push(`${t.eggsInLine}: ${mods.eggCount}`);
+          }
+          return parts.length ? "(" + parts.join(", ") + ")" : "";
+        }
+
+        React.useEffect(() => {
+          if (!activeShift || !activeWorker) return;
+
+          function bump() {
+            lastActivityRef.current = Date.now();
+          }
+
+          const events = ["click", "keydown", "touchstart", "mousemove"];
+          events.forEach((ev) => window.addEventListener(ev, bump, true));
+          return () => {
+            events.forEach((ev) => window.removeEventListener(ev, bump, true));
+          };
+        }, [activeShift, activeWorker]);
+
+        React.useEffect(() => {
+          if (!activeShift || !activeWorker) return;
+          if (shiftPaused) return;
+
+          const timeoutMs = 5 * 60 * 1000;
+          const interval = window.setInterval(() => {
+            if (Date.now() - lastActivityRef.current >= timeoutMs) {
+              setShiftPaused(true);
+              setStatus({
+                type: "err",
+                message:
+                  t.autoPausedMessage ||
+                  "Shift mis en pause automatiquement (inactivité)."
+              });
+            }
+          }, 1000);
+
+          return () => window.clearInterval(interval);
+        }, [activeShift, activeWorker, shiftPaused, t]);
+
+        function openPinPrompt(mode) {
+          setPinPromptMode(mode);
+          setPinPromptValue("");
+          setPinPromptError(null);
+        }
+
+        function closePinPrompt() {
+          setPinPromptMode(null);
+          setPinPromptValue("");
+          setPinPromptError(null);
+        }
+
+        function confirmPinPrompt(ev) {
+          ev.preventDefault();
+          if (!activeWorker) return;
+
+          if (pinPromptValue !== activeWorker.pin) {
+            setPinPromptError(t.pinIncorrect || "PIN incorrect");
+            return;
+          }
+
+          if (pinPromptMode === "pause") {
+            setShiftPaused(true);
+          } else if (pinPromptMode === "resume") {
+            setShiftPaused(false);
+            lastActivityRef.current = Date.now();
+            setStatus(null);
+          }
+
+          closePinPrompt();
+        }
+
         function handleAddToCart(product, modifiers) {
+          if (shiftPaused) {
+            setStatus({
+              type: "err",
+              message: t.shiftPausedBlocking || "Shift en pause."
+            });
+            return;
+          }
           setCart((prev) => {
             const key =
               product.id +
-              (modifiers && (modifiers.milk != null || modifiers.sugar)
+              (modifiers &&
+              (modifiers.milk != null ||
+                modifiers.sugar ||
+                modifiers.drink ||
+                modifiers.eggCount)
                 ? `_${JSON.stringify(modifiers)}`
                 : "");
             const existing = prev.find((line) => line.key === key);
@@ -1275,6 +2738,13 @@
         }
 
         function updateQty(key, delta) {
+          if (shiftPaused) {
+            setStatus({
+              type: "err",
+              message: t.shiftPausedBlocking || "Shift en pause."
+            });
+            return;
+          }
           setCart((prev) =>
             prev
               .map((line) =>
@@ -1294,15 +2764,78 @@
 
         function accumulateIngredientsForOrder(orderItems) {
           const result = {};
-          orderItems.forEach((line) => {
-            const recipe = MENU_RECIPES[line.id];
+          const COFFEE_IDS = new Set(["coffee", "coffee_with_milk", "nescafe", "machada"]);
+
+          function add(ingredientId, amountPerUnit, qty) {
+            if (!ingredientId || !amountPerUnit) return;
+            const delta = -amountPerUnit * qty;
+            result[ingredientId] = (result[ingredientId] || 0) + delta;
+          }
+
+          function addRecipe(recipe, qty) {
             if (!recipe) return;
-            const qty = line.qty || 1;
             Object.entries(recipe).forEach(([ingredientId, perUnit]) => {
-              const delta = -perUnit * qty;
-              result[ingredientId] = (result[ingredientId] || 0) + delta;
+              add(ingredientId, perUnit, qty);
             });
+          }
+
+          function addSugarFor(type, sugarLevel, qty) {
+            if (!sugarLevel || sugarLevel === "none") return;
+
+            if (type === "coffee") {
+              const KG_PER_CUBE = 1 / 180;
+              const cubes = sugarLevel === "low" ? 1 : sugarLevel === "medium" ? 2 : 3;
+              add("sugar_cubes", KG_PER_CUBE * cubes, qty);
+              return;
+            }
+
+            if (type === "tea") {
+              const grams = sugarLevel === "low" ? 5 : sugarLevel === "medium" ? 10 : 15;
+              add("sugar_powder", grams / 1000, qty);
+              return;
+            }
+          }
+
+          orderItems.forEach((line) => {
+            const qty = line.qty || 1;
+            const mods = line.modifiers || {};
+            const baseRecipe = MENU_RECIPES[line.id];
+
+            addRecipe(baseRecipe, qty);
+
+            if (line.id === "fried_eggs" && mods.eggCount) {
+              const baseEggs = (baseRecipe && baseRecipe.eggs) || 0;
+              const desired = Number(mods.eggCount) || 0;
+              const extra = desired - baseEggs;
+              if (extra !== 0) {
+                result.eggs = (result.eggs || 0) + -extra * qty;
+              }
+            }
+
+            if (mods.drink === "tea") {
+              add("tea_leaves", 0.006, qty);
+              addSugarFor("tea", mods.sugar, qty);
+            } else if (mods.drink === "coffee_milk") {
+              add("coffee_beans", 0.01, qty);
+              add("milk", 0.18, qty);
+              addSugarFor("coffee", mods.sugar, qty);
+            }
+
+            if (COFFEE_IDS.has(line.id)) {
+              if (mods.milk === true && (!baseRecipe || baseRecipe.milk == null)) {
+                add("milk", 0.18, qty);
+              }
+              if (mods.milk === false && baseRecipe && baseRecipe.milk != null) {
+                result.milk = (result.milk || 0) + baseRecipe.milk * qty;
+              }
+              addSugarFor("coffee", mods.sugar, qty);
+            }
+
+            if (line.id === "tea_lipton" || line.id === "tea_mint" || line.id === "tea_berrad") {
+              addSugarFor("tea", mods.sugar, qty);
+            }
           });
+
           return result;
         }
 
@@ -1338,12 +2871,74 @@
           ]);
         }
 
-        function handleLogin(user) {
-          setCurrentUser(user);
+        function handleInventoryAdjust(ingredientId, delta) {
+          if (!ingredientId || !delta) return;
+          setInventory((prev) => {
+            if (!prev[ingredientId]) return prev;
+            return {
+              ...prev,
+              [ingredientId]: {
+                ...prev[ingredientId],
+                currentQty: prev[ingredientId].currentQty + delta
+              }
+            };
+          });
+          setInventoryLogs((prev) => [
+            ...prev,
+            {
+              id: "log_" + Date.now() + "_" + Math.random().toString(16).slice(2),
+              ingredientId,
+              delta,
+              reason: "adjust",
+              orderId: null,
+              shiftId: activeShift ? activeShift.id : null,
+              userId: adminUser ? adminUser.id : null,
+              createdAt: new Date().toISOString()
+            }
+          ]);
         }
 
-        function handleLogout() {
-          setCurrentUser(null);
+        function handleInventoryUpdate(ingredientId, currentQty, minQty) {
+          if (!ingredientId) return;
+          setInventory((prev) => {
+            const ing = prev[ingredientId];
+            if (!ing) return prev;
+            return {
+              ...prev,
+              [ingredientId]: {
+                ...ing,
+                currentQty,
+                minQty
+              }
+            };
+          });
+          setInventoryLogs((prev) => {
+            const ing = inventory[ingredientId];
+            const oldQty = ing ? ing.currentQty : null;
+            const diff = oldQty == null ? 0 : currentQty - oldQty;
+            if (!diff) return prev;
+            return [
+              ...prev,
+              {
+                id: "log_" + Date.now() + "_" + Math.random().toString(16).slice(2),
+                ingredientId,
+                delta: diff,
+                reason: "adjust",
+                orderId: null,
+                shiftId: activeShift ? activeShift.id : null,
+                userId: adminUser ? adminUser.id : null,
+                createdAt: new Date().toISOString()
+              }
+            ];
+          });
+        }
+
+        function handleAdminLogin(user) {
+          setAdminUser(user);
+        }
+
+        function handleAdminLogout() {
+          setAdminUser(null);
         }
 
         function handleChangeUserPin(userId, newPin) {
@@ -1361,7 +2956,7 @@
             status: "open",
             openedAt: new Date().toISOString(),
             closedAt: null,
-            openedBy: currentUser ? currentUser.id : null,
+            openedBy: adminUser ? adminUser.id : null,
             closedBy: null,
             revenue: 0,
             orderCount: 0,
@@ -1400,17 +2995,26 @@
 
         async function handleSubmitOrder() {
           if (!cart.length) return;
-          if (!currentUser) {
+          if (!activeWorker) {
             setStatus({
               type: "err",
-              message: "Connectez-vous (PIN) avant de prendre une commande."
+              message:
+                t.needWorkerLogin ||
+                "Ouvrez un shift (PIN serveur) avant de prendre une commande."
+            });
+            return;
+          }
+          if (shiftPaused) {
+            setStatus({
+              type: "err",
+              message: t.shiftPausedBlocking || "Shift en pause."
             });
             return;
           }
           if (!activeShift) {
             setStatus({
               type: "err",
-              message: "Aucun shift ouvert. Demandez au manager."
+              message: t.noShiftOpen || "Aucun shift ouvert."
             });
             return;
           }
@@ -1422,13 +3026,20 @@
           const order = {
             id: orderId,
             appId: "cafe-halab-pos",
-            items: cart,
+            items: cart.map((line) => {
+              const p = menu.find((m) => m.id === line.id);
+              return {
+                ...line,
+                nameFr: p?.nameFr || line.name,
+                nameAr: p?.nameAr || line.name
+              };
+            }),
             totals,
             currency: "DHS",
-            status: "paid",
+            status: "unpaid",
             createdAt: new Date().toISOString(),
             shiftId: activeShift.id,
-            cashierId: currentUser.id
+            cashierId: activeWorker.id
           };
 
           const ingredientDeltas = accumulateIngredientsForOrder(cart);
@@ -1436,16 +3047,34 @@
             ingredientDeltas,
             activeShift.id,
             orderId,
-            currentUser.id
+            activeWorker.id
           );
-          updateShiftStats(activeShift.id, totals.total);
 
           setOrders((prev) => [...prev, order]);
 
           await new Promise((resolve) => setTimeout(resolve, 300));
-          setStatus({ type: "ok", message: "Commande enregistrée localement." });
+          setStatus({
+            type: "ok",
+            message: t.orderAddedPending || "Commande ajoutée aux commandes en attente."
+          });
           setCart([]);
           setSubmitting(false);
+        }
+
+        function handleMarkOrderPaid(orderId) {
+          setOrders((prev) => {
+            const order = prev.find((o) => o.id === orderId);
+            if (!order || order.status === "paid") {
+              return prev;
+            }
+            const next = prev.map((o) =>
+              o.id === orderId
+                ? { ...o, status: "paid", paidAt: new Date().toISOString() }
+                : o
+            );
+            updateShiftStats(order.shiftId, order.totals.total);
+            return next;
+          });
         }
 
         function handleUpdateMenuItem(id, partial) {
@@ -1474,19 +3103,67 @@
         }
 
         function canSeeManager() {
-          return (
-            currentUser &&
-            (currentUser.role === "manager" || currentUser.role === "admin")
-          );
+          return adminUser && adminUser.role === "admin";
         }
 
         function canSeeAdmin() {
-          return currentUser && currentUser.role === "admin";
+          return adminUser && adminUser.role === "admin";
+        }
+
+        function handleOpenWaiterShift(ev) {
+          ev.preventDefault();
+          const worker = users.find(
+            (u) => u.role === "worker" && u.pin === shiftPin
+          );
+          if (!worker) {
+            setShiftError(t.pinIncorrect || "PIN incorrect");
+            return;
+          }
+          const today = new Date().toISOString().slice(0, 10);
+          const shiftId = buildShiftId(today, "default");
+          const newShift = {
+            id: shiftId,
+            date: today,
+            period: "default",
+            status: "open",
+            orderCount: 0,
+            revenue: 0,
+            expectedCash: 0,
+            openedBy: worker.id
+          };
+          setActiveShift(newShift);
+          setShifts((prev) => [...prev, newShift]);
+          setActiveWorker(worker);
+          setShiftPaused(false);
+          lastActivityRef.current = Date.now();
+          setShiftPin("");
+          setShiftError(null);
+          setActiveCategory(null);
+          setView("pos");
+        }
+
+        function handleCloseWaiterShift() {
+          setActiveShift(null);
+          setActiveWorker(null);
+          setCart([]);
+          setActiveCategory(null);
+          setShiftPaused(false);
+          closePinPrompt();
         }
 
         return e(
           "div",
           { className: "app-shell" },
+          window.firebaseAuth &&
+            firebaseAuthReady &&
+            !firebaseUser &&
+            !firebaseLoginDismissed &&
+            e(FirebaseLoginOverlay, {
+              t,
+              lang,
+              onSignedIn: handleFirebaseSignedIn,
+              onDismiss: dismissFirebaseLogin
+            }),
           e(
             "header",
             null,
@@ -1505,11 +3182,20 @@
                 e("span", null, t.uiSubtitle)
               )
             ),
+            // Admin login only
             e(LoginPanel, {
-              currentUser,
-              users,
-              onLogin: handleLogin,
-              onLogout: handleLogout
+              currentUser: adminUser,
+              users: users.filter((u) => u.role === "admin"),
+              onLogin: handleAdminLogin,
+              onLogout: handleAdminLogout
+            }),
+            e(FirebaseAuthBadge, {
+              t,
+              lang,
+              firebaseUser,
+              dismissed: firebaseLoginDismissed,
+              onOpenLogin: openFirebaseLogin,
+              onLogout: handleFirebaseLogout
             }),
             e(
               "div",
@@ -1541,6 +3227,38 @@
                 },
                 "Admin"
               ),
+              activeShift &&
+                activeWorker &&
+                e(
+                  "button",
+                  {
+                    className: "category-btn",
+                    onClick: handleCloseWaiterShift
+                  },
+                  t.closeShiftBtn || "Close Shift"
+                ),
+              activeShift &&
+                activeWorker &&
+                !shiftPaused &&
+                e(
+                  "button",
+                  {
+                    className: "category-btn",
+                    onClick: () => openPinPrompt("pause")
+                  },
+                  t.pauseShiftBtn || "Pause"
+                ),
+              activeShift &&
+                activeWorker &&
+                shiftPaused &&
+                e(
+                  "button",
+                  {
+                    className: "category-btn",
+                    onClick: () => openPinPrompt("resume")
+                  },
+                  t.resumeShiftBtn || "Resume"
+                ),
               e(
                 "button",
                 {
@@ -1559,48 +3277,275 @@
               )
             )
           ),
+          pinPromptMode &&
+            e(
+              "div",
+              {
+                style: {
+                  position: "fixed",
+                  inset: 0,
+                  background: "rgba(15,23,42,0.55)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 16,
+                  zIndex: 50
+                }
+              },
+              e(
+                "section",
+                { className: "panel", style: { maxWidth: 420, width: "100%" } },
+                e(
+                  "h3",
+                  { style: { marginTop: 0 } },
+                  pinPromptMode === "pause"
+                    ? t.confirmPauseTitle || "Confirmer la pause"
+                    : t.shiftPausedTitle || "Shift en pause"
+                ),
+                e(
+                  "p",
+                  { style: { fontSize: 13, marginTop: 6 } },
+                  pinPromptMode === "pause"
+                    ? t.confirmPauseSubtitle ||
+                      "Saisir votre PIN pour mettre le shift en pause."
+                    : t.shiftPausedSubtitle ||
+                      "Saisir le PIN du serveur pour reprendre."
+                ),
+                e(
+                  "form",
+                  {
+                    onSubmit: confirmPinPrompt,
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                      marginTop: 10
+                    }
+                  },
+                  e("input", {
+                    type: "password",
+                    value: pinPromptValue,
+                    onChange: (ev) => setPinPromptValue(ev.target.value),
+                    placeholder: t.pinLabel || "PIN",
+                    style: {
+                      padding: 10,
+                      fontSize: 18,
+                      textAlign: "center"
+                    }
+                  }),
+                  e(
+                    "button",
+                    { className: "btn-primary", type: "submit" },
+                    t.confirmPinBtn || "Confirmer"
+                  ),
+                  e(
+                    "button",
+                    {
+                      className: "category-btn",
+                      type: "button",
+                      onClick: closePinPrompt
+                    },
+                    t.closeBtn || "Fermer"
+                  ),
+                  pinPromptError &&
+                    e(
+                      "div",
+                      { style: { fontSize: 12, color: "#b91c1c" } },
+                      pinPromptError
+                    )
+                )
+              )
+            ),
           view === "pos" &&
+            !activeShift &&
+            e(
+              "main",
+              {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }
+              },
+              e(
+                "section",
+                {
+                  className: "panel",
+                  style: { maxWidth: 420, textAlign: "center" }
+                },
+                e(
+                  "h2",
+                  { style: { marginTop: 0, marginBottom: 12 } },
+                  t.shiftOpenTitle || "Open Shift"
+                ),
+                e(
+                  "p",
+                  { style: { fontSize: 13, marginBottom: 16 } },
+                  t.shiftOpenSubtitle ||
+                    "Enter waiter PIN to start a shift."
+                ),
+                e(
+                  "form",
+                  {
+                    onSubmit: handleOpenWaiterShift,
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                      alignItems: "center"
+                    }
+                  },
+                  e("input", {
+                    type: "password",
+                    value: shiftPin,
+                    onChange: (ev) => setShiftPin(ev.target.value),
+                    placeholder: t.pinLabel || "PIN",
+                    style: {
+                      padding: 8,
+                      fontSize: 16,
+                      width: 160,
+                      textAlign: "center"
+                    }
+                  }),
+                  e(
+                    "button",
+                    {
+                      className: "btn-primary",
+                      type: "submit",
+                      style: {
+                        padding: "12px 24px",
+                        fontSize: 18,
+                        fontWeight: 600,
+                        width: "100%",
+                        maxWidth: 260
+                      }
+                    },
+                    t.openShiftBtn || "OPEN SHIFT"
+                  ),
+                  shiftError &&
+                    e(
+                      "span",
+                      { style: { color: "#b91c1c", fontSize: 11 } },
+                      shiftError
+                    )
+                )
+              )
+            ),
+          view === "pos" &&
+            activeShift &&
             e(
               "main",
               null,
               e(
                 "section",
                 { className: "panel" },
-                e(
-                  "div",
-                  { className: "categories" },
-                  categories.map((cat) => {
-                    let label = cat;
-                    if (cat === "All") label = t.all;
-                    else if (cat === "Breakfast") label = t.catBreakfast;
-                    else if (cat === "Hot Drinks") label = t.catHot;
-                    else if (cat === "Cold Drinks") label = t.catCold;
-                    return e(
-                      "button",
+                !activeCategory &&
+                  e(
+                    "div",
+                    null,
+                    e(
+                      "h3",
+                      { style: { marginTop: 0, marginBottom: 12 } },
+                      "Menu"
+                    ),
+                    e(
+                      "div",
                       {
-                        key: cat,
-                        className:
-                          "category-btn" +
-                          (cat === activeCategory ? " active" : ""),
-                        onClick: () => setActiveCategory(cat)
+                        style: {
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fit, minmax(160px, 1fr))",
+                          gap: 12
+                        }
                       },
-                      label
-                    );
-                  })
-                ),
-                e(
-                  "div",
-                  { className: "products-grid" },
-                  filteredProducts.map((product) =>
-                    e(ProductCard, {
-                      key: product.id,
-                      product,
-                      onAdd: handleAddToCart,
-                      lang,
-                      t
-                    })
+                      categories.map((cat) => {
+                        let label = cat;
+                        if (cat === "Breakfast") label = t.catBreakfast;
+                        else if (cat === "Hot Drinks") label = t.catHot;
+                        else if (cat === "Cold Drinks") label = t.catCold;
+                        else if (cat === "Others") label = t.catOthers;
+                        return e(
+                          "button",
+                          {
+                            key: cat,
+                            className: "category-btn",
+                            style: {
+                              padding: "18px 12px",
+                              fontSize: 16,
+                              fontWeight: 600,
+                              width: "100%"
+                            },
+                            onClick: () =>
+                              shiftPaused
+                                ? setStatus({
+                                    type: "err",
+                                    message:
+                                      t.shiftPausedBlocking ||
+                                      "Shift en pause."
+                                  })
+                                : setActiveCategory(cat)
+                          },
+                          label
+                        );
+                      })
+                    )
+                  ),
+                activeCategory &&
+                  e(
+                    "div",
+                    null,
+                    e(
+                      "div",
+                      {
+                        style: {
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 10
+                        }
+                      },
+                      e(
+                        "button",
+                        {
+                          className: "category-btn",
+                          onClick: () =>
+                            shiftPaused
+                              ? setStatus({
+                                  type: "err",
+                                  message:
+                                    t.shiftPausedBlocking ||
+                                    "Shift en pause."
+                                })
+                              : setActiveCategory(null)
+                        },
+                        t.backToMenus || "Retour menus"
+                      ),
+                      e(
+                        "h3",
+                        { style: { margin: 0 } },
+                        activeCategory === "Breakfast"
+                          ? t.catBreakfast
+                          : activeCategory === "Hot Drinks"
+                          ? t.catHot
+                          : activeCategory === "Cold Drinks"
+                          ? t.catCold
+                          : t.catOthers
+                      )
+                    ),
+                    e(
+                      "div",
+                      { className: "products-grid" },
+                      filteredProducts.map((product) =>
+                        e(ProductCard, {
+                          key: product.id,
+                          product,
+                          onAdd: handleAddToCart,
+                          lang,
+                          t
+                        })
+                      )
+                    )
                   )
-                )
               ),
               e(
                 "section",
@@ -1620,7 +3565,10 @@
                             null,
                             line.name,
                             line.modifiers &&
-                            (line.modifiers.milk != null || line.modifiers.sugar)
+                            (line.modifiers.milk != null ||
+                              line.modifiers.sugar ||
+                              line.modifiers.drink ||
+                              line.modifiers.eggCount)
                               ?
                                 " (" +
                                 [
@@ -1631,6 +3579,12 @@
                                     : null,
                                   line.modifiers.sugar
                                     ? `${t.sugarInLine}: ${line.modifiers.sugar}`
+                                    : null,
+                                  line.modifiers.drink
+                                    ? `${t.drinkInLine}: ${line.modifiers.drink}`
+                                    : null,
+                                  line.modifiers.eggCount
+                                    ? `${t.eggsInLine}: ${line.modifiers.eggCount}`
                                     : null
                                 ]
                                   .filter(Boolean)
@@ -1707,7 +3661,132 @@
                         "status " + (status.type === "ok" ? "ok" : "err")
                     },
                     status.message
-                  )
+                  ),
+                e(
+                  "div",
+                  { style: { marginTop: 12 } },
+                  e(
+                    "h4",
+                    { style: { margin: "0 0 8px", fontSize: 13 } },
+                    t.ordersInProgress || "Commandes en attente"
+                  ),
+                  unpaidOrders.length === 0
+                    ? e(
+                        "div",
+                        { style: { fontSize: 12, color: "#6b7280" } },
+                        t.noOrdersInProgress || "Aucune commande en attente."
+                      )
+                    : unpaidOrders
+                        .slice()
+                        .reverse()
+                        .map((o) =>
+                          e(
+                            "div",
+                            {
+                              key: o.id,
+                              style: {
+                                borderRadius: 14,
+                                border: "1px solid rgba(148,163,184,0.55)",
+                                background:
+                                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(224,231,255,0.72))",
+                                boxShadow: "0 10px 22px rgba(15,23,42,0.10)",
+                                padding: 10,
+                                marginBottom: 10
+                              }
+                            },
+                            e(
+                              "div",
+                              {
+                                style: {
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "baseline",
+                                  gap: 10
+                                }
+                              },
+                              e(
+                                "div",
+                                { style: { fontSize: 12, fontWeight: 700 } },
+                                (t.orderLabel || "Commande") +
+                                  " #" +
+                                  displayOrderNumber(o.id)
+                              ),
+                              e(
+                                "div",
+                                { style: { fontSize: 12, color: "#374151" } },
+                                formatTime(o.createdAt)
+                              )
+                            ),
+                            e(
+                              "div",
+                              { style: { fontSize: 11, color: "#6b7280", marginTop: 4 } },
+                              (t.waiterLabel || "Serveur") +
+                                ": " +
+                                userNameById(o.cashierId)
+                            ),
+                            e(
+                              "div",
+                              { style: { marginTop: 8 } },
+                              o.items.map((line) =>
+                                e(
+                                  "div",
+                                  {
+                                    key: line.key,
+                                    style: {
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      gap: 10,
+                                      fontSize: 12,
+                                      padding: "2px 0"
+                                    }
+                                  },
+                                  e(
+                                    "div",
+                                    { style: { flex: 1 } },
+                                    `${line.qty}× `,
+                                    lineLabel(line),
+                                    " ",
+                                    e(
+                                      "span",
+                                      { style: { fontSize: 11, color: "#6b7280" } },
+                                      lineModifiersLabel(line)
+                                    )
+                                  ),
+                                  e(
+                                    "div",
+                                    { style: { whiteSpace: "nowrap" } },
+                                    `${(line.price * line.qty).toFixed(2)} DHS`
+                                  )
+                                )
+                              )
+                            ),
+                            e(
+                              "div",
+                              {
+                                style: {
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  marginTop: 10
+                                }
+                              },
+                              e(
+                                "div",
+                                { style: { fontWeight: 700, fontSize: 12 } },
+                                `${o.totals.total.toFixed(2)} DHS`
+                              ),
+                              e(
+                                "button",
+                                {
+                                  className: "category-btn",
+                                  onClick: () => handleMarkOrderPaid(o.id)
+                                },
+                                t.markPaid || "Déclarer payé"
+                              )
+                            )
+                          )
+                        )
+                )
               )
             ),
           view === "manager" &&
@@ -1717,19 +3796,36 @@
               e(
                 "section",
                 { className: "panel" },
-                e(ShiftPanel, {
-                  currentUser,
-                  activeShift,
-                  shifts,
-                  onOpenShift: handleOpenShift,
-                  onCloseShift: handleCloseShift
-                })
+                e(
+                  "div",
+                  null,
+                  e(
+                    "h3",
+                    { style: { marginTop: 0 } },
+                    t.shiftSummaryTitle || "Shift"
+                  ),
+                  activeShift
+                    ? e(
+                        "div",
+                        { style: { fontSize: 12 } },
+                        "ID: ",
+                        activeShift.id,
+                        " | statut: ",
+                        shiftPaused ? "paused" : "active",
+                        activeWorker ? " | serveur: " + activeWorker.name : ""
+                      )
+                    : e(
+                        "div",
+                        { style: { fontSize: 12 } },
+                        t.shiftSummaryNone || "Aucun shift ouvert."
+                      )
+                )
               ),
               e(
                 "section",
                 { className: "panel" },
                 e("h3", null, "Vue Manager / Shifts"),
-                e(ManagerStats, { shifts, orders, inventoryLogs })
+                e(ManagerStats, { shifts, orders, inventoryLogs, inventory })
               )
             ),
           view === "admin" &&
@@ -1756,21 +3852,13 @@
                 "section",
                 { className: "panel" },
                 e("h3", null, "Stats & Inventaire"),
-                e(AdminStats, { shifts, orders, inventoryLogs, inventory }),
-                e("hr", { style: { margin: "10px 0" } }),
-                e("h4", null, "Niveaux de stock"),
-                Object.values(inventory).map((ing) =>
-                  e(
-                    "div",
-                    { key: ing.id, style: { fontSize: 12 } },
-                    ing.name,
-                    ": ",
-                    ing.currentQty,
-                    " ",
-                    ing.unit,
-                    ing.currentQty <= ing.minQty ? " (LOW)" : ""
-                  )
-                ),
+                e(AdminStats, { shifts, orders, inventoryLogs, inventory, t, lang }),
+                e(AdminInventoryEditor, {
+                  inventory,
+                  t,
+                  onAdjust: handleInventoryAdjust,
+                  onUpdate: handleInventoryUpdate
+                }),
                 e("hr", { style: { margin: "10px 0" } }),
                 e("h4", null, "Utilisateurs / PIN"),
                 canSeeAdmin()
@@ -1779,6 +3867,23 @@
                       onChangePin: handleChangeUserPin
                     })
                   : null
+              ),
+              e(
+                "section",
+                { className: "panel" },
+                canSeeAdmin()
+                  ? e(AdminOrdersTickets, {
+                      orders,
+                      users,
+                      lang,
+                      t,
+                      activeShiftId: activeShift ? activeShift.id : null
+                    })
+                  : e(
+                      "p",
+                      { style: { fontSize: 12 } },
+                      "Admin seulement."
+                    )
               )
             )
         );
@@ -1787,12 +3892,22 @@
       function ProductCard({ product, onAdd, lang, t }) {
         const [milk, setMilk] = React.useState(true); // yes/no for coffee
         const [sugar, setSugar] = React.useState("medium");
+        const [drink, setDrink] = React.useState("coffee_milk"); // for breakfast combos
+        const [eggCount, setEggCount] = React.useState(2); // for fried eggs
         const hasMilkModifier = isCoffee(product);
+        const isBreakfast = product.category === "Breakfast";
+        const isFriedEggs = product.id === "fried_eggs";
 
         function handleClick() {
-          onAdd(product, {
+          const effectiveProduct = isFriedEggs
+            ? { ...product, price: eggCount === 1 ? 22.0 : 24.0 }
+            : product;
+
+          onAdd(effectiveProduct, {
             milk: hasMilkModifier ? milk : null,
-            sugar
+            sugar,
+            drink: isBreakfast ? drink : null,
+            eggCount: isFriedEggs ? eggCount : null
           });
         }
 
@@ -1802,16 +3917,21 @@
           React.createElement(
             "div",
             null,
-            product.imageUrl
-              ? React.createElement("img", {
-                  src: product.imageUrl,
-                  alt:
-                    lang === "ar"
-                      ? product.nameAr || product.name
-                      : product.nameFr || product.name,
-                  className: "product-image"
-                })
-              : null,
+            product.image
+              ? (() => {
+                  console.log("Loading image:", product.image);
+                  return React.createElement("img", {
+                      src: product.image,
+                      alt:
+                        lang === "ar"
+                          ? product.nameAr || product.name
+                          : product.nameFr || product.name,
+                      className: "product-image",
+                      onLoad: () => console.log("Image loaded:", product.image),
+                      onError: () => console.error("Image failed to load:", product.image)
+                    });
+                })()
+              : (console.log("No image for:", product.nameFr), null),
             React.createElement(
               "div",
               { className: "product-name" },
@@ -1866,6 +3986,11 @@
                 ),
                 React.createElement(
                   "option",
+                  { value: "low" },
+                  t.sugarLow
+                ),
+                React.createElement(
+                  "option",
                   { value: "medium" },
                   t.sugarMedium
                 ),
@@ -1875,7 +4000,55 @@
                   t.sugarExtra
                 )
               )
-            )
+            ),
+            isBreakfast &&
+              React.createElement(
+                "div",
+                { style: { marginTop: 6, fontSize: 12 } },
+                React.createElement("span", null, t.drinkLabel + ": "),
+                React.createElement(
+                  "select",
+                  {
+                    className: "milk-select",
+                    value: drink,
+                    onChange: (ev) => setDrink(ev.target.value)
+                  },
+                  React.createElement(
+                    "option",
+                    { value: "tea" },
+                    t.drinkTea
+                  ),
+                  React.createElement(
+                    "option",
+                    { value: "coffee_milk" },
+                    t.drinkCoffeeMilk
+                  )
+                )
+              ),
+            isFriedEggs &&
+              React.createElement(
+                "div",
+                { style: { marginTop: 6, fontSize: 12 } },
+                React.createElement("span", null, "Eggs: "),
+                React.createElement(
+                  "select",
+                  {
+                    className: "milk-select",
+                    value: String(eggCount),
+                    onChange: (ev) => setEggCount(Number(ev.target.value))
+                  },
+                  React.createElement(
+                    "option",
+                    { value: "1" },
+                    "1"
+                  ),
+                  React.createElement(
+                    "option",
+                    { value: "2" },
+                    "2"
+                  )
+                )
+              )
           ),
           React.createElement(
             "button",
