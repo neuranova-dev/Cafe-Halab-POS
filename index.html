@@ -209,11 +209,50 @@
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    
+    <script>
+      (function () {
+        if (window.__errorOverlayInstalled__) return;
+        window.__errorOverlayInstalled__ = true;
+        function show(msg) {
+          try {
+            var el = document.getElementById('pwa-error-overlay');
+            if (!el) {
+              el = document.createElement('pre');
+              el.id = 'pwa-error-overlay';
+              el.style.position = 'fixed';
+              el.style.left = '0';
+              el.style.top = '0';
+              el.style.right = '0';
+              el.style.maxHeight = '50vh';
+              el.style.overflow = 'auto';
+              el.style.zIndex = '999999';
+              el.style.margin = '0';
+              el.style.padding = '10px';
+              el.style.background = 'rgba(0,0,0,0.85)';
+              el.style.color = '#fff';
+              el.style.fontSize = '12px';
+              el.style.whiteSpace = 'pre-wrap';
+              document.body.appendChild(el);
+            }
+            el.textContent = msg;
+          } catch (e) {}
+        }
+        window.addEventListener('error', function (e) {
+          var msg = 'JS Error: ' + (e && e.message ? e.message : '') + '\n' + (e && e.filename ? e.filename : '') + ':' + (e && e.lineno ? e.lineno : '') + ':' + (e && e.colno ? e.colno : '');
+          show(msg);
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          var reason = e && e.reason ? e.reason : e;
+          var msg = 'Unhandled Promise Rejection: ' + (reason && reason.message ? reason.message : String(reason));
+          show(msg);
+        });
+      })();
+    </script><div id="root"></div>
 
     <!-- React from CDNs (global React / ReactDOM) -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
