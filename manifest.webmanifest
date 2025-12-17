@@ -1,0 +1,21 @@
+﻿{
+    "display":  "standalone",
+    "icons":  [
+                  {
+                      "type":  "image/png",
+                      "sizes":  "192x192",
+                      "src":  "./icons/icon-192.png"
+                  },
+                  {
+                      "type":  "image/png",
+                      "sizes":  "512x512",
+                      "src":  "./icons/icon-512.png"
+                  }
+              ],
+    "background_color":  "#ffffff",
+    "theme_color":  "#0f172a",
+    "name":  "Café Halab POS",
+    "start_url":  "./",
+    "scope":  "./",
+    "short_name":  "Halab POS"
+}
