@@ -4898,8 +4898,8 @@
       const root = ReactDOM.createRoot(document.getElementById("root"));
       root.render(React.createElement(POSApp));
     
-      if (\"serviceWorker\" in navigator) {
-        window.addEventListener(\"load\", () => {
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
           navigator.serviceWorker.register("./sw.js").catch(() => {});
         });
       }</script>
