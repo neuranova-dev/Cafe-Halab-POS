@@ -6662,6 +6662,7 @@ const DICTIONARY = {
         const [closeShiftFloatOpen, setCloseShiftFloatOpen] = React.useState(false);
         const [closeShiftFloatValue, setCloseShiftFloatValue] = React.useState("");
         const [closeShiftFloatError, setCloseShiftFloatError] = React.useState(null);
+        const [closeShiftTargetId, setCloseShiftTargetId] = React.useState(null);
         const [pendingShiftOpen, setPendingShiftOpen] = React.useState(null);
         const [floatConfirmOpen, setFloatConfirmOpen] = React.useState(false);
         const [floatConfirmExpected, setFloatConfirmExpected] = React.useState(null);
@@ -6710,6 +6711,47 @@ const DICTIONARY = {
           }
         });
         const [shiftError, setShiftError] = React.useState(null);
+
+        const blockingOpenShift = React.useMemo(() => {
+          try {
+            return (shifts || []).find((s) => s && s.status === "open") || null;
+          } catch (e) {
+            return null;
+          }
+        }, [shifts]);
+
+        const pinWorkerCandidate = React.useMemo(() => {
+          try {
+            const v = normalizePinValue(shiftPin);
+            if (v.length !== 4) return null;
+            return (
+              (users || []).find(
+                (u) => u && u.role === "worker" && u.posAccess !== false && u.pin === v
+              ) || null
+            );
+          } catch (e) {
+            return null;
+          }
+        }, [shiftPin, users]);
+
+        function canWorkerForceCloseShift(worker, shift) {
+          if (!worker || !shift) return false;
+          const opener = shift.openedBy || shift.currentOperatorId || null;
+          if (!opener) return true;
+          return opener === worker.id;
+        }
+
+        function startForceCloseShift(shiftId, closedById) {
+          if (!shiftId) return;
+          const rec = (shifts || []).find((s) => s && s.id === shiftId) || null;
+          if (!rec || rec.status !== "open") {
+            setShiftError(lang === "ar" ? "لا يوجد شيفت مفتوح." : "Aucun shift ouvert.");
+            return;
+          }
+          setCloseShiftActorOverride(closedById || null);
+          setShiftError(null);
+          openCloseShiftFloatPrompt(shiftId);
+        }
 
         const [shiftPaused, setShiftPaused] = React.useState(() => {
           try {
@@ -9127,16 +9169,19 @@ const DICTIONARY = {
           openCloseShiftFloatPrompt();
         }
 
-        function openCloseShiftFloatPrompt() {
-          if (!activeShift) return;
+        function openCloseShiftFloatPrompt(targetShiftId) {
+          const sid = targetShiftId || (activeShift && activeShift.id);
+          if (!sid) return;
+          setCloseShiftTargetId(sid);
           setCloseShiftGateOpen(false);
           setCloseShiftFloatError(null);
-          const shiftRec = (shifts || []).find((s) => s && s.id === activeShift.id) || null;
+          const shiftRec = (shifts || []).find((s) => s && s.id === sid) || null;
+          const fallbackActive = activeShift && activeShift.id === sid ? activeShift : null;
           const initialFloat =
             shiftRec && typeof shiftRec.openingFloatCash === "number"
               ? shiftRec.openingFloatCash
-              : typeof activeShift.openingFloatCash === "number"
-              ? activeShift.openingFloatCash
+              : fallbackActive && typeof fallbackActive.openingFloatCash === "number"
+              ? fallbackActive.openingFloatCash
               : 0;
           setCloseShiftFloatValue(String((Number(initialFloat || 0) || 0).toFixed(2)));
           setCloseShiftFloatOpen(true);
@@ -9144,7 +9189,8 @@ const DICTIONARY = {
 
         function confirmCloseShiftWithFloat(ev) {
           if (ev && ev.preventDefault) ev.preventDefault();
-          if (!activeShift) return;
+          const sid = closeShiftTargetId || (activeShift && activeShift.id);
+          if (!sid) return;
           const parsed = parseCash(closeShiftFloatValue);
           if (parsed == null || parsed < 0) {
             setCloseShiftFloatError((t && t.pinIncorrect) || "Valeur invalide");
@@ -9154,17 +9200,23 @@ const DICTIONARY = {
           setCloseShiftFloatOpen(false);
           const actor = closeShiftActorOverride;
           setCloseShiftActorOverride(null);
-          finalizeCloseWaiterShift(parsed, actor);
+          setCloseShiftTargetId(null);
+          finalizeCloseShiftById(sid, parsed, actor);
         }
 
-        function finalizeCloseWaiterShift(closingFloatCash, closedByOverride) {
-          if (!activeShift) return;
+        function finalizeCloseShiftById(shiftId, closingFloatCash, closedByOverride) {
+          if (!shiftId) return;
           const closedAt = new Date().toISOString();
-          const closedBy = closedByOverride != null ? closedByOverride : (activeWorker ? activeWorker.id : null);
+          const closedBy =
+            closedByOverride != null
+              ? closedByOverride
+              : activeWorker
+              ? activeWorker.id
+              : null;
           const floatVal = Number(closingFloatCash || 0) || 0;
           setShifts((prev) =>
             (prev || []).map((s) =>
-              s && s.id === activeShift.id
+              s && s.id === shiftId
                 ? {
                     ...s,
                     status: "closed",
@@ -9181,10 +9233,10 @@ const DICTIONARY = {
             const shiftsCol = cloudCol("shifts");
             if (shiftsCol) {
               shiftsCol
-                .doc(activeShift.id)
+                .doc(shiftId)
                 .set(
                   {
-                    id: activeShift.id,
+                    id: shiftId,
                     status: "closed",
                     closedAt,
                     closedBy,
@@ -9198,14 +9250,17 @@ const DICTIONARY = {
             }
           }
 
-          setActiveShift(null);
-          setActiveWorker(null);
-          setCart([]);
-          setActiveCategory(null);
-          setPosSection("sales");
-          setShiftPaused(false);
-          closePinPrompt();
-          setCloseShiftGateOpen(false);
+          if (activeShift && activeShift.id === shiftId) {
+            setActiveShift(null);
+            setActiveWorker(null);
+            setCart([]);
+            setActiveCategory(null);
+            setPosSection("sales");
+            setShiftPaused(false);
+            closePinPrompt();
+            setCloseShiftGateOpen(false);
+          }
+          setShiftError(null);
         }
 
         function adminOpenWaiterShiftOverride(ev) {
@@ -10278,7 +10333,11 @@ const DICTIONARY = {
                       {
                         className: "category-btn",
                         type: "button",
-                        onClick: () => setCloseShiftFloatOpen(false)
+                        onClick: () => {
+                          setCloseShiftFloatOpen(false);
+                          setCloseShiftTargetId(null);
+                          setCloseShiftActorOverride(null);
+                        }
                       },
                       (t && t.cancelBtn) || "Annuler"
                     ),
@@ -10482,6 +10541,68 @@ const DICTIONARY = {
                       "span",
                       { style: { color: "#b91c1c", fontSize: 11 } },
                       shiftError
+                    )
+                  ,
+                  blockingOpenShift &&
+                    e(
+                      "div",
+                      {
+                        style: {
+                          marginTop: 10,
+                          width: "100%",
+                          maxWidth: 360,
+                          padding: 10,
+                          borderRadius: 12,
+                          border: "1px solid rgba(248,113,113,0.45)",
+                          background: "rgba(254,242,242,0.9)",
+                          textAlign: "left"
+                        }
+                      },
+                      e(
+                        "div",
+                        { style: { fontSize: 12, fontWeight: 900, color: "#991b1b" } },
+                        lang === "ar"
+                          ? "هناك شيفت مفتوح يمنع فتح شيفت جديد"
+                          : "Un shift est ouvert et bloque l'ouverture"
+                      ),
+                      e(
+                        "div",
+                        { style: { fontSize: 12, marginTop: 4, color: "#7f1d1d" } },
+                        "Shift: ",
+                        String(blockingOpenShift.id || "")
+                      ),
+                      e(
+                        "div",
+                        { style: { display: "flex", gap: 8, marginTop: 10, justifyContent: "flex-end" } },
+                        e(
+                          "button",
+                          {
+                            className: "category-btn",
+                            type: "button",
+                            disabled: !(
+                              pinWorkerCandidate &&
+                              canWorkerForceCloseShift(pinWorkerCandidate, blockingOpenShift)
+                            ),
+                            onClick: () => {
+                              if (!pinWorkerCandidate) return;
+                              if (!canWorkerForceCloseShift(pinWorkerCandidate, blockingOpenShift)) return;
+                              startForceCloseShift(blockingOpenShift.id, pinWorkerCandidate.id);
+                            }
+                          },
+                          lang === "ar" ? "إغلاق (بنفس الـ PIN)" : "Fermer (PIN serveur)"
+                        ),
+                        adminUser &&
+                          adminUser.role === "admin" &&
+                          e(
+                            "button",
+                            {
+                              className: "btn-primary",
+                              type: "button",
+                              onClick: () => startForceCloseShift(blockingOpenShift.id, adminUser.id)
+                            },
+                            lang === "ar" ? "إغلاق (مشرف)" : "Fermer (admin)"
+                          )
+                      )
                     )
                 ),
                 adminUser &&
