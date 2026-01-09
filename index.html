@@ -472,6 +472,28 @@
         line-height: 1.15;
       }
 
+      .pos-top-alert {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(249, 115, 22, 0.30);
+        background: linear-gradient(145deg, rgba(255,247,237,0.98), rgba(255,237,213,0.78));
+        box-shadow: 0 18px 40px rgba(15,23,42,0.14);
+        cursor: pointer;
+        color: #7c2d12;
+        font-weight: 800;
+        text-align: start;
+      }
+
+      .pos-top-alert:hover {
+        box-shadow: 0 22px 52px rgba(15,23,42,0.20);
+        transform: translateY(-1px);
+      }
+
       .pos-cart-panel {
         display: flex;
         flex-direction: column;
@@ -643,6 +665,73 @@
 
       .admin-bar.today {
         background: rgba(249, 115, 22, 0.95);
+      }
+
+      @media (max-width: 600px) {
+        header {
+          padding: calc(12px + env(safe-area-inset-top)) 12px 12px;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        main {
+          padding: 12px;
+          gap: 12px;
+        }
+
+        .brand-logo {
+          width: 36px;
+          height: 36px;
+        }
+
+        .products-grid {
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          gap: 10px;
+        }
+        .product-image {
+          height: 110px;
+        }
+
+        .pos-main {
+          grid-template-columns: 1fr;
+        }
+        .pos-sidebar {
+          width: auto;
+          min-width: 0;
+          max-width: none;
+          padding: 12px;
+          gap: 10px;
+        }
+        .pos-sidebar-actions {
+          flex-direction: row;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .pos-sidebar-pill {
+          text-align: center;
+        }
+
+        .admin-main {
+          grid-template-columns: 1fr;
+        }
+        .admin-sidebar {
+          width: auto;
+          min-width: 0;
+          max-width: none;
+          padding: 12px;
+        }
+        .admin-nav {
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
+        .admin-nav-item {
+          text-align: center;
+        }
+
+        input,
+        select,
+        textarea {
+          font-size: 16px !important;
+        }
       }
     </style>
   </head>
@@ -1162,9 +1251,15 @@
         soda_schweppes_mojito: "شويبس موهيتو",
         water_oulmes_regular: "أولمس",
         water_oulmes_yellow: "أولمس صفراء",
+        water_bottle_small: "قنينة ماء صغيرة",
+        water_bottle_half: "قنينة ماء نصف لتر",
         muffin: "مافن",
         raib: "رايب",
-        flan: "فلان"
+        flan: "فلان",
+        cup_disposable_small: "كأس بلاستيك صغير",
+        cup_disposable_large: "كأس بلاستيك كبير",
+        cup_glass_small: "كأس زجاج صغير",
+        cup_glass_large: "كأس زجاج كبير"
       };
 
       const INVENTORY_INITIAL = {
@@ -1329,6 +1424,52 @@
           unit: "pcs",
           currentQty: 48,
           minQty: 12
+        },
+
+        water_bottle_small: {
+          id: "water_bottle_small",
+          name: "Eau (petite bouteille)",
+          unit: "pcs",
+          packSize: 12,
+          currentQty: 0,
+          minQty: 12
+        },
+        water_bottle_half: {
+          id: "water_bottle_half",
+          name: "Eau (1/2L)",
+          unit: "pcs",
+          packSize: 12,
+          currentQty: 0,
+          minQty: 12
+        },
+
+        cup_disposable_small: {
+          id: "cup_disposable_small",
+          name: "Gobelet jetable (petit)",
+          unit: "pcs",
+          currentQty: 0,
+          minQty: 50
+        },
+        cup_disposable_large: {
+          id: "cup_disposable_large",
+          name: "Gobelet jetable (grand)",
+          unit: "pcs",
+          currentQty: 0,
+          minQty: 50
+        },
+        cup_glass_small: {
+          id: "cup_glass_small",
+          name: "Verre (petit)",
+          unit: "pcs",
+          currentQty: 0,
+          minQty: 10
+        },
+        cup_glass_large: {
+          id: "cup_glass_large",
+          name: "Verre (grand)",
+          unit: "pcs",
+          currentQty: 0,
+          minQty: 10
         },
 
         muffin: {
@@ -1959,7 +2100,22 @@ const DICTIONARY = {
           firebaseCloudConnected: "Cloud: connecté",
           firebaseCloudDisconnected: "Cloud: non connecté",
           firebaseCloudConnectBtn: "Connexion",
-          firebaseLogoutBtn: "Déconnexion"
+          firebaseLogoutBtn: "Déconnexion",
+          glassCupCustomerNameLabel: "Nom du client (verre)",
+          glassCupCustomerNamePlaceholder: "Nom du client",
+          glassCupCustomerNameRequired: "Nom du client requis pour verre à emporter.",
+          cupLoansBannerPrefix: "Vous avez",
+          cupLoansBannerSmall: "petits verres",
+          cupLoansBannerLarge: "grands verres",
+          cupLoansBannerSuffix: "dehors · Cliquez pour détails",
+          cupLoansTitle: "Verres à récupérer",
+          cupLoansEmpty: "Aucun verre à récupérer.",
+          cupLoansCustomerLabel: "Client",
+          cupLoansSinceLabel: "Depuis",
+          cupLoansRefundableYes: "Remboursable",
+          cupLoansRefundableNo: "Non remboursable",
+          cupLoansMarkReturned: "Marquer retourné",
+          cupLoansReturnAndRefund: "Retour + remboursement"
         },
         ar: {
           appTitle: "نظام مقهى حلب",
@@ -2102,7 +2258,22 @@ const DICTIONARY = {
           firebaseCloudConnected: "السحابة: متصل",
           firebaseCloudDisconnected: "السحابة: غير متصل",
           firebaseCloudConnectBtn: "اتصال",
-          firebaseLogoutBtn: "تسجيل الخروج"
+          firebaseLogoutBtn: "تسجيل الخروج",
+          glassCupCustomerNameLabel: "اسم الزبون (كأس زجاج)",
+          glassCupCustomerNamePlaceholder: "اسم الزبون",
+          glassCupCustomerNameRequired: "اسم الزبون مطلوب للكأس الزجاجي في الطلب الخارجي.",
+          cupLoansBannerPrefix: "لديك",
+          cupLoansBannerSmall: "كؤوس صغيرة",
+          cupLoansBannerLarge: "كؤوس كبيرة",
+          cupLoansBannerSuffix: "خارجية · اضغط للتفاصيل",
+          cupLoansTitle: "كؤوس يجب إرجاعها",
+          cupLoansEmpty: "لا توجد كؤوس يجب إرجاعها.",
+          cupLoansCustomerLabel: "الزبون",
+          cupLoansSinceLabel: "منذ",
+          cupLoansRefundableYes: "قابلة للاسترجاع",
+          cupLoansRefundableNo: "غير قابلة للاسترجاع",
+          cupLoansMarkReturned: "تم الإرجاع",
+          cupLoansReturnAndRefund: "إرجاع + استرجاع"
         }
       };
 
@@ -2172,6 +2343,7 @@ const DICTIONARY = {
         lang,
         activeShift,
         activeWorker,
+        adminUser,
         shifts,
         onPurchase,
         canPurchase
@@ -2188,7 +2360,34 @@ const DICTIONARY = {
         });
         const [selectedId, setSelectedId] = React.useState(ids[0] || "");
         const [qty, setQty] = React.useState("");
-        const [unitPrice, setUnitPrice] = React.useState("");
+        const [totalCost, setTotalCost] = React.useState("");
+
+        const isAdmin =
+          !!(adminUser && (adminUser.role === "admin" || adminUser.role === "manager"));
+        const canChooseActor = !!(isAdmin && activeWorker && activeShift);
+        const [purchaseActor, setPurchaseActor] = React.useState(() =>
+          canChooseActor ? "worker" : isAdmin ? "admin" : "worker"
+        );
+
+        const [deductFromExpectedCash, setDeductFromExpectedCash] = React.useState(() => {
+          const defaultActor = canChooseActor ? "worker" : isAdmin ? "admin" : "worker";
+          return !!activeShift && defaultActor === "worker";
+        });
+        const [deductFromExpectedCashTouched, setDeductFromExpectedCashTouched] = React.useState(false);
+
+        React.useEffect(() => {
+          if (canChooseActor) return;
+          setPurchaseActor(isAdmin ? "admin" : "worker");
+        }, [canChooseActor, isAdmin]);
+
+        React.useEffect(() => {
+          if (deductFromExpectedCashTouched) return;
+          if (!activeShift) {
+            setDeductFromExpectedCash(false);
+            return;
+          }
+          setDeductFromExpectedCash(purchaseActor === "worker");
+        }, [purchaseActor, !!activeShift, deductFromExpectedCashTouched]);
 
         React.useEffect(() => {
           if (selectedId) return;
@@ -2197,6 +2396,10 @@ const DICTIONARY = {
 
         const ing = selectedId && inventory ? inventory[selectedId] : null;
         const unit = ing && ing.unit ? ing.unit : "";
+        const packSize =
+          ing && typeof ing.packSize === "number" && Number.isFinite(ing.packSize) && ing.packSize > 0
+            ? ing.packSize
+            : null;
         const shiftRec =
           activeShift && Array.isArray(shifts)
             ? shifts.find((s) => s && s.id === activeShift.id)
@@ -2216,21 +2419,25 @@ const DICTIONARY = {
         const btn = (t && t.purchaseAddBtn) || "Ajouter achat";
 
         const qPreview = parseNum(qty);
-        const upPreview = parseNum(unitPrice);
-        const totalPreview =
-          qPreview != null && upPreview != null ? qPreview * upPreview : null;
+        const costPreview = parseNum(totalCost);
+        const effectiveQtyPreview =
+          qPreview != null ? qPreview * (packSize ? packSize : 1) : null;
+        const unitPricePreview =
+          effectiveQtyPreview != null && effectiveQtyPreview > 0 && costPreview != null
+            ? costPreview / effectiveQtyPreview
+            : null;
 
         function handleSubmit(ev) {
           ev.preventDefault();
           if (!selectedId) return;
           const q = parseNum(qty);
-          const up = parseNum(unitPrice);
+          const cost = parseNum(totalCost);
           if (q == null || q <= 0) return;
-          if (up == null || up < 0) return;
-          const c = q * up;
-          onPurchase(selectedId, q, c);
+          if (cost == null || cost < 0) return;
+          const actorOverride = purchaseActor === "admin" ? adminUser : activeWorker;
+          onPurchase(selectedId, q, cost, actorOverride, deductFromExpectedCash);
           setQty("");
-          setUnitPrice("");
+          setTotalCost("");
         }
 
         return React.createElement(
@@ -2270,6 +2477,54 @@ const DICTIONARY = {
                 )
               : null
           ),
+          canChooseActor
+            ? React.createElement(
+                "div",
+                {
+                  style: {
+                    fontSize: 12,
+                    color: "#334155",
+                    marginBottom: 10,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    alignItems: "center"
+                  }
+                },
+                React.createElement(
+                  "div",
+                  { style: { fontWeight: 800 } },
+                  lang === "ar" ? "الشراء بواسطة" : "Achat par"
+                ),
+                React.createElement(
+                  "select",
+                  {
+                    value: purchaseActor,
+                    onChange: (ev) => {
+                      setDeductFromExpectedCashTouched(false);
+                      setPurchaseActor(ev.target.value);
+                    },
+                    style: {
+                      padding: 6,
+                      borderRadius: 10,
+                      border: "1px solid rgba(148,163,184,0.55)",
+                      fontSize: 12,
+                      direction: lang === "ar" ? "rtl" : "ltr"
+                    }
+                  },
+                  React.createElement(
+                    "option",
+                    { value: "worker" },
+                    String((activeWorker && activeWorker.name) || (lang === "ar" ? "النادل" : "Serveur"))
+                  ),
+                  React.createElement(
+                    "option",
+                    { value: "admin" },
+                    String((adminUser && adminUser.name) || (lang === "ar" ? "مدير" : "Admin"))
+                  )
+                )
+              )
+            : null,
           !canPurchase
             ? React.createElement(
                 "div",
@@ -2325,7 +2580,10 @@ const DICTIONARY = {
                         "Stock: ",
                         String(ing.currentQty || 0),
                         " ",
-                        unit
+                        unit,
+                        packSize
+                          ? " (" + Number((ing.currentQty || 0) / packSize).toFixed(2) + " packs)"
+                          : ""
                       )
                     : null
                 ),
@@ -2335,14 +2593,16 @@ const DICTIONARY = {
                   React.createElement(
                     "div",
                     { style: { fontSize: 12, fontWeight: 800 } },
-                    labelQty
+                    packSize
+                      ? labelQty + (lang === "ar" ? " (علب ×12)" : " (packs ×12)")
+                      : labelQty
                   ),
                   React.createElement("input", {
                     type: "number",
-                    step: "any",
+                    step: packSize ? "1" : "any",
                     value: qty,
                     onChange: (ev) => setQty(ev.target.value),
-                    placeholder: unit ? "0 (" + unit + ")" : "0",
+                    placeholder: packSize ? (lang === "ar" ? "0 (علب)" : "0 (packs)") : unit ? "0 (" + unit + ")" : "0",
                     style: {
                       padding: 10,
                       borderRadius: 12,
@@ -2357,13 +2617,13 @@ const DICTIONARY = {
                   React.createElement(
                     "div",
                     { style: { fontSize: 12, fontWeight: 800 } },
-                    labelUnitPrice
+                    labelCost
                   ),
                   React.createElement("input", {
                     type: "number",
                     step: "any",
-                    value: unitPrice,
-                    onChange: (ev) => setUnitPrice(ev.target.value),
+                    value: totalCost,
+                    onChange: (ev) => setTotalCost(ev.target.value),
                     placeholder: "0",
                     style: {
                       padding: 10,
@@ -2374,13 +2634,37 @@ const DICTIONARY = {
                   })
                 ),
                 React.createElement(
-                  "div",
-                  { style: { fontSize: 12, color: "#334155", fontWeight: 700 } },
-                  labelCost,
-                  ": ",
-                  totalPreview == null ? "—" : totalPreview.toFixed(2),
-                  " DHS"
+                  "label",
+                  {
+                    style: {
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "center",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      color: "#334155"
+                    }
+                  },
+                  React.createElement("input", {
+                    type: "checkbox",
+                    checked: !!deductFromExpectedCash,
+                    disabled: !activeShift,
+                    onChange: (ev) => {
+                      setDeductFromExpectedCashTouched(true);
+                      setDeductFromExpectedCash(!!(ev && ev.target && ev.target.checked));
+                    }
+                  }),
+                  lang === "ar" ? "خصم من النقد المتوقع (النوبة)" : "Déduire du cash attendu (shift)"
                 ),
+                unitPricePreview != null &&
+                  React.createElement(
+                    "div",
+                    { style: { fontSize: 12, color: "#334155", fontWeight: 700 } },
+                    labelUnitPrice,
+                    ": ",
+                    unitPricePreview.toFixed(2),
+                    " DHS"
+                  ),
                 React.createElement(
                   "button",
                   { className: "btn-primary", type: "submit", style: { width: "100%" } },
@@ -2390,7 +2674,871 @@ const DICTIONARY = {
         );
       }
 
-      function AdminInventoryPurchasesLog({ inventory, inventoryLogs, users, t, lang }) {
+      function WaiterPurchaseInvoicesPanel({
+        inventory,
+        t,
+        lang,
+        activeShift,
+        activeWorker,
+        adminUser,
+        shifts,
+        onPurchaseInvoice,
+        canPurchase
+      }) {
+        function parseNum(v) {
+          const n = Number(String(v).replace(",", "."));
+          return Number.isFinite(n) ? n : null;
+        }
+
+        const ids = Object.keys(inventory || {}).sort((a, b) => {
+          const na = ingredientLabel(inventory && inventory[a], lang) || String(a);
+          const nb = ingredientLabel(inventory && inventory[b], lang) || String(b);
+          return na.localeCompare(nb);
+        });
+
+        const isAdmin =
+          !!(adminUser && (adminUser.role === "admin" || adminUser.role === "manager"));
+        const canChooseActor = !!(isAdmin && activeWorker && activeShift);
+        const [purchaseActor, setPurchaseActor] = React.useState(() =>
+          canChooseActor ? "worker" : isAdmin ? "admin" : "worker"
+        );
+
+        React.useEffect(() => {
+          if (canChooseActor) return;
+          setPurchaseActor(isAdmin ? "admin" : "worker");
+        }, [canChooseActor, isAdmin]);
+
+        const [deductFromExpectedCash, setDeductFromExpectedCash] = React.useState(() => {
+          const defaultActor = canChooseActor ? "worker" : isAdmin ? "admin" : "worker";
+          return !!activeShift && defaultActor === "worker";
+        });
+        const [deductFromExpectedCashTouched, setDeductFromExpectedCashTouched] = React.useState(false);
+
+        React.useEffect(() => {
+          if (deductFromExpectedCashTouched) return;
+          if (!activeShift) {
+            setDeductFromExpectedCash(false);
+            return;
+          }
+          setDeductFromExpectedCash(purchaseActor === "worker");
+        }, [purchaseActor, !!activeShift, deductFromExpectedCashTouched]);
+
+        const [supplierName, setSupplierName] = React.useState("");
+        const [invoiceNumber, setInvoiceNumber] = React.useState("");
+        const [note, setNote] = React.useState("");
+
+        const [lineIngredientId, setLineIngredientId] = React.useState(ids[0] || "");
+        const [lineQty, setLineQty] = React.useState("");
+        const [lineTotalCost, setLineTotalCost] = React.useState("");
+        const [lines, setLines] = React.useState([]);
+
+        React.useEffect(() => {
+          if (lineIngredientId) return;
+          if (ids[0]) setLineIngredientId(ids[0]);
+        }, [lineIngredientId, ids.length]);
+
+        const ing = lineIngredientId && inventory ? inventory[lineIngredientId] : null;
+        const unit = ing && ing.unit ? ing.unit : "";
+        const packSize =
+          ing && typeof ing.packSize === "number" && Number.isFinite(ing.packSize) && ing.packSize > 0
+            ? ing.packSize
+            : null;
+
+        const qPreview = parseNum(lineQty);
+        const costPreview = parseNum(lineTotalCost);
+        const effectiveQtyPreview =
+          qPreview != null ? qPreview * (packSize ? packSize : 1) : null;
+        const unitPricePreview =
+          effectiveQtyPreview != null && effectiveQtyPreview > 0 && costPreview != null
+            ? costPreview / effectiveQtyPreview
+            : null;
+
+        const totalInvoiceCost = React.useMemo(
+          () => (lines || []).reduce((s, l) => s + (Number(l && l.totalCost) || 0), 0),
+          [lines]
+        );
+
+        function addLine(ev) {
+          if (ev && ev.preventDefault) ev.preventDefault();
+          if (!lineIngredientId) return;
+          const q = parseNum(lineQty);
+          const cost = parseNum(lineTotalCost);
+          if (q == null || q <= 0) return;
+          if (cost == null || cost < 0) return;
+          setLines((prev) => [
+            ...((prev || []).filter(Boolean)),
+            {
+              ingredientId: lineIngredientId,
+              qty: q,
+              totalCost: cost
+            }
+          ]);
+          setLineQty("");
+          setLineTotalCost("");
+        }
+
+        function removeLine(idx) {
+          setLines((prev) => (prev || []).filter((_, i) => i !== idx));
+        }
+
+        function submitInvoice() {
+          if (!onPurchaseInvoice) return;
+          if (!lines.length) return;
+          const actorOverride = purchaseActor === "admin" ? adminUser : activeWorker;
+          onPurchaseInvoice(
+            {
+              supplierName,
+              invoiceNumber,
+              note,
+              lines
+            },
+            actorOverride,
+            deductFromExpectedCash
+          );
+          setSupplierName("");
+          setInvoiceNumber("");
+          setNote("");
+          setLines([]);
+          setLineQty("");
+          setLineTotalCost("");
+        }
+
+        const title = lang === "ar" ? "فاتورة مشتريات" : "Facture d'achat";
+        const labelSelect = (t && t.purchaseSelectIngredient) || "Sélectionner un ingrédient";
+
+        return React.createElement(
+          "div",
+          { style: { maxWidth: 620 } },
+          React.createElement(
+            "div",
+            { style: { fontWeight: 900, fontSize: 18, marginBottom: 10 } },
+            title
+          ),
+          canChooseActor
+            ? React.createElement(
+                "div",
+                {
+                  style: {
+                    fontSize: 12,
+                    color: "#334155",
+                    marginBottom: 10,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    alignItems: "center"
+                  }
+                },
+                React.createElement(
+                  "div",
+                  { style: { fontWeight: 800 } },
+                  lang === "ar" ? "الشراء بواسطة" : "Achat par"
+                ),
+                React.createElement(
+                  "select",
+                  {
+                    value: purchaseActor,
+                    onChange: (ev) => {
+                      setDeductFromExpectedCashTouched(false);
+                      setPurchaseActor(ev.target.value);
+                    },
+                    style: {
+                      padding: 6,
+                      borderRadius: 10,
+                      border: "1px solid rgba(148,163,184,0.55)",
+                      fontSize: 12,
+                      direction: lang === "ar" ? "rtl" : "ltr"
+                    }
+                  },
+                  React.createElement(
+                    "option",
+                    { value: "worker" },
+                    String((activeWorker && activeWorker.name) || (lang === "ar" ? "النادل" : "Serveur"))
+                  ),
+                  React.createElement(
+                    "option",
+                    { value: "admin" },
+                    String((adminUser && adminUser.name) || (lang === "ar" ? "مدير" : "Admin"))
+                  )
+                )
+              )
+            : null,
+          !canPurchase
+            ? React.createElement(
+                "div",
+                { style: { fontSize: 12, color: "#b91c1c" } },
+                lang === "ar" ? "غير مسموح" : "Accès refusé."
+              )
+            : React.createElement(
+                React.Fragment,
+                null,
+                React.createElement(
+                  "div",
+                  {
+                    style: {
+                      display: "grid",
+                      gap: 10,
+                      padding: 12,
+                      borderRadius: 14,
+                      border: "1px solid rgba(148,163,184,0.45)",
+                      background: "rgba(255,255,255,0.92)"
+                    }
+                  },
+                  React.createElement("input", {
+                    value: supplierName,
+                    onChange: (e) => setSupplierName(e.target.value),
+                    placeholder: lang === "ar" ? "المورد" : "Fournisseur",
+                    style: { padding: 10, borderRadius: 12, border: "1px solid rgba(148,163,184,0.55)", fontSize: 14 }
+                  }),
+                  React.createElement("input", {
+                    value: invoiceNumber,
+                    onChange: (e) => setInvoiceNumber(e.target.value),
+                    placeholder: lang === "ar" ? "رقم الفاتورة" : "N° facture",
+                    style: { padding: 10, borderRadius: 12, border: "1px solid rgba(148,163,184,0.55)", fontSize: 14 }
+                  }),
+                  React.createElement("input", {
+                    value: note,
+                    onChange: (e) => setNote(e.target.value),
+                    placeholder: lang === "ar" ? "ملاحظة" : "Note",
+                    style: { padding: 10, borderRadius: 12, border: "1px solid rgba(148,163,184,0.55)", fontSize: 14 }
+                  }),
+                  React.createElement(
+                    "label",
+                    {
+                      style: {
+                        display: "flex",
+                        gap: 8,
+                        alignItems: "center",
+                        fontSize: 12,
+                        fontWeight: 800,
+                        color: "#334155"
+                      }
+                    },
+                    React.createElement("input", {
+                      type: "checkbox",
+                      checked: !!deductFromExpectedCash,
+                      disabled: !activeShift,
+                      onChange: (ev) => {
+                        setDeductFromExpectedCashTouched(true);
+                        setDeductFromExpectedCash(!!(ev && ev.target && ev.target.checked));
+                      }
+                    }),
+                    lang === "ar" ? "خصم من النقد المتوقع (النوبة)" : "Déduire du cash attendu (shift)"
+                  ),
+                  React.createElement(
+                    "div",
+                    { style: { borderTop: "1px solid rgba(148,163,184,0.25)", paddingTop: 10, display: "grid", gap: 10 } },
+                    React.createElement(
+                      "div",
+                      { style: { fontSize: 12, fontWeight: 900 } },
+                      lang === "ar" ? "إضافة عنصر" : "Ajouter ligne"
+                    ),
+                    React.createElement(
+                      "div",
+                      { style: { display: "grid", gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 0.8fr) minmax(0, 0.8fr)", gap: 8 } },
+                      React.createElement(
+                        "select",
+                        {
+                          value: lineIngredientId,
+                          onChange: (ev) => setLineIngredientId(ev.target.value),
+                          style: {
+                            padding: 10,
+                            borderRadius: 12,
+                            border: "1px solid rgba(148,163,184,0.55)",
+                            fontSize: 14,
+                            direction: lang === "ar" ? "rtl" : "ltr"
+                          }
+                        },
+                        ids.map((id) =>
+                          React.createElement(
+                            "option",
+                            { key: id, value: id },
+                            ingredientLabel(inventory && inventory[id], lang) || id
+                          )
+                        )
+                      ),
+                      React.createElement("input", {
+                        type: "number",
+                        step: packSize ? "1" : "any",
+                        value: lineQty,
+                        onChange: (ev) => setLineQty(ev.target.value),
+                        placeholder: packSize ? (lang === "ar" ? "علب" : "packs") : unit || "0",
+                        style: {
+                          padding: 10,
+                          borderRadius: 12,
+                          border: "1px solid rgba(148,163,184,0.55)",
+                          fontSize: 14
+                        }
+                      }),
+                      React.createElement("input", {
+                        type: "number",
+                        step: "any",
+                        value: lineTotalCost,
+                        onChange: (ev) => setLineTotalCost(ev.target.value),
+                        placeholder: "0",
+                        style: {
+                          padding: 10,
+                          borderRadius: 12,
+                          border: "1px solid rgba(148,163,184,0.55)",
+                          fontSize: 14
+                        }
+                      })
+                    ),
+                    unitPricePreview != null &&
+                      React.createElement(
+                        "div",
+                        { style: { fontSize: 12, color: "#334155", fontWeight: 700 } },
+                        ((t && t.purchaseUnitPriceLabel) || "Prix unitaire (DHS)"),
+                        ": ",
+                        unitPricePreview.toFixed(2),
+                        " DHS"
+                      ),
+                    React.createElement(
+                      "button",
+                      { className: "category-btn", type: "button", onClick: addLine },
+                      lang === "ar" ? "إضافة" : "Ajouter"
+                    )
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { style: { marginTop: 10 } },
+                  (lines || []).length
+                    ? React.createElement(
+                        "div",
+                        { style: { display: "grid", gap: 8 } },
+                        lines.map((l, idx) =>
+                          React.createElement(
+                            "div",
+                            {
+                              key: String(idx),
+                              style: {
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                gap: 10,
+                                padding: "8px 10px",
+                                borderRadius: 12,
+                                border: "1px solid rgba(148,163,184,0.35)",
+                                background: "rgba(255,255,255,0.75)"
+                              }
+                            },
+                            React.createElement(
+                              "div",
+                              { style: { fontSize: 12, fontWeight: 800 } },
+                              ingredientLabel(inventory && inventory[l.ingredientId], lang) || String(l.ingredientId || "")
+                            ),
+                            React.createElement(
+                              "div",
+                              { style: { display: "flex", gap: 10, alignItems: "center" } },
+                              React.createElement(
+                                "div",
+                                { style: { fontSize: 12, fontWeight: 900, whiteSpace: "nowrap" } },
+                                Number(l.totalCost || 0).toFixed(2),
+                                " DHS"
+                              ),
+                              React.createElement(
+                                "button",
+                                { className: "category-btn", type: "button", onClick: () => removeLine(idx) },
+                                "✕"
+                              )
+                            )
+                          )
+                        )
+                      )
+                    : React.createElement(
+                        "div",
+                        { style: { fontSize: 12, color: "#64748b" } },
+                        lang === "ar" ? "لا توجد خطوط." : "Aucune ligne."
+                      )
+                ),
+                React.createElement(
+                  "div",
+                  { style: { marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 } },
+                  React.createElement(
+                    "div",
+                    { style: { fontSize: 12, fontWeight: 900 } },
+                    (lang === "ar" ? "الإجمالي" : "Total") + ": " + Number(totalInvoiceCost || 0).toFixed(2) + " DHS"
+                  ),
+                  React.createElement(
+                    "button",
+                    { className: "btn-primary", type: "button", disabled: !(lines || []).length, onClick: submitInvoice },
+                    lang === "ar" ? "تسجيل الفاتورة" : "Enregistrer"
+                  )
+                )
+              )
+        );
+      }
+
+      function WaiterStockCountPanel({ inventory, stockCountRequests, activeWorker, t, lang, onSubmit }) {
+        const [values, setValues] = React.useState({});
+        const mine = (stockCountRequests || [])
+          .filter((r) => r && r.status === "open" && activeWorker && r.assignedToId === activeWorker.id)
+          .slice()
+          .sort((a, b) => String(b.requestedAt || "").localeCompare(String(a.requestedAt || "")));
+
+        function submit(id) {
+          const v = values && values[id] != null ? values[id] : "";
+          if (onSubmit) onSubmit(id, v);
+          setValues((p) => ({ ...(p || {}), [id]: "" }));
+        }
+
+        return React.createElement(
+          "div",
+          { style: { maxWidth: 520 } },
+          React.createElement(
+            "div",
+            { style: { fontWeight: 900, fontSize: 18, marginBottom: 10 } },
+            lang === "ar" ? "جرد (تفتيش)" : "Comptage (inspection)"
+          ),
+          !activeWorker
+            ? React.createElement(
+                "div",
+                { style: { fontSize: 12, color: "#64748b" } },
+                lang === "ar" ? "غير متصل" : "Non connecté"
+              )
+            : mine.length
+              ? React.createElement(
+                  "div",
+                  { style: { display: "grid", gap: 10 } },
+                  mine.map((r) =>
+                    React.createElement(
+                      "div",
+                      {
+                        key: r.id,
+                        style: {
+                          padding: 12,
+                          borderRadius: 14,
+                          border: "1px solid rgba(148,163,184,0.45)",
+                          background: "rgba(255,255,255,0.92)",
+                          display: "grid",
+                          gap: 8
+                        }
+                      },
+                      React.createElement(
+                        "div",
+                        { style: { fontSize: 12, fontWeight: 900 } },
+                        ingredientLabel(inventory && inventory[r.ingredientId], lang) || String(r.ingredientId || "")
+                      ),
+                      r.note
+                        ? React.createElement(
+                            "div",
+                            { style: { fontSize: 12, color: "#64748b" } },
+                            String(r.note)
+                          )
+                        : null,
+                      React.createElement(
+                        "div",
+                        { style: { display: "flex", gap: 8, alignItems: "center" } },
+                        React.createElement("input", {
+                          type: "number",
+                          value: (values && values[r.id]) || "",
+                          onChange: (ev) =>
+                            setValues((p) => ({ ...(p || {}), [r.id]: ev.target.value })),
+                          placeholder: lang === "ar" ? "العدد" : "Quantité comptée",
+                          style: { flex: 1, padding: 10, fontSize: 14, borderRadius: 12, border: "1px solid rgba(148,163,184,0.55)" }
+                        }),
+                        React.createElement(
+                          "button",
+                          { className: "btn-primary", type: "button", onClick: () => submit(r.id) },
+                          (t && t.confirmPinBtn) || (lang === "ar" ? "تأكيد" : "Confirmer")
+                        )
+                      )
+                    )
+                  )
+                )
+              : React.createElement(
+                  "div",
+                  { style: { fontSize: 12, color: "#64748b" } },
+                  lang === "ar" ? "لا توجد طلبات تفتيش." : "Aucune demande."
+                )
+        );
+      }
+
+      function WaiterPurchasesHub(props) {
+        const lang = props && props.lang;
+        const t = props && props.t;
+        const [mode, setMode] = React.useState("single");
+        const tabBtnStyle = (active) => ({
+          flex: 1,
+          padding: "10px 10px",
+          borderRadius: 12,
+          border: "1px solid rgba(148,163,184,0.45)",
+          background: active ? "rgba(249,115,22,0.18)" : "rgba(255,255,255,0.85)",
+          fontWeight: 900,
+          fontSize: 12
+        });
+        return React.createElement(
+          "div",
+          null,
+          React.createElement(
+            "div",
+            { style: { display: "flex", gap: 8, marginBottom: 12 } },
+            React.createElement(
+              "button",
+              { type: "button", className: "category-btn", style: tabBtnStyle(mode === "single"), onClick: () => setMode("single") },
+              (lang === "ar" ? "شراء" : "Achat")
+            ),
+            React.createElement(
+              "button",
+              { type: "button", className: "category-btn", style: tabBtnStyle(mode === "invoice"), onClick: () => setMode("invoice") },
+              (lang === "ar" ? "فاتورة" : "Facture")
+            ),
+            React.createElement(
+              "button",
+              { type: "button", className: "category-btn", style: tabBtnStyle(mode === "count"), onClick: () => setMode("count") },
+              (lang === "ar" ? "تفتيش" : "Inspection")
+            )
+          ),
+          mode === "single"
+            ? React.createElement(WaiterPurchasesPanel, props)
+            : mode === "invoice"
+              ? React.createElement(WaiterPurchaseInvoicesPanel, props)
+              : React.createElement(WaiterStockCountPanel, {
+                  inventory: props.inventory,
+                  stockCountRequests: props.stockCountRequests,
+                  activeWorker: props.activeWorker,
+                  t,
+                  lang,
+                  onSubmit: props.onSubmitStockCountRequest
+                })
+        );
+      }
+
+      function AdminPurchaseInvoicesLog({ purchaseInvoices, inventory, users, lang, isPhone }) {
+        function userNameById(id) {
+          const u = (users || []).find((x) => x && x.id === id);
+          return u ? u.name : id || "";
+        }
+
+        function formatDateTime(iso) {
+          if (!iso) return "";
+          try {
+            const d = new Date(iso);
+            return d.toLocaleString(lang === "ar" ? "ar-MA" : "fr-FR", {
+              year: "2-digit",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+          } catch (e) {
+            return String(iso || "");
+          }
+        }
+
+        const rows = (purchaseInvoices || [])
+          .slice()
+          .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+
+        const title = lang === "ar" ? "فواتير المشتريات" : "Factures d'achat";
+        const empty = lang === "ar" ? "لا توجد فواتير." : "Aucune facture.";
+
+        return React.createElement(
+          "div",
+          null,
+          React.createElement(
+            "div",
+            { style: { fontWeight: 700, marginBottom: 8, fontSize: 13 } },
+            title
+          ),
+          rows.length
+            ? React.createElement(
+                "div",
+                { style: { display: "grid", gap: 10 } },
+                rows.slice(0, 20).map((inv) =>
+                  React.createElement(
+                    "div",
+                    {
+                      key: inv.id,
+                      style: {
+                        borderRadius: 14,
+                        border: "1px solid rgba(148,163,184,0.45)",
+                        background: "rgba(255,255,255,0.92)",
+                        padding: 12,
+                        display: "grid",
+                        gap: 8
+                      }
+                    },
+                    React.createElement(
+                      "div",
+                      { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline", flexWrap: isPhone ? "wrap" : "nowrap" } },
+                      React.createElement(
+                        "div",
+                        { style: { fontWeight: 900, fontSize: 12 } },
+                        (inv.invoiceNumber ? String(inv.invoiceNumber) : (lang === "ar" ? "فاتورة" : "Facture")) +
+                          (inv.supplierName ? " · " + String(inv.supplierName) : "")
+                      ),
+                      React.createElement(
+                        "div",
+                        { style: { fontWeight: 900, fontSize: 12, whiteSpace: "nowrap" } },
+                        Number(inv.totalCost || 0).toFixed(2) + " DHS"
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { style: { fontSize: 11, color: "#64748b", display: "flex", justifyContent: "space-between", gap: 10 } },
+                      React.createElement(
+                        "div",
+                        null,
+                        formatDateTime(inv.createdAt) +
+                          (inv.userId ? " · " + userNameById(inv.userId) : "") +
+                          (inv.shiftId ? " · " + String(inv.shiftId) : "")
+                      ),
+                      React.createElement(
+                        "div",
+                        { style: { whiteSpace: "nowrap" } },
+                        (lang === "ar" ? "أسطر" : "Lignes") + ": " + String(inv.lineCount || ((inv.lines || []).length || 0))
+                      )
+                    ),
+                    inv.note
+                      ? React.createElement(
+                          "div",
+                          { style: { fontSize: 11, color: "#475569", fontWeight: 700 } },
+                          String(inv.note)
+                        )
+                      : null,
+                    (inv.lines || []).length
+                      ? React.createElement(
+                          "div",
+                          { style: { display: "grid", gap: 6 } },
+                          (inv.lines || []).map((ln) =>
+                            React.createElement(
+                              "div",
+                              {
+                                key: ln.id || Math.random(),
+                                style: {
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  gap: 10,
+                                  padding: "6px 8px",
+                                  borderRadius: 10,
+                                  border: "1px solid rgba(148,163,184,0.25)",
+                                  background: "rgba(248,250,252,0.85)",
+                                  fontSize: 12
+                                }
+                              },
+                              React.createElement(
+                                "div",
+                                { style: { fontWeight: 800 } },
+                                ingredientLabel(inventory && inventory[ln.ingredientId], lang) || String(ln.ingredientId || "")
+                              ),
+                              React.createElement(
+                                "div",
+                                { style: { whiteSpace: "nowrap", fontWeight: 900 } },
+                                Number(ln.totalCost || 0).toFixed(2) + " DHS"
+                              )
+                            )
+                          )
+                        )
+                      : null
+                  )
+                )
+              )
+            : React.createElement(
+                "div",
+                { style: { fontSize: 12, color: "#64748b" } },
+                empty
+              )
+        );
+      }
+
+      function AdminStockCountRequestsPanel({ stockCountRequests, inventory, users, lang, cloudEnabled, onCreateRequest, isPhone }) {
+        const ids = Object.keys(inventory || {}).sort((a, b) => {
+          const na = ingredientLabel(inventory && inventory[a], lang) || String(a);
+          const nb = ingredientLabel(inventory && inventory[b], lang) || String(b);
+          return na.localeCompare(nb);
+        });
+        const workers = (users || []).filter((u) => u && u.role === "worker" && u.posAccess !== false);
+
+        const [ingredientId, setIngredientId] = React.useState(ids[0] || "");
+        const [assignedToId, setAssignedToId] = React.useState((workers[0] && workers[0].id) || "");
+        const [note, setNote] = React.useState("");
+
+        React.useEffect(() => {
+          if (!ingredientId && ids[0]) setIngredientId(ids[0]);
+        }, [ingredientId, ids.length]);
+
+        React.useEffect(() => {
+          if (!assignedToId && workers[0] && workers[0].id) setAssignedToId(workers[0].id);
+        }, [assignedToId, workers.length]);
+
+        function userNameById(id) {
+          const u = (users || []).find((x) => x && x.id === id);
+          return u ? u.name : id || "";
+        }
+
+        function formatDateTime(iso) {
+          if (!iso) return "";
+          try {
+            const d = new Date(iso);
+            return d.toLocaleString(lang === "ar" ? "ar-MA" : "fr-FR", {
+              year: "2-digit",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+          } catch (e) {
+            return String(iso || "");
+          }
+        }
+
+        const rows = (stockCountRequests || [])
+          .slice()
+          .sort((a, b) => String(b.requestedAt || "").localeCompare(String(a.requestedAt || "")));
+
+        function create() {
+          if (!ingredientId || !assignedToId) return;
+          if (onCreateRequest) onCreateRequest(ingredientId, assignedToId, note);
+          setNote("");
+        }
+
+        const title = lang === "ar" ? "طلبات التفتيش" : "Demandes d'inspection";
+
+        return React.createElement(
+          "div",
+          null,
+          React.createElement(
+            "div",
+            { style: { fontWeight: 700, marginBottom: 8, fontSize: 13 } },
+            title
+          ),
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "grid",
+                gap: 10,
+                padding: 12,
+                borderRadius: 14,
+                border: "1px solid rgba(148,163,184,0.45)",
+                background: "rgba(255,255,255,0.92)"
+              }
+            },
+            React.createElement(
+              "div",
+              { style: { fontSize: 12, fontWeight: 900 } },
+              lang === "ar" ? "إنشاء طلب" : "Créer une demande"
+            ),
+            React.createElement(
+              "div",
+              {
+                style: {
+                  display: "grid",
+                  gridTemplateColumns: isPhone ? "1fr" : "minmax(0, 1.3fr) minmax(0, 1fr)",
+                  gap: 8
+                }
+              },
+              React.createElement(
+                "select",
+                {
+                  value: ingredientId,
+                  onChange: (e) => setIngredientId(e.target.value),
+                  style: { padding: 10, borderRadius: 12, border: "1px solid rgba(148,163,184,0.55)", fontSize: 14 }
+                },
+                ids.map((id) =>
+                  React.createElement(
+                    "option",
+                    { key: id, value: id },
+                    ingredientLabel(inventory && inventory[id], lang) || id
+                  )
+                )
+              ),
+              React.createElement(
+                "select",
+                {
+                  value: assignedToId,
+                  onChange: (e) => setAssignedToId(e.target.value),
+                  style: { padding: 10, borderRadius: 12, border: "1px solid rgba(148,163,184,0.55)", fontSize: 14 }
+                },
+                workers.map((u) =>
+                  React.createElement(
+                    "option",
+                    { key: u.id, value: u.id },
+                    String(u.name || u.id)
+                  )
+                )
+              )
+            ),
+            React.createElement("input", {
+              value: note,
+              onChange: (e) => setNote(e.target.value),
+              placeholder: lang === "ar" ? "ملاحظة" : "Note",
+              style: { padding: 10, borderRadius: 12, border: "1px solid rgba(148,163,184,0.55)", fontSize: 14 }
+            }),
+            React.createElement(
+              "button",
+              { className: "btn-primary", type: "button", onClick: create },
+              lang === "ar" ? "إرسال" : "Envoyer"
+            )
+          ),
+          React.createElement(
+            "div",
+            { style: { marginTop: 10, display: "grid", gap: 10 } },
+            rows.slice(0, 25).map((r) => {
+              const status = r.status === "submitted" ? (lang === "ar" ? "مُرسل" : "Soumis") : (lang === "ar" ? "مفتوح" : "Ouvert");
+              const variance = typeof r.variance === "number" ? r.variance : null;
+              const varianceColor = variance == null ? "#64748b" : Math.abs(variance) > 0.0001 ? "#b91c1c" : "#065f46";
+              return React.createElement(
+                "div",
+                {
+                  key: r.id,
+                  style: {
+                    borderRadius: 14,
+                    border: "1px solid rgba(148,163,184,0.45)",
+                    background: "rgba(255,255,255,0.92)",
+                    padding: 12,
+                    display: "grid",
+                    gap: 6
+                  }
+                },
+                React.createElement(
+                  "div",
+                  { style: { display: "flex", justifyContent: "space-between", gap: 10 } },
+                  React.createElement(
+                    "div",
+                    { style: { fontWeight: 900, fontSize: 12 } },
+                    ingredientLabel(inventory && inventory[r.ingredientId], lang) || String(r.ingredientId || "")
+                  ),
+                  React.createElement(
+                    "div",
+                    { style: { fontSize: 12, fontWeight: 900, whiteSpace: "nowrap" } },
+                    status
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { style: { fontSize: 11, color: "#64748b" } },
+                  (lang === "ar" ? "إلى" : "À") + ": " + userNameById(r.assignedToId) +
+                    " · " + formatDateTime(r.requestedAt)
+                ),
+                r.note
+                  ? React.createElement(
+                      "div",
+                      { style: { fontSize: 11, color: "#475569", fontWeight: 700 } },
+                      String(r.note)
+                    )
+                  : null,
+                r.status === "submitted"
+                  ? React.createElement(
+                      "div",
+                      { style: { fontSize: 12, fontWeight: 900, color: varianceColor } },
+                      (lang === "ar" ? "الفرق" : "Diff") + ": " +
+                        Number(variance || 0).toFixed(3) +
+                        " (" +
+                        (lang === "ar" ? "متوقع" : "exp") + ": " + Number(r.expectedQty || 0).toFixed(3) +
+                        ", " +
+                        (lang === "ar" ? "معدود" : "count") + ": " + Number(r.countedQty || 0).toFixed(3) +
+                        ")"
+                    )
+                  : null
+              );
+            })
+          )
+        );
+      }
+
+      function AdminInventoryPurchasesLog({ inventory, inventoryLogs, users, t, lang, isPhone }) {
         function nameForIngredient(id) {
           return ingredientLabel(inventory && inventory[id], lang) || id;
         }
@@ -2472,7 +3620,7 @@ const DICTIONARY = {
                     style: {
                       width: "100%",
                       borderCollapse: "collapse",
-                      minWidth: 760
+                      minWidth: isPhone ? 640 : 760
                     }
                   },
                   React.createElement(
@@ -2494,6 +3642,14 @@ const DICTIONARY = {
                     null,
                     rows.map((r) => {
                       const unit = unitForIngredient(r.ingredientId);
+                      const packSize =
+                        inventory &&
+                        inventory[r.ingredientId] &&
+                        typeof inventory[r.ingredientId].packSize === "number" &&
+                        Number.isFinite(inventory[r.ingredientId].packSize) &&
+                        inventory[r.ingredientId].packSize > 0
+                          ? inventory[r.ingredientId].packSize
+                          : null;
                       return React.createElement(
                         "tr",
                         { key: r.id },
@@ -2506,7 +3662,10 @@ const DICTIONARY = {
                           { style: tdStyle },
                           String(r.delta || 0),
                           " ",
-                          unit
+                          unit,
+                          packSize && unit === "pcs" && typeof r.delta === "number"
+                            ? " (" + Number(r.delta / packSize).toFixed(2) + " packs)"
+                            : ""
                         ),
                         React.createElement(
                           "td",
@@ -2526,7 +3685,7 @@ const DICTIONARY = {
         );
       }
 
-      function AdminInventoryStockDetails({ inventory, inventoryLogs, shifts, t, lang }) {
+      function AdminInventoryStockDetails({ inventory, inventoryLogs, shifts, t, lang, isPhone }) {
         function nameForIngredient(id) {
           return ingredientLabel(inventory && inventory[id], lang) || id;
         }
@@ -2639,7 +3798,7 @@ const DICTIONARY = {
                 style: {
                   width: "100%",
                   borderCollapse: "collapse",
-                  minWidth: 860
+                  minWidth: isPhone ? 680 : 860
                 }
               },
               React.createElement(
@@ -2661,6 +3820,14 @@ const DICTIONARY = {
                 null,
                 ingredientIds.map((id) => {
                   const unit = unitForIngredient(id);
+                  const packSize =
+                    inventory &&
+                    inventory[id] &&
+                    typeof inventory[id].packSize === "number" &&
+                    Number.isFinite(inventory[id].packSize) &&
+                    inventory[id].packSize > 0
+                      ? inventory[id].packSize
+                      : null;
                   const remainingQty = inventory && inventory[id] ? inventory[id].currentQty : null;
                   const minQty = inventory && inventory[id] ? inventory[id].minQty : null;
 
@@ -2684,14 +3851,20 @@ const DICTIONARY = {
                       { style: tdStyle },
                       formatQty(remainingQty, unit),
                       " ",
-                      unit
+                      unit,
+                      packSize && unit === "pcs" && typeof remainingQty === "number"
+                        ? " (" + Number(remainingQty / packSize).toFixed(2) + " packs)"
+                        : ""
                     ),
                     React.createElement(
                       "td",
                       { style: tdStyle },
                       formatQty(minQty, unit),
                       " ",
-                      unit
+                      unit,
+                      packSize && unit === "pcs" && typeof minQty === "number"
+                        ? " (" + Number(minQty / packSize).toFixed(2) + " packs)"
+                        : ""
                     ),
                     React.createElement(
                       "td",
@@ -2716,7 +3889,7 @@ const DICTIONARY = {
         );
       }
 
-      function AdminInventoryAlertsReport({ inventory, t, lang }) {
+      function AdminInventoryAlertsReport({ inventory, t, lang, isPhone }) {
         const items = Object.values(inventory || {})
           .filter(Boolean)
           .slice()
@@ -2802,7 +3975,7 @@ const DICTIONARY = {
                   },
                   React.createElement(
                     "table",
-                    { style: { width: "100%", borderCollapse: "collapse", minWidth: 520 } },
+                    { style: { width: "100%", borderCollapse: "collapse", minWidth: isPhone ? 360 : 520 } },
                     React.createElement(
                       "thead",
                       null,
@@ -2932,7 +4105,7 @@ const DICTIONARY = {
                   },
                   React.createElement(
                     "table",
-                    { style: { width: "100%", borderCollapse: "collapse", minWidth: 620 } },
+                    { style: { width: "100%", borderCollapse: "collapse", minWidth: isPhone ? 420 : 620 } },
                     React.createElement(
                       "thead",
                       null,
@@ -3044,7 +4217,7 @@ const DICTIONARY = {
         );
       }
 
-      function AdminReportsPage({ shifts, orders, inventoryLogs, clientDebts, inventory, t, lang }) {
+      function AdminReportsPage({ shifts, orders, inventoryLogs, clientDebts, inventory, t, lang, isPhone }) {
         const [reportMode, setReportMode] = React.useState("shift");
         const [reportShiftId, setReportShiftId] = React.useState(() => {
           const last = (shifts || [])[shifts.length - 1];
@@ -3632,7 +4805,7 @@ const DICTIONARY = {
               );
             })()
           ),
-          React.createElement(AdminInventoryAlertsReport, { inventory, t, lang })
+          React.createElement(AdminInventoryAlertsReport, { inventory, t, lang, isPhone })
         );
       }
 
@@ -3810,7 +4983,7 @@ const DICTIONARY = {
         );
       }
 
-      function AdminInventoryEditor({ inventory, t, onAdjust, onUpdate, lang }) {
+      function AdminInventoryEditor({ inventory, t, onAdjust, onUpdate, lang, isPhone }) {
         const items = Object.values(inventory)
           .slice()
           .sort((a, b) => ingredientLabel(a, lang).localeCompare(ingredientLabel(b, lang)));
@@ -3884,7 +5057,7 @@ const DICTIONARY = {
           {
             style: {
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 2fr)",
+              gridTemplateColumns: isPhone ? "1fr" : "minmax(0, 1.4fr) minmax(0, 2fr)",
               gap: 14,
               alignItems: "flex-start"
             }
@@ -3896,7 +5069,7 @@ const DICTIONARY = {
                 borderRadius: 10,
                 background: "linear-gradient(145deg,#eef2ff,#e0f2fe)",
                 border: "1px solid rgba(129,140,248,0.6)",
-                maxHeight: 260,
+                maxHeight: isPhone ? 200 : 260,
                 overflowY: "auto"
               }
             },
@@ -4319,7 +5492,7 @@ const DICTIONARY = {
         );
       }
 
-      function ManagerStats({ shifts, orders, inventoryLogs, inventory }) {
+      function ManagerStats({ shifts, orders, inventoryLogs, inventory, isPhone }) {
         if (!shifts.length) {
           return React.createElement(
             "p",
@@ -4425,8 +5598,9 @@ const DICTIONARY = {
         );
       }
 
-      function AdminStaffPanel({ users, advances, lang, t, onUpsertUser, onDeleteUser, onChangePin, onApproveAdvance, onRejectAdvance, onCreateAdvance }) {
+      function AdminStaffPanel({ users, advances, lang, t, onUpsertUser, onDeleteUser, onChangePin, onApproveAdvance, onRejectAdvance, onCreateAdvance, isPhone }) {
         const workers = (users || []).filter((u) => u && u.role === "worker");
+        const managers = (users || []).filter((u) => u && u.role === "manager");
         const admins = (users || []).filter((u) => u && u.role === "admin");
 
         const [edit, setEdit] = React.useState(() => {
@@ -4585,6 +5759,7 @@ const DICTIONARY = {
         const advancesTitle = lang === "ar" ? "طلبات السلف" : "Demandes d'avance";
         const waitersTitle = lang === "ar" ? "النوادل (POS)" : "Serveurs (POS)";
         const otherWorkersTitle = lang === "ar" ? "العمال (بدون POS)" : "Employés (sans POS)";
+        const managersTitle = lang === "ar" ? "المدير" : "Manager";
         const adminsTitle = lang === "ar" ? "المدراء" : "Admins";
 
         return React.createElement(
@@ -4700,7 +5875,13 @@ const DICTIONARY = {
               ),
               React.createElement(
                 "div",
-                { style: { display: "grid", gridTemplateColumns: "1fr 140px 140px 120px 140px 170px 140px", gap: 8 } },
+                {
+                  style: {
+                    display: "grid",
+                    gridTemplateColumns: isPhone ? "1fr" : "1fr 140px 140px 120px 140px 170px 140px",
+                    gap: 8
+                  }
+                },
                 React.createElement("input", {
                   value: newName,
                   onChange: (e) => setNewName(e.target.value),
@@ -4809,7 +5990,14 @@ const DICTIONARY = {
                       },
                       React.createElement(
                         "div",
-                        { style: { display: "grid", gridTemplateColumns: "1fr 140px 140px 120px 140px 170px 1fr", gap: 8, alignItems: "center" } },
+                        {
+                          style: {
+                            display: "grid",
+                            gridTemplateColumns: isPhone ? "1fr" : "1fr 140px 140px 120px 140px 170px 1fr",
+                            gap: 8,
+                            alignItems: isPhone ? "stretch" : "center"
+                          }
+                        },
                         React.createElement("input", {
                           value: row ? row.name : String(u.name || ""),
                           onChange: (e) =>
@@ -5006,7 +6194,14 @@ const DICTIONARY = {
                       },
                       React.createElement(
                         "div",
-                        { style: { display: "grid", gridTemplateColumns: "1fr 140px 120px 140px 170px 1fr", gap: 8, alignItems: "center" } },
+                        {
+                          style: {
+                            display: "grid",
+                            gridTemplateColumns: isPhone ? "1fr" : "1fr 140px 120px 140px 170px 1fr",
+                            gap: 8,
+                            alignItems: isPhone ? "stretch" : "center"
+                          }
+                        },
                         React.createElement("input", {
                           value: row ? row.name : String(u.name || ""),
                           onChange: (e) =>
@@ -5128,6 +6323,12 @@ const DICTIONARY = {
                   { style: { fontSize: 12, color: "#64748b" } },
                   lang === "ar" ? "لا يوجد موظفون بدون POS." : "Aucun employé sans POS."
                 )
+          ),
+          React.createElement(
+            "div",
+            { style: { display: "grid", gap: 10 } },
+            React.createElement("div", { style: { fontWeight: 800 } }, managersTitle),
+            React.createElement(AdminUsersPanel, { users: managers, onChangePin: onChangePin })
           ),
           React.createElement(
             "div",
@@ -5949,7 +7150,7 @@ const DICTIONARY = {
                   style: {
                     width: "100%",
                     borderCollapse: "collapse",
-                    minWidth: 720
+                    minWidth: isPhone ? 520 : 720
                   }
                 },
                 React.createElement(
@@ -6095,6 +7296,27 @@ const DICTIONARY = {
           if (mods.eggCount) {
             parts.push(`${t.eggsInLine}: ${mods.eggCount}`);
           }
+          if (line && (line.containerType || line.cupSize)) {
+            const typeLabel =
+              line.containerType === "glass"
+                ? lang === "ar"
+                  ? "زجاج"
+                  : "Verre"
+                : lang === "ar"
+                ? "بلاستيك"
+                : "Jetable";
+            const sizeLabel =
+              line.cupSize === "large"
+                ? lang === "ar"
+                  ? "كبير"
+                  : "Grand"
+                : lang === "ar"
+                ? "صغير"
+                : "Petit";
+            parts.push(
+              (lang === "ar" ? "كأس" : "Gobelet") + ": " + typeLabel + " " + sizeLabel
+            );
+          }
           return parts.length ? "(" + parts.join(", ") + ")" : "";
         }
 
@@ -6191,7 +7413,12 @@ const DICTIONARY = {
                       { style: { fontSize: 12, fontWeight: 700 } },
                       (t && t.orderLabel ? t.orderLabel : "Commande") +
                         " " +
-                        String(o.ticketCode || (o.id ? "#" + o.id : ""))
+                        String(o.ticketCode || (o.id ? "#" + o.id : "")) +
+                        (o && o.serviceType === "takeaway"
+                          ? lang === "ar"
+                            ? " · خارجي"
+                            : " · À emporter"
+                          : "")
                     ),
                     React.createElement(
                       "div",
@@ -6264,19 +7491,19 @@ const DICTIONARY = {
                       { style: { fontWeight: 700, fontSize: 12 } },
                       "#" + displayOrderNumber(o.id) + " • " + `${(((o.totals && o.totals.total) || 0).toFixed(2))} DHS`
                     ),
-                    React.createElement(
-                      "button",
-                      {
-                        className: "category-btn",
-                        disabled:
-                          !onMarkPaid ||
-                          !!(exitingOrderIds && exitingOrderIds[o.id]),
-                        onClick: () => {
-                          if (onMarkPaid) onMarkPaid(o.id);
-                        }
-                      },
-                      (t && t.markPaid) || "Déclarer payé"
-                    )
+                    onMarkPaid
+                      ? React.createElement(
+                          "button",
+                          {
+                            className: "category-btn",
+                            disabled: !!(exitingOrderIds && exitingOrderIds[o.id]),
+                            onClick: () => {
+                              onMarkPaid(o.id);
+                            }
+                          },
+                          (t && t.markPaid) || "Déclarer payé"
+                        )
+                      : null
                   )
                 )
               ),
@@ -6407,7 +7634,7 @@ const DICTIONARY = {
         );
       }
 
-      function AdminMenuEditor({ menu, onUpdateMenuItem, onSaveMenu }) {
+      function AdminMenuEditor({ menu, onUpdateMenuItem, onSaveMenu, isPhone }) {
         const [selectedId, setSelectedId] = React.useState(menu[0]?.id || null);
 
         if (!selectedId) {
@@ -6429,7 +7656,7 @@ const DICTIONARY = {
           {
             style: {
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 2fr)",
+              gridTemplateColumns: isPhone ? "1fr" : "minmax(0, 1.4fr) minmax(0, 2fr)",
               gap: 14,
               alignItems: "flex-start"
             }
@@ -6438,8 +7665,8 @@ const DICTIONARY = {
             "div",
             {
               style: {
-                minWidth: 220,
-                maxHeight: 280,
+                minWidth: isPhone ? 0 : 220,
+                maxHeight: isPhone ? 220 : 280,
                 overflowY: "auto",
                 borderRadius: 10,
                 background: "linear-gradient(145deg,#f9fafb,#e5e7eb)",
@@ -6557,6 +7784,35 @@ const DICTIONARY = {
         const [lang, setLang] = React.useState("fr");
         const t = DICTIONARY[lang];
 
+        const [isPhone, setIsPhone] = React.useState(() => {
+          try {
+            return !!(window.matchMedia && window.matchMedia("(max-width: 600px)").matches);
+          } catch (e) {
+            return false;
+          }
+        });
+
+        React.useEffect(() => {
+          if (!window.matchMedia) return;
+          const mq = window.matchMedia("(max-width: 600px)");
+          function handleChange(ev) {
+            setIsPhone(!!(ev && ev.matches));
+          }
+          try {
+            if (mq.addEventListener) mq.addEventListener("change", handleChange);
+            else mq.addListener(handleChange);
+          } catch (e) {}
+          try {
+            setIsPhone(!!mq.matches);
+          } catch (e) {}
+          return () => {
+            try {
+              if (mq.removeEventListener) mq.removeEventListener("change", handleChange);
+              else mq.removeListener(handleChange);
+            } catch (e) {}
+          };
+        }, []);
+
         const [activeCategory, setActiveCategory] = React.useState(null);
         const [posSection, setPosSection] = React.useState("sales");
         const [menu, setMenu] = React.useState(() => {
@@ -6586,10 +7842,34 @@ const DICTIONARY = {
           } catch (e) {}
           return USERS.slice();
         });
+
+        React.useEffect(() => {
+          setUsers((prev) => {
+            const list = Array.isArray(prev) ? prev : [];
+            const idx = list.findIndex((u) => u && u.role === "manager");
+            if (idx === -1) {
+              return [
+                ...list,
+                { id: "manager_halab", name: "Manager", role: "manager", pin: "4444" }
+              ];
+            }
+            const u = list[idx];
+            const pin = u && u.pin != null ? String(u.pin) : "";
+            if (!pin) {
+              const next = list.slice();
+              next[idx] = { ...u, pin: "4444" };
+              return next;
+            }
+            return prev;
+          });
+        }, []);
         const [cart, setCart] = React.useState([]);
         const [cartEnterKeys, setCartEnterKeys] = React.useState({});
         const cartEnterTimeoutsRef = React.useRef({});
         const prevCartKeysRef = React.useRef(new Set());
+
+        const [cartServiceType, setCartServiceType] = React.useState("dine_in");
+        const [glassCupCustomerName, setGlassCupCustomerName] = React.useState("");
 
         const [exitingOrderIds, setExitingOrderIds] = React.useState({});
         const exitingOrderTimeoutsRef = React.useRef({});
@@ -6598,6 +7878,17 @@ const DICTIONARY = {
         const [status, setStatus] = React.useState(null);
 
         const [adminUser, setAdminUser] = React.useState(null);
+        const [managerUnlocked, setManagerUnlocked] = React.useState(() => {
+          try {
+            return window.localStorage.getItem("cafe_halab_manager_unlocked") === "1";
+          } catch (e) {
+            return false;
+          }
+        });
+        const [managerSelectedShiftId, setManagerSelectedShiftId] = React.useState("");
+        const [managerGateOpen, setManagerGateOpen] = React.useState(false);
+        const [managerGateValue, setManagerGateValue] = React.useState("");
+        const [managerGateError, setManagerGateError] = React.useState(null);
         const [activeWorker, setActiveWorker] = React.useState(() => {
           try {
             const raw = window.localStorage.getItem("cafe_halab_session");
@@ -6652,6 +7943,14 @@ const DICTIONARY = {
           } catch (e) {}
           return [];
         });
+        const [cupLoans, setCupLoans] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_state");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && Array.isArray(parsed.cupLoans)) return parsed.cupLoans;
+          } catch (e) {}
+          return [];
+        });
         const [clientDebts, setClientDebts] = React.useState(() => {
           try {
             const raw = window.localStorage.getItem("cafe_halab_state");
@@ -6688,7 +7987,14 @@ const DICTIONARY = {
             const raw = window.localStorage.getItem("cafe_halab_state");
             const parsed = raw ? JSON.parse(raw) : null;
             if (parsed && parsed.inventory && typeof parsed.inventory === "object") {
-              return parsed.inventory;
+              const merged = { ...INVENTORY_INITIAL };
+              Object.keys(parsed.inventory || {}).forEach((id) => {
+                const saved = parsed.inventory[id];
+                if (!saved || typeof saved !== "object") return;
+                const base = merged[id] && typeof merged[id] === "object" ? merged[id] : { id };
+                merged[id] = { ...base, ...saved, id };
+              });
+              return merged;
             }
           } catch (e) {}
           return INVENTORY_INITIAL;
@@ -6702,15 +8008,45 @@ const DICTIONARY = {
           return [];
         });
 
+        const [purchaseInvoices, setPurchaseInvoices] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_state");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && Array.isArray(parsed.purchaseInvoices)) return parsed.purchaseInvoices;
+          } catch (e) {}
+          return [];
+        });
+
+        const [stockCountRequests, setStockCountRequests] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_state");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && Array.isArray(parsed.stockCountRequests)) return parsed.stockCountRequests;
+          } catch (e) {}
+          return [];
+        });
+
         const [firebaseUser, setFirebaseUser] = React.useState(null);
         const [firebaseAuthReady, setFirebaseAuthReady] = React.useState(false);
         const [firebaseLoginDismissed, setFirebaseLoginDismissed] = React.useState(false);
 
         const [shiftPin, setShiftPin] = React.useState("");
         const [calcOpen, setCalcOpen] = React.useState(false);
+        const [purchaseOpen, setPurchaseOpen] = React.useState(false);
         const [calcExpr, setCalcExpr] = React.useState("");
         const [calcCashPaid, setCalcCashPaid] = React.useState("");
         const [calcManualAmount, setCalcManualAmount] = React.useState("");
+        const [cupLoansOpen, setCupLoansOpen] = React.useState(false);
+
+        React.useEffect(() => {
+          try {
+            window.localStorage.setItem("cafe_halab_manager_unlocked", managerUnlocked ? "1" : "0");
+          } catch (e) {}
+        }, [managerUnlocked]);
+
+        React.useEffect(() => {
+          if (purchaseOpen && !activeShift) setPurchaseOpen(false);
+        }, [purchaseOpen, activeShift]);
         const [calcItems, setCalcItems] = React.useState([]);
         const [calcNumTarget, setCalcNumTarget] = React.useState("cash");
         const [waiterPeriod, setWaiterPeriod] = React.useState(() => {
@@ -6862,15 +8198,18 @@ const DICTIONARY = {
               JSON.stringify({
                 shifts,
                 orders,
+                cupLoans,
                 clientDebts,
                 inventory,
                 inventoryLogs,
+                purchaseInvoices,
+                stockCountRequests,
                 users,
                 advances
               })
             );
           } catch (e) {}
-        }, [shifts, orders, clientDebts, inventory, inventoryLogs, users, advances]);
+        }, [shifts, orders, cupLoans, clientDebts, inventory, inventoryLogs, purchaseInvoices, stockCountRequests, users, advances]);
 
         React.useEffect(() => {
           try {
@@ -6948,12 +8287,15 @@ const DICTIONARY = {
 
           const shiftsCol = cloudCol("shifts");
           const ordersCol = cloudCol("orders");
+          const cupLoansCol = cloudCol("cupLoans");
           const debtsCol = cloudCol("clientDebts");
           const invCol = cloudCol("inventory");
           const logsCol = cloudCol("inventoryLogs");
+          const invoicesCol = cloudCol("purchaseInvoices");
+          const stockCountsCol = cloudCol("stockCountRequests");
           const usersCol = cloudCol("users");
           const advancesCol = cloudCol("advances");
-          if (!shiftsCol || !ordersCol || !debtsCol || !invCol || !logsCol || !usersCol || !advancesCol) return;
+          if (!shiftsCol || !ordersCol || !cupLoansCol || !debtsCol || !invCol || !logsCol || !invoicesCol || !stockCountsCol || !usersCol || !advancesCol) return;
 
           let cancelled = false;
 
@@ -7045,6 +8387,22 @@ const DICTIONARY = {
             }
           );
 
+          const unsubCupLoans = cupLoansCol.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+              setCupLoans(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
           const unsubDebts = debtsCol.onSnapshot(
             (snap) => {
               const next = [];
@@ -7094,6 +8452,38 @@ const DICTIONARY = {
             }
           );
 
+          const unsubInvoices = invoicesCol.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+              setPurchaseInvoices(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
+          const unsubStockCounts = stockCountsCol.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.requestedAt || a.createdAt || "").localeCompare(String(b.requestedAt || b.createdAt || "")));
+              setStockCountRequests(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
           const unsubUsers = usersCol.onSnapshot(
             (snap) => {
               const next = [];
@@ -7135,6 +8525,9 @@ const DICTIONARY = {
               if (typeof unsubOrders === "function") unsubOrders();
             } catch (e) {}
             try {
+              if (typeof unsubCupLoans === "function") unsubCupLoans();
+            } catch (e) {}
+            try {
               if (typeof unsubDebts === "function") unsubDebts();
             } catch (e) {}
             try {
@@ -7142,6 +8535,12 @@ const DICTIONARY = {
             } catch (e) {}
             try {
               if (typeof unsubLogs === "function") unsubLogs();
+            } catch (e) {}
+            try {
+              if (typeof unsubInvoices === "function") unsubInvoices();
+            } catch (e) {}
+            try {
+              if (typeof unsubStockCounts === "function") unsubStockCounts();
             } catch (e) {}
             try {
               if (typeof unsubUsers === "function") unsubUsers();
@@ -7256,6 +8655,27 @@ const DICTIONARY = {
           }
           if (mods.eggCount) {
             parts.push(`${t.eggsInLine}: ${mods.eggCount}`);
+          }
+          if (line && (line.containerType || line.cupSize)) {
+            const typeLabel =
+              line.containerType === "glass"
+                ? lang === "ar"
+                  ? "زجاج"
+                  : "Verre"
+                : lang === "ar"
+                ? "بلاستيك"
+                : "Jetable";
+            const sizeLabel =
+              line.cupSize === "large"
+                ? lang === "ar"
+                  ? "كبير"
+                  : "Grand"
+                : lang === "ar"
+                ? "صغير"
+                : "Petit";
+            parts.push(
+              (lang === "ar" ? "كأس" : "Gobelet") + ": " + typeLabel + " " + sizeLabel
+            );
           }
           return parts.length ? "(" + parts.join(", ") + ")" : "";
         }
@@ -7585,6 +9005,73 @@ const DICTIONARY = {
         function confirmPinPrompt(ev) {
           if (ev && ev.preventDefault) ev.preventDefault();
           const entered = String(pinPromptValue || "");
+          const pending = activeShift && activeShift.pendingHandoff ? activeShift.pendingHandoff : null;
+
+          if (pinPromptMode === "resume" && pending) {
+            const toWorker = (users || []).find(
+              (u) => u && u.role === "worker" && u.posAccess !== false && u.id === pending.toWorkerId
+            );
+            if (!toWorker || String(toWorker.pin || "") !== entered) {
+              setPinPromptError(t.pinIncorrect || "PIN incorrect");
+              return;
+            }
+
+            const nowIso = new Date().toISOString();
+            const event = { ...pending, toConfirmedAt: nowIso };
+
+            setShifts((prev) =>
+              (prev || []).map((s) =>
+                s && s.id === activeShift.id
+                  ? {
+                      ...s,
+                      currentOperatorId: toWorker.id,
+                      pendingHandoff: null,
+                      operatorHandoffs: [...((s.operatorHandoffs || []).filter(Boolean)), event],
+                      updatedAt: nowIso
+                    }
+                  : s
+              )
+            );
+
+            setActiveShift((s) =>
+              s && s.id === activeShift.id
+                ? {
+                    ...s,
+                    currentOperatorId: toWorker.id,
+                    pendingHandoff: null,
+                    operatorHandoffs: [...(((s && s.operatorHandoffs) || []).filter(Boolean)), event]
+                  }
+                : s
+            );
+
+            setActiveWorker(toWorker);
+            setShiftPaused(false);
+            lastActivityRef.current = Date.now();
+            setStatus(null);
+
+            closePinPrompt();
+
+            if (!cloudEnabled) return;
+            const shiftsCol = cloudCol("shifts");
+            if (!shiftsCol) return;
+            try {
+              shiftsCol
+                .doc(activeShift.id)
+                .set(
+                  {
+                    id: activeShift.id,
+                    currentOperatorId: toWorker.id,
+                    pendingHandoff: null,
+                    operatorHandoffs: [...(((activeShift && activeShift.operatorHandoffs) || []).filter(Boolean)), event],
+                    updatedAt: nowIso
+                  },
+                  { merge: true }
+                )
+                .catch(() => {});
+            } catch (e) {}
+            return;
+          }
+
           const worker = activeWorker && entered === activeWorker.pin ? activeWorker : null;
           if (!worker) {
             setPinPromptError(t.pinIncorrect || "PIN incorrect");
@@ -7607,6 +9094,20 @@ const DICTIONARY = {
         function openHandoffPrompt() {
           if (!activeShift || !activeWorker) return;
           const shiftRec = (shifts || []).find((s) => s && s.id === activeShift.id) || null;
+          const pending =
+            (shiftRec && shiftRec.pendingHandoff) ||
+            (activeShift && activeShift.pendingHandoff) ||
+            null;
+          if (pending) {
+            setStatus({
+              type: "err",
+              message:
+                lang === "ar"
+                  ? "هناك تسليم قيد الانتظار."
+                  : "Une passation est déjà en attente."
+            });
+            return;
+          }
           const expectedNow =
             shiftRec && typeof shiftRec.expectedCash === "number"
               ? shiftRec.expectedCash
@@ -7632,10 +9133,6 @@ const DICTIONARY = {
         function confirmHandoff(ev) {
           if (ev && ev.preventDefault) ev.preventDefault();
           if (!activeShift || !activeWorker) return;
-          if (!adminUser || adminUser.role !== "admin") {
-            setHandoffError(lang === "ar" ? "مطلوب موافقة المدير" : "Autorisation admin requise");
-            return;
-          }
           const toId = String(handoffToWorkerId || "");
           const toWorker = (users || []).find((u) => u && u.role === "worker" && u.id === toId) || null;
           if (!toWorker || toWorker.posAccess === false) {
@@ -7647,33 +9144,21 @@ const DICTIONARY = {
             setHandoffError(t.pinIncorrect || "PIN incorrect");
             return;
           }
-          const toPinOk = String(handoffToPin || "") === String(toWorker.pin || "");
-          if (!toPinOk) {
-            setHandoffError(t.pinIncorrect || "PIN incorrect");
-            return;
-          }
           const a1 = parseCash(handoffFromAmount);
-          const a2 = parseCash(handoffToAmount);
-          if (a1 == null || a2 == null || a1 < 0 || a2 < 0) {
+          if (a1 == null || a1 < 0) {
             setHandoffError(lang === "ar" ? "قيمة غير صالحة" : "Valeur invalide");
-            return;
-          }
-          if (Math.abs(a1 - a2) > 0.009) {
-            setHandoffError(lang === "ar" ? "القيم غير متطابقة" : "Les montants ne correspondent pas");
             return;
           }
 
           const nowIso = new Date().toISOString();
-          const event = {
+          const pending = {
             id: makeId("handoff"),
             shiftId: activeShift.id,
             fromWorkerId: activeWorker.id,
             toWorkerId: toWorker.id,
             expectedCash: Number(a1 || 0) || 0,
             fromConfirmedAt: nowIso,
-            toConfirmedAt: nowIso,
-            approvedAt: nowIso,
-            approvedBy: adminUser.id
+            initiatedAt: nowIso
           };
 
           setShifts((prev) =>
@@ -7681,8 +9166,7 @@ const DICTIONARY = {
               s && s.id === activeShift.id
                 ? {
                     ...s,
-                    currentOperatorId: toWorker.id,
-                    operatorHandoffs: [...((s.operatorHandoffs || []).filter(Boolean)), event],
+                    pendingHandoff: pending,
                     updatedAt: nowIso
                   }
                 : s
@@ -7693,16 +9177,28 @@ const DICTIONARY = {
             s && s.id === activeShift.id
               ? {
                   ...s,
-                  currentOperatorId: toWorker.id,
-                  operatorHandoffs: [...(((s && s.operatorHandoffs) || []).filter(Boolean)), event]
+                  pendingHandoff: pending
                 }
               : s
           );
 
-          setActiveWorker(toWorker);
-          setShiftPaused(false);
+          setShiftPaused(true);
           lastActivityRef.current = Date.now();
-          setStatus(null);
+          setStatus({
+            type: "ok",
+            message:
+              lang === "ar"
+                ? "تسليم قيد الانتظار: سلّم " +
+                  Number(pending.expectedCash || 0).toFixed(2) +
+                  " درهم إلى " +
+                  String(toWorker.name || toWorker.id) +
+                  "."
+                : "Passation en attente: donner " +
+                  Number(pending.expectedCash || 0).toFixed(2) +
+                  " DHS à " +
+                  String(toWorker.name || toWorker.id) +
+                  "."
+          });
           closeHandoffPrompt();
 
           if (!cloudEnabled) return;
@@ -7714,8 +9210,7 @@ const DICTIONARY = {
               .set(
                 {
                   id: activeShift.id,
-                  currentOperatorId: toWorker.id,
-                  operatorHandoffs: [...(((activeShift && activeShift.operatorHandoffs) || []).filter(Boolean)), event],
+                  pendingHandoff: pending,
                   updatedAt: nowIso
                 },
                 { merge: true }
@@ -7732,6 +9227,21 @@ const DICTIONARY = {
             });
             return;
           }
+
+          function isDrinkProduct(p) {
+            const cat = p && p.category;
+            if (cat === "Hot Drinks" || cat === "Cold Drinks") return true;
+            const id = p && p.id;
+            if (!id) return false;
+            return (
+              id === "other_water" ||
+              String(id).startsWith("soda_") ||
+              String(id).startsWith("water_") ||
+              String(id).startsWith("juice_") ||
+              String(id).startsWith("tea_")
+            );
+          }
+
           setCart((prev) => {
             const key =
               product.id +
@@ -7747,21 +9257,32 @@ const DICTIONARY = {
                 modifiers.eggCount)
                 ? `_${JSON.stringify(modifiers)}`
                 : "");
-            const existing = prev.find((line) => line.key === key);
+
+            const forceNewLine =
+              cartServiceType === "takeaway" && isDrinkProduct(product);
+            const finalKey = forceNewLine ? key + "_" + makeId("line") : key;
+
+            const existing = prev.find((line) => line.key === finalKey);
             if (existing) {
               return prev.map((line) =>
-                line.key === key ? { ...line, qty: line.qty + 1 } : line
+                line.key === finalKey ? { ...line, qty: line.qty + 1 } : line
               );
             }
+
+            const defaultCup =
+              cartServiceType === "takeaway" && isDrinkProduct(product)
+                ? { containerType: "disposable", cupSize: "small" }
+                : {};
             return [
               ...prev,
               {
-                key,
+                key: finalKey,
                 id: product.id,
                 name: product.name,
                 price: product.price,
                 qty: 1,
-                modifiers: modifiers || {}
+                modifiers: modifiers || {},
+                ...defaultCup
               }
             ];
           });
@@ -7819,13 +9340,192 @@ const DICTIONARY = {
           const subtotal = cart.reduce((sum, line) => sum + line.price * line.qty, 0);
           const taxRate = 0.0;
           const tax = subtotal * taxRate;
-          const total = subtotal + tax;
-          return { subtotal, tax, total };
-        }, [cart]);
+          const cupFee = (cartServiceType !== "takeaway")
+            ? 0
+            : (cart || []).reduce((sum, line) => {
+                if (!line || !line.id) return sum;
+                if (line.containerType === "glass") return sum;
+                const id = String(line.id || "");
+                if (id.startsWith("water_")) return sum;
+                if (!isDrinkLineForCup(line)) return sum;
+                const qty = Number(line.qty || 0) || 0;
+                if (qty <= 0) return sum;
+                return sum + qty * 1;
+              }, 0);
 
-        function accumulateIngredientsForOrder(orderItems) {
+          const total = subtotal + tax + cupFee;
+          return { subtotal, tax, cupFee, total };
+        }, [cart, cartServiceType, menu]);
+
+        function isDrinkLineForCup(line) {
+          if (!line || !line.id) return false;
+          const p = (menu || []).find((m) => m && m.id === line.id) || null;
+          if (p && (p.category === "Hot Drinks" || p.category === "Cold Drinks")) return true;
+
+          const id = line.id;
+          if (id === "coffee" || id === "coffee_with_milk" || id === "nescafe" || id === "machada") return true;
+          const s = String(id);
+          return (
+            s === "other_water" ||
+            s.startsWith("tea_") ||
+            s.startsWith("juice_") ||
+            s.startsWith("soda_") ||
+            s.startsWith("water_")
+          );
+        }
+
+        const needsGlassCupCustomerName = React.useMemo(() => {
+          if (cartServiceType !== "takeaway") return false;
+          return (cart || []).some(
+            (l) => l && l.containerType === "glass" && isDrinkLineForCup(l)
+          );
+        }, [cart, cartServiceType, menu]);
+
+        const openCupLoanSummary = React.useMemo(() => {
+          const result = { small: 0, large: 0, total: 0 };
+          (cupLoans || []).forEach((l) => {
+            if (!l || l.status === "returned") return;
+            if (l.kind !== "glass") return;
+            const qty = Number(l.qty || 0) || 0;
+            if (qty <= 0) return;
+            if (l.size === "large") result.large += qty;
+            else result.small += qty;
+          });
+          result.total = result.small + result.large;
+          return result;
+        }, [cupLoans]);
+
+        function applyInventoryCupDelta(ingredientId, delta, nowIso, reason, orderId, shiftId, userId) {
+          if (!ingredientId || !delta) return;
+          const logId = makeId("log");
+          setInventory((prev) => {
+            if (!prev || !prev[ingredientId]) return prev;
+            return {
+              ...prev,
+              [ingredientId]: {
+                ...prev[ingredientId],
+                currentQty: (prev[ingredientId].currentQty || 0) + delta
+              }
+            };
+          });
+          setInventoryLogs((prev) => [
+            ...(prev || []),
+            {
+              id: logId,
+              ingredientId,
+              delta,
+              reason: reason || "cup",
+              orderId: orderId || null,
+              shiftId: shiftId || (activeShift ? activeShift.id : null),
+              userId: userId || (activeWorker ? activeWorker.id : null),
+              createdAt: nowIso
+            }
+          ]);
+
+          if (!cloudEnabled) return;
+          const db = window.firebaseDb;
+          const invCol = cloudCol("inventory");
+          const logsCol = cloudCol("inventoryLogs");
+          if (!db || !invCol || !logsCol) return;
+          try {
+            const batch = db.batch();
+            const inc = firebase.firestore.FieldValue.increment;
+            batch.set(
+              invCol.doc(ingredientId),
+              { id: ingredientId, currentQty: inc(delta), updatedAt: nowIso },
+              { merge: true }
+            );
+            batch.set(
+              logsCol.doc(logId),
+              {
+                id: logId,
+                ingredientId,
+                delta,
+                reason: reason || "cup",
+                orderId: orderId || null,
+                shiftId: shiftId || (activeShift ? activeShift.id : null),
+                userId: userId || (activeWorker ? activeWorker.id : null),
+                appId: CLOUD_APP_ID,
+                deviceId: deviceIdRef.current,
+                createdAt: nowIso
+              },
+              { merge: true }
+            );
+            batch.commit().catch(() => {});
+          } catch (e) {}
+        }
+
+        function handleCloseCupLoans() {
+          setCupLoansOpen(false);
+        }
+
+        function handleMarkCupLoanReturned(loanId, refundDeposit) {
+          if (!loanId) return;
+          if (shiftPaused) {
+            setStatus({ type: "err", message: t.shiftPausedBlocking || "Shift en pause." });
+            return;
+          }
+          if (!activeShift || !activeWorker) return;
+
+          const rec = (cupLoans || []).find((l) => l && l.id === loanId) || null;
+          if (!rec || rec.status === "returned") return;
+
+          const nowIso = new Date().toISOString();
+          const nextRefund = !!(refundDeposit && rec.depositPaid && !rec.depositRefunded);
+
+          const patch = {
+            status: "returned",
+            returnedAt: nowIso,
+            returnedShiftId: activeShift.id,
+            returnedBy: activeWorker.id,
+            depositRefunded: nextRefund ? true : !!rec.depositRefunded,
+            depositRefundedAt: nextRefund ? nowIso : (rec.depositRefundedAt || null),
+            refundShiftId: nextRefund ? activeShift.id : (rec.refundShiftId || null),
+            refundBy: nextRefund ? activeWorker.id : (rec.refundBy || null),
+            updatedAt: nowIso
+          };
+
+          setCupLoans((prev) =>
+            (prev || []).map((l) => (l && l.id === loanId ? { ...l, ...patch } : l))
+          );
+
+          const size = rec.size === "large" ? "large" : "small";
+          const qty = Number(rec.qty || 0) || 0;
+          if (qty > 0) {
+            const ingId = size === "large" ? "cup_glass_large" : "cup_glass_small";
+            applyInventoryCupDelta(ingId, qty, nowIso, "cup_return", rec.orderId || null, activeShift.id, activeWorker.id);
+          }
+
+          if (nextRefund) {
+            const amount = Number(rec.depositAmount || 0) || 0;
+            if (amount > 0) applyShiftExpectedCashDelta(activeShift.id, -amount, nowIso);
+          }
+
+          if (!cloudEnabled) return;
+          const loansCol = cloudCol("cupLoans");
+          if (!loansCol) return;
+          try {
+            loansCol.doc(loanId).set(patch, { merge: true }).catch(() => {});
+          } catch (e) {}
+        }
+
+        function accumulateIngredientsForOrder(orderItems, opts) {
           const result = {};
           const COFFEE_IDS = new Set(["coffee", "coffee_with_milk", "nescafe", "machada"]);
+          const serviceType = opts && opts.serviceType === "takeaway" ? "takeaway" : "dine_in";
+
+          function isDrinkId(id) {
+            if (!id) return false;
+            if (COFFEE_IDS.has(id)) return true;
+            const s = String(id);
+            return (
+              s === "other_water" ||
+              s.startsWith("tea_") ||
+              s.startsWith("juice_") ||
+              s.startsWith("soda_") ||
+              s.startsWith("water_")
+            );
+          }
 
           function add(ingredientId, amountPerUnit, qty) {
             if (!ingredientId || !amountPerUnit) return;
@@ -7864,6 +9564,15 @@ const DICTIONARY = {
 
             addRecipe(baseRecipe, qty);
 
+            if (line.id === "other_water") {
+              const size = mods.waterSize === "half" ? "half" : "quarter";
+              add(size === "half" ? "water_bottle_half" : "water_bottle_small", 1, qty);
+            }
+
+            if (mods.water === true) {
+              add("water_bottle_small", 1, qty);
+            }
+
             if (line.id === "fried_eggs" && mods.eggCount) {
               const baseEggs = (baseRecipe && baseRecipe.eggs) || 0;
               const desired = Number(mods.eggCount) || 0;
@@ -7894,6 +9603,20 @@ const DICTIONARY = {
 
             if (line.id === "tea_lipton" || line.id === "tea_mint" || line.id === "tea_berrad") {
               addSugarFor("tea", mods.sugar, qty);
+            }
+
+            if (serviceType === "takeaway" && isDrinkId(line.id)) {
+              const container = line.containerType === "glass" ? "glass" : "disposable";
+              const size = line.cupSize === "large" ? "large" : "small";
+              const cupIngredientId =
+                container === "glass"
+                  ? size === "large"
+                    ? "cup_glass_large"
+                    : "cup_glass_small"
+                  : size === "large"
+                  ? "cup_disposable_large"
+                  : "cup_disposable_small";
+              add(cupIngredientId, 1, qty);
             }
           });
 
@@ -8277,16 +10000,19 @@ const DICTIONARY = {
           } catch (e) {}
         }
 
-        function handleInventoryPurchase(ingredientId, qty, totalCost) {
+        function handleInventoryPurchase(ingredientId, qty, totalCost, actorOverride, deductFromExpectedCash) {
           if (!ingredientId) return;
           const actor =
-            adminUser && (adminUser.role === "admin" || adminUser.role === "manager")
+            actorOverride && typeof actorOverride === "object"
+              ? actorOverride
+              : adminUser && (adminUser.role === "admin" || adminUser.role === "manager")
               ? adminUser
               : activeWorker;
           const actorId = actor ? actor.id : null;
           const canPurchase =
-            !!(adminUser && (adminUser.role === "admin" || adminUser.role === "manager")) ||
-            !!(activeWorker && activeWorker.inventoryAccess === true);
+            !!activeShift &&
+            (!!(adminUser && adminUser.role === "admin") ||
+              !!activeWorker);
           if (!canPurchase) {
             setStatus({ type: "err", message: lang === "ar" ? "غير مسموح" : "Accès refusé." });
             return;
@@ -8297,8 +10023,18 @@ const DICTIONARY = {
           if (!Number.isFinite(cost) || cost < 0) return;
           const nowIso = new Date().toISOString();
           const logId = makeId("log");
-          const unitPrice = q ? cost / q : null;
+          const packSize =
+            inventory &&
+            inventory[ingredientId] &&
+            typeof inventory[ingredientId].packSize === "number" &&
+            Number.isFinite(inventory[ingredientId].packSize) &&
+            inventory[ingredientId].packSize > 0
+              ? inventory[ingredientId].packSize
+              : null;
+          const effectiveQty = packSize ? q * packSize : q;
+          const unitPrice = effectiveQty ? cost / effectiveQty : null;
           const shiftId = activeShift ? activeShift.id : null;
+          const affectsShiftCash = !!(shiftId && deductFromExpectedCash === true);
 
           setInventory((prev) => {
             if (!prev || !prev[ingredientId]) return prev;
@@ -8306,7 +10042,7 @@ const DICTIONARY = {
               ...prev,
               [ingredientId]: {
                 ...prev[ingredientId],
-                currentQty: (prev[ingredientId].currentQty || 0) + q
+                currentQty: (prev[ingredientId].currentQty || 0) + effectiveQty
               }
             };
           });
@@ -8315,17 +10051,18 @@ const DICTIONARY = {
             {
               id: logId,
               ingredientId,
-              delta: q,
+              delta: effectiveQty,
               reason: "purchase",
               orderId: null,
               shiftId: shiftId,
               userId: actorId,
               totalCost: cost,
               unitPrice: unitPrice,
+              deductFromExpectedCash: affectsShiftCash,
               createdAt: nowIso
             }
           ]);
-          if (shiftId) {
+          if (shiftId && affectsShiftCash) {
             setShifts((prev) =>
               (prev || []).map((s) =>
                 s && s.id === shiftId
@@ -8356,7 +10093,7 @@ const DICTIONARY = {
             const inc = firebase.firestore.FieldValue.increment;
             batch.set(
               invCol.doc(ingredientId),
-              { id: ingredientId, currentQty: inc(q), updatedAt: nowIso },
+              { id: ingredientId, currentQty: inc(effectiveQty), updatedAt: nowIso },
               { merge: true }
             );
             batch.set(
@@ -8364,20 +10101,21 @@ const DICTIONARY = {
               {
                 id: logId,
                 ingredientId,
-                delta: q,
+                delta: effectiveQty,
                 reason: "purchase",
                 orderId: null,
                 shiftId: shiftId,
                 userId: actorId,
                 totalCost: cost,
                 unitPrice: unitPrice,
+                deductFromExpectedCash: affectsShiftCash,
                 appId: CLOUD_APP_ID,
                 deviceId: deviceIdRef.current,
                 createdAt: nowIso
               },
               { merge: true }
             );
-            if (shiftId) {
+            if (shiftId && affectsShiftCash) {
               batch.set(
                 shiftsCol.doc(shiftId),
                 { id: shiftId, expectedCash: inc(-cost), updatedAt: nowIso },
@@ -8385,6 +10123,287 @@ const DICTIONARY = {
               );
             }
             batch.commit().catch(() => {});
+          } catch (e) {}
+        }
+
+        function handleInventoryPurchaseInvoice(payload, actorOverride, deductFromExpectedCash) {
+          const meta = payload && typeof payload === "object" ? payload : null;
+          const rawLines = meta && Array.isArray(meta.lines) ? meta.lines.filter(Boolean) : [];
+          if (!rawLines.length) return;
+
+          const actor =
+            actorOverride && typeof actorOverride === "object"
+              ? actorOverride
+              : adminUser && (adminUser.role === "admin" || adminUser.role === "manager")
+              ? adminUser
+              : activeWorker;
+          const actorId = actor ? actor.id : null;
+
+          const canPurchase =
+            !!activeShift &&
+            (!!(adminUser && adminUser.role === "admin") ||
+              !!activeWorker);
+          if (!canPurchase) {
+            setStatus({ type: "err", message: lang === "ar" ? "غير مسموح" : "Accès refusé." });
+            return;
+          }
+
+          function parseNum(v) {
+            const n = Number(String(v == null ? "" : v).replace(",", "."));
+            return Number.isFinite(n) ? n : null;
+          }
+
+          const nowIso = new Date().toISOString();
+          const invoiceId = makeId("inv");
+          const shiftId = activeShift ? activeShift.id : null;
+          const invoiceNumber = meta && meta.invoiceNumber ? String(meta.invoiceNumber || "").trim() : "";
+          const supplierName = meta && meta.supplierName ? String(meta.supplierName || "").trim() : "";
+          const note = meta && meta.note ? String(meta.note || "").trim() : "";
+
+          const affectsShiftCash = !!(shiftId && deductFromExpectedCash === true);
+
+          const lines = [];
+          const logEntries = [];
+          const ingredientDeltas = {};
+          let invoiceTotalCost = 0;
+
+          for (let i = 0; i < rawLines.length; i++) {
+            const ln = rawLines[i];
+            const ingredientId = String(ln.ingredientId || "");
+            if (!ingredientId) continue;
+            const q = parseNum(ln.qty);
+            const cost = parseNum(ln.totalCost);
+            if (q == null || q <= 0) continue;
+            if (cost == null || cost < 0) continue;
+
+            const ing = inventory && inventory[ingredientId] ? inventory[ingredientId] : null;
+            const packSize =
+              ing && typeof ing.packSize === "number" && Number.isFinite(ing.packSize) && ing.packSize > 0
+                ? ing.packSize
+                : null;
+            const effectiveQty = packSize ? q * packSize : q;
+            const unitPrice = effectiveQty ? cost / effectiveQty : null;
+
+            const logId = makeId("log");
+            invoiceTotalCost += cost;
+            ingredientDeltas[ingredientId] = (ingredientDeltas[ingredientId] || 0) + effectiveQty;
+            lines.push({
+              id: makeId("invline"),
+              ingredientId,
+              qty: q,
+              effectiveQty,
+              totalCost: cost,
+              unitPrice
+            });
+            logEntries.push({
+              id: logId,
+              ingredientId,
+              delta: effectiveQty,
+              reason: "purchase",
+              orderId: null,
+              shiftId: shiftId,
+              userId: actorId,
+              totalCost: cost,
+              unitPrice: unitPrice,
+              invoiceId,
+              deductFromExpectedCash: affectsShiftCash,
+              createdAt: nowIso
+            });
+          }
+
+          if (!lines.length) return;
+
+          const invoice = {
+            id: invoiceId,
+            supplierName,
+            invoiceNumber,
+            note,
+            shiftId,
+            userId: actorId,
+            createdAt: nowIso,
+            totalCost: Number(invoiceTotalCost || 0) || 0,
+            deductFromExpectedCash: affectsShiftCash,
+            lineCount: lines.length,
+            lines
+          };
+
+          setInventory((prev) => {
+            const copy = { ...(prev || {}) };
+            Object.entries(ingredientDeltas).forEach(([id, delta]) => {
+              if (!copy[id]) return;
+              copy[id] = { ...copy[id], currentQty: (copy[id].currentQty || 0) + delta };
+            });
+            return copy;
+          });
+          setInventoryLogs((prev) => [...(prev || []), ...logEntries]);
+          setPurchaseInvoices((prev) => [...(prev || []), invoice]);
+
+          if (shiftId && affectsShiftCash && invoiceTotalCost) {
+            setShifts((prev) =>
+              (prev || []).map((s) =>
+                s && s.id === shiftId
+                  ? { ...s, expectedCash: (s.expectedCash || 0) - invoiceTotalCost }
+                  : s
+              )
+            );
+            setActiveShift((s) =>
+              s && s.id === shiftId
+                ? { ...s, expectedCash: (s.expectedCash || 0) - invoiceTotalCost }
+                : s
+            );
+          }
+
+          setStatus({
+            type: "ok",
+            message: lang === "ar" ? "تمت إضافة الفاتورة." : "Facture ajoutée."
+          });
+
+          if (!cloudEnabled) return;
+          const db = window.firebaseDb;
+          const invCol = cloudCol("inventory");
+          const logsCol = cloudCol("inventoryLogs");
+          const shiftsCol = cloudCol("shifts");
+          const invoicesCol = cloudCol("purchaseInvoices");
+          if (!db || !invCol || !logsCol || !shiftsCol || !invoicesCol) return;
+
+          try {
+            const batch = db.batch();
+            const inc = firebase.firestore.FieldValue.increment;
+
+            Object.entries(ingredientDeltas).forEach(([id, delta]) => {
+              if (!id || !delta) return;
+              batch.set(
+                invCol.doc(id),
+                { id, currentQty: inc(delta), updatedAt: nowIso },
+                { merge: true }
+              );
+            });
+
+            logEntries.forEach((entry) => {
+              if (!entry || !entry.id) return;
+              batch.set(
+                logsCol.doc(entry.id),
+                {
+                  ...entry,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  updatedAt: nowIso
+                },
+                { merge: true }
+              );
+            });
+
+            batch.set(
+              invoicesCol.doc(invoiceId),
+              {
+                ...invoice,
+                appId: CLOUD_APP_ID,
+                deviceId: deviceIdRef.current,
+                updatedAt: nowIso
+              },
+              { merge: true }
+            );
+
+            if (shiftId && affectsShiftCash && invoiceTotalCost) {
+              batch.set(
+                shiftsCol.doc(shiftId),
+                { id: shiftId, expectedCash: inc(-invoiceTotalCost), updatedAt: nowIso },
+                { merge: true }
+              );
+            }
+
+            batch.commit().catch(() => {});
+          } catch (e) {}
+        }
+
+        function handleCreateStockCountRequest(ingredientId, assignedToId, note) {
+          const requester = adminUser && (adminUser.role === "admin" || adminUser.role === "manager") ? adminUser : null;
+          if (!requester) return;
+
+          const id = makeId("sc");
+          const ingId = String(ingredientId || "");
+          const toId = String(assignedToId || "");
+          if (!ingId || !toId) return;
+
+          const nowIso = new Date().toISOString();
+          const shiftId = activeShift ? activeShift.id : null;
+          const ing = inventory && inventory[ingId] ? inventory[ingId] : null;
+          const expectedQty = ing && typeof ing.currentQty === "number" ? ing.currentQty : 0;
+
+          const req = {
+            id,
+            ingredientId: ingId,
+            assignedToId: toId,
+            requestedById: requester.id,
+            requestedAt: nowIso,
+            shiftId,
+            status: "open",
+            expectedQty,
+            note: note ? String(note) : ""
+          };
+          setStockCountRequests((prev) => [...(prev || []), req]);
+
+          if (!cloudEnabled) return;
+          const stockCountsCol = cloudCol("stockCountRequests");
+          if (!stockCountsCol) return;
+          try {
+            stockCountsCol
+              .doc(id)
+              .set(
+                {
+                  ...req,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  updatedAt: nowIso
+                },
+                { merge: true }
+              )
+              .catch(() => {});
+          } catch (e) {}
+        }
+
+        function handleSubmitStockCountRequest(requestId, countedQty) {
+          const id = String(requestId || "");
+          if (!id) return;
+          const req = (stockCountRequests || []).find((r) => r && r.id === id) || null;
+          if (!req || req.status !== "open") return;
+          if (!activeWorker || req.assignedToId !== activeWorker.id) return;
+
+          const n = Number(String(countedQty == null ? "" : countedQty).replace(",", "."));
+          if (!Number.isFinite(n) || n < 0) return;
+          const nowIso = new Date().toISOString();
+          const expectedQty = typeof req.expectedQty === "number" ? req.expectedQty : 0;
+          const variance = n - expectedQty;
+
+          const patch = {
+            status: "submitted",
+            countedQty: n,
+            variance: variance,
+            submittedAt: nowIso,
+            submittedById: activeWorker.id,
+            updatedAt: nowIso
+          };
+
+          setStockCountRequests((prev) =>
+            (prev || []).map((r) => (r && r.id === id ? { ...r, ...patch } : r))
+          );
+
+          if (!cloudEnabled) return;
+          const stockCountsCol = cloudCol("stockCountRequests");
+          if (!stockCountsCol) return;
+          try {
+            stockCountsCol
+              .doc(id)
+              .set(
+                {
+                  ...patch,
+                  id,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current
+                },
+                { merge: true }
+              )
+              .catch(() => {});
           } catch (e) {}
         }
 
@@ -8759,10 +10778,19 @@ const DICTIONARY = {
             return;
           }
 
+          if (needsGlassCupCustomerName && !String(glassCupCustomerName || "").trim()) {
+            setStatus({
+              type: "err",
+              message: (t && t.glassCupCustomerNameRequired) || "Nom du client requis pour verre à emporter."
+            });
+            return;
+          }
+
           setSubmitting(true);
           setStatus(null);
 
           const now = new Date();
+          const nowIso = now.toISOString();
           const orderId = makeId("ord");
           const ticketDay = pad2(now.getDate());
           const ticketMonth = pad2(now.getMonth() + 1);
@@ -8783,6 +10811,8 @@ const DICTIONARY = {
           const order = {
             id: orderId,
             appId: "cafe-halab-pos",
+            serviceType: cartServiceType,
+            glassCupCustomerName: needsGlassCupCustomerName ? String(glassCupCustomerName || "").trim() : "",
             items: cart.map((line) => {
               const p = menu.find((m) => m.id === line.id);
               return {
@@ -8791,10 +10821,15 @@ const DICTIONARY = {
                 nameAr: p?.nameAr || line.name
               };
             }),
-            totals,
+            totals: {
+              subtotal: totals && typeof totals.subtotal === "number" ? totals.subtotal : 0,
+              tax: totals && typeof totals.tax === "number" ? totals.tax : 0,
+              cupFee: totals && typeof totals.cupFee === "number" ? totals.cupFee : 0,
+              total: totals && typeof totals.total === "number" ? totals.total : 0
+            },
             currency: "DHS",
             status: "unpaid",
-            createdAt: now.toISOString(),
+            createdAt: nowIso,
             shiftId: activeShift.id,
             cashierId: activeWorker.id,
             ticketCode,
@@ -8802,7 +10837,60 @@ const DICTIONARY = {
             ticketSeq
           };
 
-          const ingredientDeltas = accumulateIngredientsForOrder(cart);
+          const loansToCreate = [];
+          if (cartServiceType === "takeaway") {
+            const customerName = String(order.glassCupCustomerName || "").trim();
+            const counts = { small: 0, large: 0 };
+            (cart || []).forEach((line) => {
+              if (!line || line.containerType !== "glass") return;
+              if (!isDrinkLineForCup(line)) return;
+              const size = line.cupSize === "large" ? "large" : "small";
+              const qty = Number(line.qty || 0) || 0;
+              if (qty <= 0) return;
+              counts[size] += qty;
+            });
+
+            if (customerName && (counts.small > 0 || counts.large > 0)) {
+              (counts.small > 0 ? ["small"] : [])
+                .concat(counts.large > 0 ? ["large"] : [])
+                .forEach((size) => {
+                  const qty = size === "large" ? counts.large : counts.small;
+                  const unitDeposit = size === "large" ? 10 : 5;
+                  const depositAmount = qty * unitDeposit;
+                  loansToCreate.push({
+                    id: makeId("cupLoan"),
+                    kind: "glass",
+                    size,
+                    qty,
+                    customerName,
+                    depositPaid: true,
+                    depositAmount,
+                    depositPaidAt: nowIso,
+                    depositRefunded: false,
+                    depositRefundedAt: null,
+                    status: "out",
+                    createdAt: nowIso,
+                    orderId,
+                    shiftId: activeShift.id,
+                    waiterId: activeWorker.id,
+                    returnedAt: null,
+                    returnedShiftId: null,
+                    returnedBy: null
+                  });
+                });
+            }
+          }
+
+          const depositTotal = (loansToCreate || []).reduce((sum, l) => {
+            if (!l || !l.depositPaid) return sum;
+            const v = Number(l.depositAmount || 0) || 0;
+            return sum + v;
+          }, 0);
+          if (depositTotal > 0) {
+            applyShiftExpectedCashDelta(activeShift.id, depositTotal, nowIso);
+          }
+
+          const ingredientDeltas = accumulateIngredientsForOrder(cart, { serviceType: cartServiceType });
           applyInventoryConsumption(
             ingredientDeltas,
             activeShift.id,
@@ -8811,11 +10899,14 @@ const DICTIONARY = {
           );
 
           setOrders((prev) => [...prev, order]);
+          if (loansToCreate.length) setCupLoans((prev) => [...(prev || []), ...loansToCreate]);
 
           if (cloudEnabled) {
             const ordersCol = cloudCol("orders");
+            const loansCol = cloudCol("cupLoans");
+            const nowIso = order.createdAt;
+            const shiftsCol = cloudCol("shifts");
             if (ordersCol) {
-              const nowIso = order.createdAt;
               ordersCol
                 .doc(orderId)
                 .set(
@@ -8829,6 +10920,32 @@ const DICTIONARY = {
                 )
                 .catch(() => {});
             }
+            if (loansCol && loansToCreate.length) {
+              loansToCreate.forEach((l) => {
+                if (!l || !l.id) return;
+                try {
+                  loansCol
+                    .doc(l.id)
+                    .set(
+                      { ...l, appId: CLOUD_APP_ID, deviceId: deviceIdRef.current, updatedAt: nowIso },
+                      { merge: true }
+                    )
+                    .catch(() => {});
+                } catch (e) {}
+              });
+            }
+            if (shiftsCol && depositTotal > 0) {
+              try {
+                const inc = firebase.firestore.FieldValue.increment;
+                shiftsCol
+                  .doc(activeShift.id)
+                  .set(
+                    { id: activeShift.id, expectedCash: inc(depositTotal), updatedAt: nowIso },
+                    { merge: true }
+                  )
+                  .catch(() => {});
+              } catch (e) {}
+            }
           }
 
           await new Promise((resolve) => setTimeout(resolve, 300));
@@ -8837,6 +10954,7 @@ const DICTIONARY = {
             message: t.orderAddedPending || "Commande ajoutée aux commandes en attente."
           });
           setCart([]);
+          setGlassCupCustomerName("");
           setSubmitting(false);
         }
 
@@ -8941,14 +11059,41 @@ const DICTIONARY = {
         }
 
         function canSeeManager() {
-          return (
-            (adminUser && (adminUser.role === "admin" || adminUser.role === "manager")) ||
-            (activeWorker && activeWorker.inventoryAccess === true)
-          );
+          return (adminUser && adminUser.role === "admin") || !!managerUnlocked;
         }
 
         function canSeeAdmin() {
           return adminUser && adminUser.role === "admin";
+        }
+
+        function managerPinValue() {
+          const u = (users || []).find((x) => x && x.role === "manager") || null;
+          return u && u.pin != null ? String(u.pin) : "";
+        }
+
+        function openManagerGate() {
+          setManagerGateError(null);
+          setManagerGateValue("");
+          setManagerGateOpen(true);
+        }
+
+        function closeManagerGate() {
+          setManagerGateOpen(false);
+          setManagerGateError(null);
+          setManagerGateValue("");
+        }
+
+        function confirmManagerGate(ev) {
+          if (ev && ev.preventDefault) ev.preventDefault();
+          const expected = normalizePinValue(managerPinValue());
+          const got = normalizePinValue(managerGateValue);
+          if (!expected || got !== expected) {
+            setManagerGateError(t.pinIncorrect || "PIN incorrect");
+            return;
+          }
+          setManagerUnlocked(true);
+          closeManagerGate();
+          setView("manager");
         }
 
         function handleOpenWaiterShift(ev) {
@@ -9460,7 +11605,7 @@ const DICTIONARY = {
             // Admin login only
             e(LoginPanel, {
               currentUser: adminUser,
-              users: users.filter((u) => u && (u.role === "admin" || u.role === "manager")),
+              users: users.filter((u) => u && u.role === "admin"),
               onLogin: handleAdminLogin,
               onLogout: handleAdminLogout
             }),
@@ -9488,8 +11633,8 @@ const DICTIONARY = {
                 {
                   className:
                     "category-btn" + (view === "manager" ? " active" : ""),
-                  onClick: () => setView("manager"),
-                  disabled: !canSeeManager()
+                  onClick: () => (canSeeManager() ? setView("manager") : openManagerGate()),
+                  disabled: false
                 },
                 "Manager"
               ),
@@ -9556,8 +11701,12 @@ const DICTIONARY = {
                   pinPromptMode === "pause"
                     ? t.confirmPauseSubtitle ||
                       "Saisir votre PIN pour mettre le shift en pause."
-                    : t.shiftPausedSubtitle ||
-                      "Saisir le PIN du serveur pour reprendre."
+                    : pinPromptMode === "resume" && activeShift && activeShift.pendingHandoff
+                      ? (lang === "ar"
+                          ? "أدخل رقم PIN للنادل القادم لتأكيد الاستلام."
+                          : "Saisir le PIN du serveur entrant pour confirmer la réception.")
+                      : t.shiftPausedSubtitle ||
+                        "Saisir le PIN du serveur pour reprendre."
                 ),
                 e(
                   "form",
@@ -9617,6 +11766,92 @@ const DICTIONARY = {
                 )
               )
             ),
+          managerGateOpen &&
+            e(
+              "div",
+              {
+                style: {
+                  position: "fixed",
+                  inset: 0,
+                  background: "rgba(15,23,42,0.55)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 16,
+                  zIndex: 52
+                }
+              },
+              e(
+                "section",
+                { className: "panel", style: { maxWidth: 420, width: "100%" } },
+                e(
+                  "h3",
+                  { style: { marginTop: 0 } },
+                  lang === "ar" ? "مدير" : "Manager"
+                ),
+                e(
+                  "p",
+                  { style: { fontSize: 13, marginTop: 6 } },
+                  lang === "ar" ? "أدخل رمز المدير" : "Saisir le code manager"
+                ),
+                e(
+                  "form",
+                  {
+                    onSubmit: confirmManagerGate,
+                    style: {
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                      marginTop: 10
+                    }
+                  },
+                  e("input", {
+                    type: "password",
+                    value: managerGateValue,
+                    readOnly: true,
+                    inputMode: "none",
+                    onChange: (ev) => setManagerGateValue(normalizePinValue(ev.target.value)),
+                    placeholder: t.pinLabel || "PIN",
+                    style: {
+                      padding: 10,
+                      fontSize: 18,
+                      textAlign: "center"
+                    }
+                  }),
+                  renderPinPad(
+                    managerGateValue,
+                    (d) => setManagerGateValue((v) => normalizePinValue(String(v || "") + String(d || ""))),
+                    () => setManagerGateValue((v) => normalizePinValue(String(v || "").slice(0, -1))),
+                    () => confirmManagerGate({ preventDefault: () => {} }),
+                    t.confirmPinBtn || "Confirmer"
+                  ),
+                  e(
+                    "button",
+                    {
+                      className: "btn-primary",
+                      type: "submit",
+                      disabled: normalizePinValue(managerGateValue).length !== 4
+                    },
+                    t.confirmPinBtn || "Confirmer"
+                  ),
+                  e(
+                    "button",
+                    {
+                      className: "category-btn",
+                      type: "button",
+                      onClick: closeManagerGate
+                    },
+                    t.closeBtn || "Fermer"
+                  ),
+                  managerGateError &&
+                    e(
+                      "div",
+                      { style: { fontSize: 12, color: "#b91c1c" } },
+                      managerGateError
+                    )
+                )
+              )
+            ),
           calcOpen &&
             e(
               "div",
@@ -9658,7 +11893,7 @@ const DICTIONARY = {
                   {
                     style: {
                       display: "grid",
-                      gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+                      gridTemplateColumns: isPhone ? "1fr" : "minmax(0, 1fr) minmax(0, 1fr)",
                       gap: 14,
                       marginTop: 12,
                       alignItems: "start"
@@ -10130,6 +12365,328 @@ const DICTIONARY = {
                           )
                         )
                       )
+                    )
+                  )
+                )
+              )
+            ),
+          purchaseOpen &&
+            e(
+              "div",
+              {
+                style: {
+                  position: "fixed",
+                  inset: 0,
+                  background: "rgba(15,23,42,0.55)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 16,
+                  zIndex: 58
+                }
+              },
+              e(
+                "section",
+                { className: "panel", style: { maxWidth: 760, width: "100%" } },
+                e(
+                  "div",
+                  {
+                    style: {
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 10
+                    }
+                  },
+                  e(
+                    "h3",
+                    { style: { marginTop: 0, marginBottom: 0 } },
+                    (t && t.purchaseTitle) || (lang === "ar" ? "مشتريات (المخزون)" : "Achats (stock)")
+                  ),
+                  e(
+                    "button",
+                    {
+                      className: "category-btn",
+                      type: "button",
+                      onClick: () => setPurchaseOpen(false)
+                    },
+                    (t && t.closeBtn) || "Fermer"
+                  )
+                ),
+                e(
+                  "div",
+                  { style: { marginTop: 12 } },
+                  e(WaiterPurchasesHub, {
+                    inventory,
+                    t,
+                    lang,
+                    activeShift,
+                    activeWorker,
+                    adminUser,
+                    shifts,
+                    onPurchase: handleInventoryPurchase,
+                    onPurchaseInvoice: handleInventoryPurchaseInvoice,
+                    stockCountRequests,
+                    onSubmitStockCountRequest: handleSubmitStockCountRequest,
+                    canPurchase:
+                      !!activeShift &&
+                      (!!(adminUser && (adminUser.role === "admin" || adminUser.role === "manager")) ||
+                        !!activeWorker)
+                  })
+                )
+              )
+            ),
+          view === "pos" &&
+            cupLoansOpen &&
+            e(
+              "div",
+              {
+                style: {
+                  position: "fixed",
+                  inset: 0,
+                  background: "rgba(15,23,42,0.55)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 16,
+                  zIndex: 58
+                }
+              },
+              e(
+                "section",
+                { className: "panel", style: { maxWidth: 720, width: "100%" } },
+                e(
+                  "div",
+                  { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 } },
+                  e(
+                    "h3",
+                    { style: { marginTop: 0, marginBottom: 0 } },
+                    (t && t.cupLoansTitle) || "Verres à récupérer"
+                  ),
+                  e(
+                    "button",
+                    { className: "category-btn", type: "button", onClick: handleCloseCupLoans },
+                    (t && t.closeBtn) || "Fermer"
+                  )
+                ),
+                ((cupLoans || []).filter((l) => l && l.kind === "glass" && l.status !== "returned").length === 0)
+                  ? e(
+                      "div",
+                      { style: { marginTop: 10, fontSize: 12, color: "#6b7280" } },
+                      (t && t.cupLoansEmpty) || "Aucun verre à récupérer."
+                    )
+                  : e(
+                      "div",
+                      { style: { marginTop: 12, display: "grid", gap: 10 } },
+                      (cupLoans || [])
+                        .filter((l) => l && l.kind === "glass" && l.status !== "returned")
+                        .slice()
+                        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
+                        .map((l) => {
+                          const qty = Number(l.qty || 0) || 0;
+                          const size = l.size === "large" ? "large" : "small";
+                          const refundable = !!l.depositPaid;
+
+                          let createdLabel = "";
+                          try {
+                            if (l.createdAt) {
+                              const dt = new Date(l.createdAt);
+                              createdLabel = dt.toLocaleString(lang === "ar" ? "ar-MA" : "fr-FR", {
+                                year: "2-digit",
+                                month: "2-digit",
+                                day: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit"
+                              });
+                            }
+                          } catch (e) {}
+
+                          return e(
+                            "div",
+                            {
+                              key: l.id,
+                              style: {
+                                borderRadius: 14,
+                                border: "1px solid rgba(148,163,184,0.55)",
+                                background: "rgba(255,255,255,0.92)",
+                                padding: 10,
+                                display: "grid",
+                                gap: 8
+                              }
+                            },
+                            e(
+                              "div",
+                              { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" } },
+                              e(
+                                "div",
+                                { style: { fontWeight: 900, fontSize: 13 } },
+                                String(l.customerName || "") +
+                                  (qty
+                                    ? " · " +
+                                      qty +
+                                      "× " +
+                                      (size === "large"
+                                        ? lang === "ar"
+                                          ? "كبير"
+                                          : "Grand"
+                                        : lang === "ar"
+                                        ? "صغير"
+                                        : "Petit")
+                                    : "")
+                              ),
+                              e(
+                                "div",
+                                { style: { fontSize: 12, color: "#374151", whiteSpace: "nowrap" } },
+                                createdLabel
+                              )
+                            ),
+                            e(
+                              "div",
+                              { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" } },
+                              e(
+                                "div",
+                                { style: { fontSize: 12, color: "#6b7280" } },
+                                ((t && t.cupLoansRefundableYes && t.cupLoansRefundableNo)
+                                  ? refundable
+                                    ? t.cupLoansRefundableYes
+                                    : t.cupLoansRefundableNo
+                                  : refundable
+                                  ? "Remboursable"
+                                  : "Non remboursable") +
+                                  (refundable && l.depositAmount != null
+                                    ? " · " + Number(l.depositAmount || 0).toFixed(2) + " DHS"
+                                    : "")
+                              ),
+                              e(
+                                "div",
+                                { style: { display: "flex", gap: 8, alignItems: "center" } },
+                                e(
+                                  "button",
+                                  {
+                                    className: "category-btn",
+                                    type: "button",
+                                    onClick: () => handleMarkCupLoanReturned(l.id, false)
+                                  },
+                                  (t && t.cupLoansMarkReturned) || "Marquer retourné"
+                                ),
+                                refundable &&
+                                  e(
+                                    "button",
+                                    {
+                                      className: "btn-warning",
+                                      type: "button",
+                                      onClick: () => handleMarkCupLoanReturned(l.id, true)
+                                    },
+                                    (t && t.cupLoansReturnAndRefund) || "Retour + remboursement"
+                                  )
+                              )
+                            )
+                          );
+                        })
+                    )
+              )
+            ),
+          handoffOpen &&
+            e(
+              "div",
+              {
+                style: {
+                  position: "fixed",
+                  inset: 0,
+                  background: "rgba(15,23,42,0.55)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 16,
+                  zIndex: 59
+                }
+              },
+              e(
+                "section",
+                { className: "panel", style: { maxWidth: 520, width: "100%" } },
+                e(
+                  "div",
+                  { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 } },
+                  e(
+                    "h3",
+                    { style: { marginTop: 0, marginBottom: 0 } },
+                    lang === "ar" ? "تسليم النادل" : "Passation"
+                  ),
+                  e(
+                    "button",
+                    { className: "category-btn", type: "button", onClick: closeHandoffPrompt },
+                    (t && t.closeBtn) || "Fermer"
+                  )
+                ),
+                e(
+                  "p",
+                  { style: { fontSize: 13, marginTop: 10 } },
+                  lang === "ar"
+                    ? "اختر النادل القادم. سيظهر المبلغ الذي يجب تسليمه. بعد التسليم، النادل القادم يضغط (استئناف) ويدخل PIN لتأكيد الاستلام."
+                    : "Choisissez le serveur entrant. Le montant à donner sera affiché. Après remise, le serveur entrant clique (Reprendre) et saisit son PIN pour confirmer la réception."
+                ),
+                e(
+                  "form",
+                  { onSubmit: confirmHandoff, style: { display: "grid", gap: 10, marginTop: 10 } },
+                  e(
+                    "select",
+                    {
+                      value: handoffToWorkerId,
+                      onChange: (ev) => setHandoffToWorkerId(ev.target.value),
+                      style: { padding: 10, borderRadius: 10, border: "1px solid rgba(148,163,184,0.55)" }
+                    },
+                    e("option", { value: "" }, lang === "ar" ? "اختر الموظف" : "Choisir l'employé"),
+                    (users || [])
+                      .filter(
+                        (u) =>
+                          u &&
+                          u.role === "worker" &&
+                          u.posAccess !== false &&
+                          activeWorker &&
+                          u.id !== activeWorker.id
+                      )
+                      .map((u) => e("option", { key: u.id, value: u.id }, String(u.name || u.id)))
+                  ),
+                  e(
+                    "div",
+                    { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 } },
+                    e("input", {
+                      type: "password",
+                      value: handoffFromPin,
+                      onChange: (ev) => setHandoffFromPin(normalizePinValue(ev.target.value)),
+                      placeholder: lang === "ar" ? "PIN الموظف الحالي" : "PIN sortant",
+                      style: { padding: 10, borderRadius: 10, border: "1px solid rgba(148,163,184,0.55)" }
+                    }),
+                    e("input", {
+                      value: handoffFromAmount,
+                      onChange: (ev) => setHandoffFromAmount(ev.target.value),
+                      inputMode: "decimal",
+                      placeholder: lang === "ar" ? "المبلغ الذي يجب تسليمه" : "Montant à donner",
+                      style: { padding: 10, borderRadius: 10, border: "1px solid rgba(148,163,184,0.55)" }
+                    })
+                  ),
+                  handoffError &&
+                    e(
+                      "div",
+                      { style: { fontSize: 12, color: "#b91c1c" } },
+                      handoffError
+                    ),
+                  e(
+                    "div",
+                    { style: { display: "flex", gap: 8, justifyContent: "flex-end" } },
+                    e(
+                      "button",
+                      { className: "category-btn", type: "button", onClick: closeHandoffPrompt },
+                      (t && t.cancelBtn) || (lang === "ar" ? "إلغاء" : "Annuler")
+                    ),
+                    e(
+                      "button",
+                      {
+                        className: "btn-primary",
+                        type: "submit",
+                        disabled: !(handoffToWorkerId && normalizePinValue(handoffFromPin).length === 4)
+                      },
+                      lang === "ar" ? "بدء التسليم" : "Démarrer"
                     )
                   )
                 )
@@ -10711,6 +13268,27 @@ const DICTIONARY = {
             e(
               "main",
               { className: "pos-main" },
+              openCupLoanSummary && openCupLoanSummary.total > 0
+                ? e(
+                    "button",
+                    {
+                      type: "button",
+                      className: "pos-top-alert",
+                      onClick: () => setCupLoansOpen(true)
+                    },
+                    (t && t.cupLoansBannerPrefix ? t.cupLoansBannerPrefix : "Vous avez") +
+                      " " +
+                      String(openCupLoanSummary.small || 0) +
+                      " " +
+                      ((t && t.cupLoansBannerSmall) || "petits verres") +
+                      " · " +
+                      String(openCupLoanSummary.large || 0) +
+                      " " +
+                      ((t && t.cupLoansBannerLarge) || "grands verres") +
+                      " " +
+                      ((t && t.cupLoansBannerSuffix) || "dehors · Cliquez pour détails")
+                  )
+                : null,
               e(
                 "aside",
                 { className: "pos-sidebar" },
@@ -10769,6 +13347,15 @@ const DICTIONARY = {
                       onClick: () => setCalcOpen(true)
                     },
                     (lang === "ar" ? "🧮 آلة حاسبة" : "🧮 Calculatrice")
+                  ),
+                  e(
+                    "button",
+                    {
+                      type: "button",
+                      className: "pos-sidebar-pill",
+                      onClick: () => setPurchaseOpen(true)
+                    },
+                    (t && t.purchasesBtn) || (lang === "ar" ? "المشتريات" : "Achats")
                   ),
                   e(
                     "button",
@@ -10979,11 +13566,72 @@ const DICTIONARY = {
               e(
                 "section",
                 { className: "panel pos-cart-panel" },
-                e("h3", null, t.currentOrder),
+                e(
+                  "div",
+                  { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 } },
+                  e("h3", { style: { margin: 0 } }, t.currentOrder),
+                  e(
+                    "button",
+                    {
+                      type: "button",
+                      className: "category-btn",
+                      onClick: () =>
+                        shiftPaused
+                          ? setStatus({
+                              type: "err",
+                              message: t.shiftPausedBlocking || "Shift en pause."
+                            })
+                          : setCartServiceType((p) => {
+                              const next = p === "takeaway" ? "dine_in" : "takeaway";
+                              if (next !== "takeaway") setGlassCupCustomerName("");
+                              return next;
+                            })
+                    },
+                    cartServiceType === "takeaway"
+                      ? lang === "ar"
+                        ? "خارجي: نعم"
+                        : "À emporter: Oui"
+                      : lang === "ar"
+                      ? "خارجي: لا"
+                      : "À emporter: Non"
+                  )
+                ),
+                cartServiceType === "takeaway" && needsGlassCupCustomerName
+                  ? e(
+                      "div",
+                      { style: { marginTop: 8, padding: 10, borderRadius: 14, border: "1px solid rgba(148,163,184,0.55)", background: "rgba(255,255,255,0.9)" } },
+                      e(
+                        "div",
+                        { style: { fontSize: 12, fontWeight: 700, marginBottom: 6 } },
+                        (t && t.glassCupCustomerNameLabel) || "Nom du client (verre)"
+                      ),
+                      e("input", {
+                        value: glassCupCustomerName,
+                        onChange: (ev) => setGlassCupCustomerName(ev.target.value),
+                        inputMode: "text",
+                        autoComplete: "name",
+                        enterKeyHint: "done",
+                        autoCapitalize: "words",
+                        placeholder: (t && t.glassCupCustomerNamePlaceholder) || "Nom du client",
+                        style: { width: "100%", padding: 10, fontSize: 14 }
+                      })
+                    )
+                  : null,
                 cart.length === 0
                   ? e("div", { className: "pos-cart-empty" }, t.cartEmpty)
-                  : cart.map((line) =>
-                      e(
+                  : cart.map((line) => {
+                      const p = (menu || []).find((m) => m && m.id === line.id) || null;
+                      const isDrink =
+                        cartServiceType === "takeaway" &&
+                        !!(p && (p.category === "Hot Drinks" || p.category === "Cold Drinks")) ||
+                        (cartServiceType === "takeaway" &&
+                          (String(line.id || "") === "other_water" ||
+                            String(line.id || "").startsWith("soda_") ||
+                            String(line.id || "").startsWith("water_") ||
+                            String(line.id || "").startsWith("juice_") ||
+                            String(line.id || "").startsWith("tea_")));
+
+                      return e(
                         "div",
                         { className: "cart-item" + ((cartEnterKeys && cartEnterKeys[line.key]) ? " cart-item--enter" : ""), key: line.key },
                         e(
@@ -10999,7 +13647,46 @@ const DICTIONARY = {
                             "span",
                             { className: "cart-item-meta" },
                             `${line.qty} x ${line.price.toFixed(2)} DHS`
-                          )
+                          ),
+                          isDrink &&
+                            e(
+                              "div",
+                              { style: { display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap" } },
+                              e(
+                                "select",
+                                {
+                                  value: line.containerType === "glass" ? "glass" : "disposable",
+                                  onChange: (ev) => {
+                                    const v = ev && ev.target ? ev.target.value : "disposable";
+                                    setCart((prev) =>
+                                      (prev || []).map((l) =>
+                                        l && l.key === line.key ? { ...l, containerType: v } : l
+                                      )
+                                    );
+                                  },
+                                  style: { padding: 6, borderRadius: 10, border: "1px solid rgba(148,163,184,0.55)", fontSize: 12 }
+                                },
+                                e("option", { value: "disposable" }, lang === "ar" ? "بلاستيك" : "Jetable"),
+                                e("option", { value: "glass" }, lang === "ar" ? "زجاج" : "Verre")
+                              ),
+                              e(
+                                "select",
+                                {
+                                  value: line.cupSize === "large" ? "large" : "small",
+                                  onChange: (ev) => {
+                                    const v = ev && ev.target ? ev.target.value : "small";
+                                    setCart((prev) =>
+                                      (prev || []).map((l) =>
+                                        l && l.key === line.key ? { ...l, cupSize: v } : l
+                                      )
+                                    );
+                                  },
+                                  style: { padding: 6, borderRadius: 10, border: "1px solid rgba(148,163,184,0.55)", fontSize: 12 }
+                                },
+                                e("option", { value: "small" }, lang === "ar" ? "صغير" : "Petit"),
+                                e("option", { value: "large" }, lang === "ar" ? "كبير" : "Grand")
+                              )
+                            )
                         ),
                         e(
                           "div",
@@ -11022,8 +13709,8 @@ const DICTIONARY = {
                             "+"
                           )
                         )
-                      )
-                    ),
+                      );
+                    }),
                 cart.length > 0 &&
                   e(
                     "div",
@@ -11040,6 +13727,13 @@ const DICTIONARY = {
                       e("span", null, t.tax),
                       e("span", null, `${totals.tax.toFixed(2)} DHS`)
                     ),
+                    totals.cupFee > 0 &&
+                      e(
+                        "div",
+                        { className: "summary-row" },
+                        e("span", null, (t && t.disposableCupFeeLabel) || (lang === "ar" ? "رسوم كوب" : "Gobelet")),
+                        e("span", null, `+${Number(totals.cupFee || 0).toFixed(2)} DHS`)
+                      ),
                     e(
                       "div",
                       { className: "summary-row total" },
@@ -11053,7 +13747,7 @@ const DICTIONARY = {
                     {
                       className: "btn-primary",
                       style: { marginTop: 10, width: "100%" },
-                      disabled: submitting,
+                      disabled: submitting || (needsGlassCupCustomerName && !String(glassCupCustomerName || "").trim()),
                       onClick: handleSubmitOrder
                     },
                     submitting ? t.placingOrder : "Encaisser"
@@ -11192,7 +13886,12 @@ const DICTIONARY = {
                                 { style: { fontSize: 12, fontWeight: 700 } },
                                 (t.orderLabel || "Commande") +
                                   " " +
-                                  (o.ticketCode || ("#" + displayOrderNumber(o.id)))
+                                  (o.ticketCode || ("#" + displayOrderNumber(o.id))) +
+                                  (o && o.serviceType === "takeaway"
+                                    ? lang === "ar"
+                                      ? " · خارجي"
+                                      : " · À emporter"
+                                    : "")
                               ),
                               e(
                                 "div",
@@ -11294,29 +13993,25 @@ const DICTIONARY = {
               "main",
               null,
               (() => {
+                if (!canSeeManager()) {
+                  return e(
+                    "section",
+                    { className: "panel" },
+                    e("p", { style: { fontSize: 12 } }, lang === "ar" ? "مدير فقط" : "Manager seulement."),
+                    e(
+                      "button",
+                      { className: "btn-primary", type: "button", onClick: openManagerGate },
+                      lang === "ar" ? "تسجيل الدخول" : "Se connecter"
+                    )
+                  );
+                }
                 const canPurchase =
-                  !!(adminUser && (adminUser.role === "admin" || adminUser.role === "manager")) ||
-                  !!(activeWorker && activeWorker.inventoryAccess === true);
+                  !!activeShift &&
+                  (!!(adminUser && adminUser.role === "admin") ||
+                    !!activeWorker);
 
-                const shiftRec =
-                  activeShift && Array.isArray(shifts)
-                    ? shifts.find((s) => s && s.id === activeShift.id)
-                    : null;
-                const currentExpectedCash =
-                  shiftRec && typeof shiftRec.expectedCash === "number"
-                    ? shiftRec.expectedCash
-                    : activeShift && typeof activeShift.expectedCash === "number"
-                    ? activeShift.expectedCash
-                    : 0;
-
-                const lastClosed = (shifts || [])
-                  .filter((s) => s && s.status === "closed")
-                  .slice()
-                  .sort((a, b) => shiftTimeMs(b) - shiftTimeMs(a))[0];
-                const lastClosedExpected =
-                  lastClosed && typeof lastClosed.expectedCash === "number"
-                    ? lastClosed.expectedCash
-                    : 0;
+                const managerUser = (users || []).find((u) => u && u.role === "manager") || null;
+                const managerAdminUser = (adminUser && adminUser.role === "admin") ? adminUser : managerUser;
 
                 const lowStock = Object.values(inventory || {})
                   .filter((x) => x)
@@ -11329,6 +14024,69 @@ const DICTIONARY = {
                   .filter((x) => x.missing > 0)
                   .sort((a, b) => b.missing - a.missing);
 
+                function money(v) {
+                  return `${Number(v || 0).toFixed(2)} DHS`;
+                }
+
+                function shiftDetails(shiftId) {
+                  const sid = String(shiftId || "");
+                  if (!sid) return null;
+
+                  const shiftItem =
+                    (shifts || []).find((s) => s && s.id === sid) ||
+                    (activeShift && activeShift.id === sid ? activeShift : null);
+
+                  const relevantOrders = (orders || []).filter(
+                    (o) =>
+                      o &&
+                      o.shiftId === sid &&
+                      (o.status === "paid" || o.status === "unpaid" || o.status === "debt")
+                  );
+                  const paidOrders = relevantOrders.filter((o) => o && o.status === "paid");
+                  const unpaidOrders = relevantOrders.filter((o) => o && o.status !== "paid");
+
+                  const paidRevenue = paidOrders.reduce(
+                    (sum, o) => sum + (Number((o.totals && o.totals.total) || 0) || 0),
+                    0
+                  );
+                  const unpaidTotal = unpaidOrders.reduce(
+                    (sum, o) => sum + (Number((o.totals && o.totals.total) || 0) || 0),
+                    0
+                  );
+
+                  const purchasesLogs = (inventoryLogs || []).filter(
+                    (l) => l && l.shiftId === sid && l.reason === "purchase"
+                  );
+                  const purchasesTotal = purchasesLogs.reduce(
+                    (sum, l) => sum + (Number(l.totalCost || 0) || 0),
+                    0
+                  );
+
+                  const openingFloatCash =
+                    shiftItem && typeof shiftItem.openingFloatCash === "number"
+                      ? shiftItem.openingFloatCash
+                      : 0;
+
+                  return {
+                    shift: shiftItem,
+                    openingFloatCash,
+                    paidRevenue,
+                    paidCount: paidOrders.length,
+                    unpaidTotal,
+                    unpaidCount: unpaidOrders.length,
+                    purchasesTotal
+                  };
+                }
+
+                const currentShiftId = activeShift ? activeShift.id : "";
+                const currentDetails = currentShiftId ? shiftDetails(currentShiftId) : null;
+                const previousShifts = (shifts || [])
+                  .filter((s) => s && (s.status === "closed" || s.closedAt))
+                  .slice()
+                  .sort((a, b) => shiftTimeMs(b) - shiftTimeMs(a));
+                const selectedShiftId = managerSelectedShiftId || (previousShifts[0] && previousShifts[0].id) || "";
+                const selectedDetails = selectedShiftId ? shiftDetails(selectedShiftId) : null;
+
                 return e(
                   React.Fragment,
                   null,
@@ -11336,71 +14094,335 @@ const DICTIONARY = {
                     "section",
                     { className: "panel" },
                     e(
-                      "div",
-                      {
-                        style: {
-                          display: "grid",
-                          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                          gap: 10
-                        }
-                      },
-                      e(
-                        "div",
-                        {
-                          style: {
-                            borderRadius: 14,
-                            border: "1px solid rgba(148,163,184,0.55)",
-                            background: "rgba(255,255,255,0.9)",
-                            padding: 12
-                          }
-                        },
-                        e(
+                      "h3",
+                      { style: { marginTop: 0 } },
+                      lang === "ar" ? "تفاصيل الشيفت الحالي" : "Détails du shift en cours"
+                    ),
+                    !activeShift || !currentDetails
+                      ? e(
                           "div",
-                          { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
-                          lang === "ar" ? "النقد المتوقع (الحالي)" : "Cash attendu (shift en cours)"
-                        ),
-                        e(
+                          { style: { fontSize: 12, color: "#64748b" } },
+                          lang === "ar" ? "لا يوجد شيفت مفتوح" : "Aucun shift ouvert."
+                        )
+                      : e(
                           "div",
-                          { style: { fontSize: 18, fontWeight: 900, marginTop: 4 } },
-                          `${Number(currentExpectedCash || 0).toFixed(2)} DHS`
-                        ),
-                        activeShift
-                          ? e(
+                          {
+                            style: {
+                              display: "grid",
+                              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                              gap: 10
+                            }
+                          },
+                          e(
+                            "div",
+                            {
+                              style: {
+                                borderRadius: 14,
+                                border: "1px solid rgba(148,163,184,0.55)",
+                                background: "rgba(255,255,255,0.9)",
+                                padding: 12
+                              }
+                            },
+                            e(
+                              "div",
+                              { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
+                              lang === "ar" ? "الصندوق (بداية)" : "Fond (début)"
+                            ),
+                            e(
+                              "div",
+                              { style: { fontSize: 18, fontWeight: 900, marginTop: 4 } },
+                              money(currentDetails.openingFloatCash)
+                            )
+                          ),
+                          e(
+                            "div",
+                            {
+                              style: {
+                                borderRadius: 14,
+                                border: "1px solid rgba(148,163,184,0.55)",
+                                background: "rgba(255,255,255,0.9)",
+                                padding: 12
+                              }
+                            },
+                            e(
+                              "div",
+                              { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
+                              lang === "ar" ? "المداخيل (مدفوع)" : "Revenu commandes (payé)"
+                            ),
+                            e(
+                              "div",
+                              { style: { fontSize: 18, fontWeight: 900, marginTop: 4 } },
+                              money(currentDetails.paidRevenue)
+                            ),
+                            e(
                               "div",
                               { style: { fontSize: 11, color: "#64748b", marginTop: 2 } },
-                              String(activeShift.id || "")
+                              (lang === "ar" ? "عدد" : "Nb") + ": " + String(currentDetails.paidCount)
                             )
-                          : null
-                      ),
-                      e(
-                        "div",
-                        {
-                          style: {
-                            borderRadius: 14,
-                            border: "1px solid rgba(148,163,184,0.55)",
-                            background: "rgba(255,255,255,0.9)",
-                            padding: 12
-                          }
-                        },
-                        e(
-                          "div",
-                          { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
-                          lang === "ar" ? "النقد المتوقع (آخر نوبة مغلقة)" : "Cash attendu (dernier shift fermé)"
-                        ),
-                        e(
-                          "div",
-                          { style: { fontSize: 18, fontWeight: 900, marginTop: 4 } },
-                          `${Number(lastClosedExpected || 0).toFixed(2)} DHS`
-                        ),
-                        lastClosed
-                          ? e(
+                          ),
+                          e(
+                            "div",
+                            {
+                              style: {
+                                borderRadius: 14,
+                                border: "1px solid rgba(148,163,184,0.55)",
+                                background: "rgba(255,255,255,0.9)",
+                                padding: 12
+                              }
+                            },
+                            e(
+                              "div",
+                              { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
+                              lang === "ar" ? "غير مدفوع" : "Impayé"
+                            ),
+                            e(
+                              "div",
+                              { style: { fontSize: 18, fontWeight: 900, marginTop: 4 } },
+                              money(currentDetails.unpaidTotal)
+                            ),
+                            e(
                               "div",
                               { style: { fontSize: 11, color: "#64748b", marginTop: 2 } },
-                              String(lastClosed.id || "")
+                              (lang === "ar" ? "عدد" : "Nb") + ": " + String(currentDetails.unpaidCount)
                             )
-                          : null
-                      )
-                    )
+                          ),
+                          e(
+                            "div",
+                            {
+                              style: {
+                                borderRadius: 14,
+                                border: "1px solid rgba(148,163,184,0.55)",
+                                background: "rgba(255,255,255,0.9)",
+                                padding: 12
+                              }
+                            },
+                            e(
+                              "div",
+                              { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
+                              lang === "ar" ? "المشتريات (الشيفت)" : "Achats (shift)"
+                            ),
+                            e(
+                              "div",
+                              { style: { fontSize: 18, fontWeight: 900, marginTop: 4 } },
+                              money(currentDetails.purchasesTotal)
+                            )
+                          )
+                        )
+                  ),
+                  e(
+                    "section",
+                    { className: "panel" },
+                    e(
+                      "h3",
+                      { style: { marginTop: 0 } },
+                      lang === "ar" ? "تذاكر الشيفت الحالي" : "Tickets du shift en cours"
+                    ),
+                    !activeShift
+                      ? e(
+                          "div",
+                          { style: { fontSize: 12, color: "#64748b" } },
+                          lang === "ar" ? "لا يوجد شيفت مفتوح" : "Aucun shift ouvert."
+                        )
+                      : e(AdminOrdersTickets, {
+                          orders,
+                          users,
+                          lang,
+                          t,
+                          activeShiftId: activeShift ? activeShift.id : null,
+                          shifts,
+                          onMarkPaid: null,
+                          exitingOrderIds
+                        })
+                  ),
+                  e(
+                    "section",
+                    { className: "panel" },
+                    e(
+                      "h3",
+                      { style: { marginTop: 0 } },
+                      lang === "ar" ? "الشيفتات السابقة" : "Shifts précédents"
+                    ),
+                    previousShifts.length === 0
+                      ? e(
+                          "div",
+                          { style: { fontSize: 12, color: "#64748b" } },
+                          lang === "ar" ? "لا توجد شيفتات" : "Aucun shift."
+                        )
+                      : e(
+                          "div",
+                          {
+                            style: {
+                              display: "grid",
+                              gridTemplateColumns: isPhone
+                                ? "1fr"
+                                : "minmax(220px, 320px) minmax(0, 1fr)",
+                              gap: 10,
+                              alignItems: "start"
+                            }
+                          },
+                          e(
+                            "div",
+                            { style: { display: "grid", gap: 8 } },
+                            previousShifts.slice(0, 30).map((s) => {
+                              const active = s && s.id === selectedShiftId;
+                              return e(
+                                "button",
+                                {
+                                  key: s.id,
+                                  type: "button",
+                                  className: "category-btn",
+                                  onClick: () => setManagerSelectedShiftId(s.id),
+                                  style: {
+                                    textAlign: "left",
+                                    padding: 10,
+                                    borderRadius: 12,
+                                    background: active
+                                      ? "rgba(249,115,22,0.16)"
+                                      : "rgba(255,255,255,0.85)",
+                                    border: active
+                                      ? "1px solid rgba(249,115,22,0.55)"
+                                      : "1px solid rgba(148,163,184,0.45)",
+                                    fontWeight: active ? 900 : 700
+                                  }
+                                },
+                                String(s.date || "") +
+                                  "-" +
+                                  String(s.period || "") +
+                                  " (" +
+                                  String(s.status || "") +
+                                  ")"
+                              );
+                            })
+                          ),
+                          !selectedDetails
+                            ? e(
+                                "div",
+                                { style: { fontSize: 12, color: "#64748b" } },
+                                lang === "ar" ? "اختر شيفت" : "Choisir un shift."
+                              )
+                            : e(
+                                "div",
+                                {
+                                  style: {
+                                    borderRadius: 14,
+                                    border: "1px solid rgba(148,163,184,0.55)",
+                                    background: "rgba(255,255,255,0.92)",
+                                    padding: 12,
+                                    display: "grid",
+                                    gap: 10
+                                  }
+                                },
+                                e(
+                                  "div",
+                                  { style: { fontWeight: 900 } },
+                                  String((selectedDetails.shift && selectedDetails.shift.id) || "")
+                                ),
+                                e(
+                                  "div",
+                                  {
+                                    style: {
+                                      display: "grid",
+                                      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                                      gap: 10
+                                    }
+                                  },
+                                  e(
+                                    "div",
+                                    {
+                                      style: {
+                                        borderRadius: 14,
+                                        border: "1px solid rgba(148,163,184,0.45)",
+                                        background: "rgba(248,250,252,0.9)",
+                                        padding: 10
+                                      }
+                                    },
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
+                                      lang === "ar" ? "الصندوق (بداية)" : "Fond (début)"
+                                    ),
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 16, fontWeight: 900, marginTop: 2 } },
+                                      money(selectedDetails.openingFloatCash)
+                                    )
+                                  ),
+                                  e(
+                                    "div",
+                                    {
+                                      style: {
+                                        borderRadius: 14,
+                                        border: "1px solid rgba(148,163,184,0.45)",
+                                        background: "rgba(248,250,252,0.9)",
+                                        padding: 10
+                                      }
+                                    },
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
+                                      lang === "ar" ? "المداخيل (مدفوع)" : "Revenu commandes (payé)"
+                                    ),
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 16, fontWeight: 900, marginTop: 2 } },
+                                      money(selectedDetails.paidRevenue)
+                                    ),
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 11, color: "#64748b", marginTop: 2 } },
+                                      (lang === "ar" ? "عدد" : "Nb") + ": " + String(selectedDetails.paidCount)
+                                    )
+                                  ),
+                                  e(
+                                    "div",
+                                    {
+                                      style: {
+                                        borderRadius: 14,
+                                        border: "1px solid rgba(148,163,184,0.45)",
+                                        background: "rgba(248,250,252,0.9)",
+                                        padding: 10
+                                      }
+                                    },
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
+                                      lang === "ar" ? "غير مدفوع" : "Impayé"
+                                    ),
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 16, fontWeight: 900, marginTop: 2 } },
+                                      money(selectedDetails.unpaidTotal)
+                                    ),
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 11, color: "#64748b", marginTop: 2 } },
+                                      (lang === "ar" ? "عدد" : "Nb") + ": " + String(selectedDetails.unpaidCount)
+                                    )
+                                  ),
+                                  e(
+                                    "div",
+                                    {
+                                      style: {
+                                        borderRadius: 14,
+                                        border: "1px solid rgba(148,163,184,0.45)",
+                                        background: "rgba(248,250,252,0.9)",
+                                        padding: 10
+                                      }
+                                    },
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
+                                      lang === "ar" ? "المشتريات (الشيفت)" : "Achats (shift)"
+                                    ),
+                                    e(
+                                      "div",
+                                      { style: { fontSize: 16, fontWeight: 900, marginTop: 2 } },
+                                      money(selectedDetails.purchasesTotal)
+                                    )
+                                  )
+                                )
+                              )
+                        )
                   ),
                   e(
                     "section",
@@ -11454,53 +14476,24 @@ const DICTIONARY = {
                   e(
                     "section",
                     { className: "panel" },
-                    e(WaiterPurchasesPanel, {
+                    e(WaiterPurchasesHub, {
                       inventory,
                       t,
                       lang,
                       activeShift,
                       activeWorker,
+                      adminUser: managerAdminUser,
                       shifts,
                       onPurchase: handleInventoryPurchase,
+                      onPurchaseInvoice: handleInventoryPurchaseInvoice,
+                      stockCountRequests,
+                      onSubmitStockCountRequest: handleSubmitStockCountRequest,
                       canPurchase: canPurchase
                     })
                   )
                 );
               })(),
-              e(
-                "section",
-                { className: "panel" },
-                e(
-                  "div",
-                  null,
-                  e(
-                    "h3",
-                    { style: { marginTop: 0 } },
-                    t.shiftSummaryTitle || "Shift"
-                  ),
-                  activeShift
-                    ? e(
-                        "div",
-                        { style: { fontSize: 12 } },
-                        "ID: ",
-                        activeShift.id,
-                        " | statut: ",
-                        shiftPaused ? "paused" : "active",
-                        activeWorker ? " | serveur: " + activeWorker.name : ""
-                      )
-                    : e(
-                        "div",
-                        { style: { fontSize: 12 } },
-                        t.shiftSummaryNone || "Aucun shift ouvert."
-                      )
-                )
-              ),
-              e(
-                "section",
-                { className: "panel" },
-                e("h3", null, "Vue Manager / Shifts"),
-                e(ManagerStats, { shifts, orders, inventoryLogs, inventory })
-              )
+              null
             ),
           view === "admin" &&
             e(
@@ -11792,7 +14785,13 @@ const DICTIONARY = {
 
                                 const purchasesCost = selectedShiftId
                                   ? (inventoryLogs || [])
-                                      .filter((l) => l && l.shiftId === selectedShiftId && l.reason === "purchase")
+                                      .filter(
+                                        (l) =>
+                                          l &&
+                                          l.shiftId === selectedShiftId &&
+                                          l.reason === "purchase" &&
+                                          l.deductFromExpectedCash !== false
+                                      )
                                       .reduce((s, l) => s + (typeof l.totalCost === "number" ? l.totalCost : 0), 0)
                                   : 0;
 
@@ -11872,7 +14871,7 @@ const DICTIONARY = {
                                       ),
                                       e(
                                         "div",
-                                        { style: { marginLeft: "auto", minWidth: 220, width: "min(520px, 100%)" } },
+                                        { style: { marginLeft: "auto", minWidth: isPhone ? 0 : 220, width: "min(520px, 100%)" } },
                                         e(
                                           "select",
                                           {
@@ -12317,6 +15316,27 @@ const DICTIONARY = {
                                 if (mods.eggCount) {
                                   parts.push(`${t.eggsInLine}: ${mods.eggCount}`);
                                 }
+                                if (line && (line.containerType || line.cupSize)) {
+                                  const typeLabel =
+                                    line.containerType === "glass"
+                                      ? lang === "ar"
+                                        ? "زجاج"
+                                        : "Verre"
+                                      : lang === "ar"
+                                      ? "بلاستيك"
+                                      : "Jetable";
+                                  const sizeLabel =
+                                    line.cupSize === "large"
+                                      ? lang === "ar"
+                                        ? "كبير"
+                                        : "Grand"
+                                      : lang === "ar"
+                                      ? "صغير"
+                                      : "Petit";
+                                  parts.push(
+                                    (lang === "ar" ? "كأس" : "Gobelet") + ": " + typeLabel + " " + sizeLabel
+                                  );
+                                }
                                 return parts.length ? "(" + parts.join(", ") + ")" : "";
                               }
                               servedOrders.forEach((o) => {
@@ -12407,7 +15427,8 @@ const DICTIONARY = {
                             e(AdminMenuEditor, {
                               menu: menu,
                               onUpdateMenuItem: handleUpdateMenuItem,
-                              onSaveMenu: handleSaveMenu
+                              onSaveMenu: handleSaveMenu,
+                              isPhone
                             })
                           )
                         : adminSection === "inventory"
@@ -12418,9 +15439,19 @@ const DICTIONARY = {
                             e(AdminInventoryEditor, {
                               inventory,
                               t,
+                              isPhone,
                               onAdjust: handleInventoryAdjust,
                               onUpdate: handleInventoryUpdate,
                               lang
+                            }),
+                            e("div", { style: { marginTop: 14 } }),
+                            e(AdminStockCountRequestsPanel, {
+                              inventory,
+                              users,
+                              stockCountRequests,
+                              lang,
+                              isPhone,
+                              onCreateRequest: handleCreateStockCountRequest
                             }),
                             e("div", { style: { marginTop: 14 } }),
                             e(AdminInventoryStockDetails, {
@@ -12428,7 +15459,8 @@ const DICTIONARY = {
                               inventoryLogs,
                               shifts,
                               t,
-                              lang
+                              lang,
+                              isPhone
                             }),
                             e("div", { style: { marginTop: 14 } }),
                             e(AdminInventoryPurchasesLog, {
@@ -12436,7 +15468,16 @@ const DICTIONARY = {
                               inventoryLogs,
                               users,
                               t,
-                              lang
+                              lang,
+                              isPhone
+                            }),
+                            e("div", { style: { marginTop: 14 } }),
+                            e(AdminPurchaseInvoicesLog, {
+                              purchaseInvoices,
+                              inventory,
+                              users,
+                              lang,
+                              isPhone
                             })
                           )
                         : adminSection === "reports"
@@ -12451,7 +15492,8 @@ const DICTIONARY = {
                               clientDebts,
                               inventory,
                               t,
-                              lang
+                              lang,
+                              isPhone
                             })
                           )
                         : adminSection === "staff"
@@ -12464,11 +15506,12 @@ const DICTIONARY = {
                               advances,
                               lang,
                               t,
+                              isPhone,
                               onUpsertUser: handleUpsertUser,
                               onDeleteUser: handleDeleteUser,
                               onChangePin: handleChangeUserPin,
                               onApproveAdvance: handleApproveAdvance,
-                              onRejectAdvance: handleRejectAdvance
+                              onRejectAdvance: handleRejectAdvance,
                             })
                           )
                         : adminSection === "debts"
