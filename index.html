@@ -894,6 +894,16 @@
           image: "Petit-déjeuner au croissant.jpg",
           modifiers: []
         },
+        {
+          id: "breakfast_special_set",
+          name: "Special Breakfast Set",
+          nameFr: "Petit déjeuner spécial",
+          nameAr: "فطور خاص",
+          price: 0.0,
+          category: "Breakfast",
+          image: "petit déjeunée spécial.jpg",
+          modifiers: []
+        },
 
         {
           id: "coffee",
@@ -1214,6 +1224,7 @@
       }
 
       const INITIAL_CATEGORIES = [
+        "Favorites",
         "Breakfast",
         "Hot Drinks",
         "Cold Drinks",
@@ -1962,6 +1973,7 @@ const DICTIONARY = {
           appTitle: "Café Halab POS",
           uiSubtitle: "Aperçu UI · pas encore de backend",
           all: "Tout",
+          catFavorites: "Favoris",
           catBreakfast: "Petit Déjeuner",
           catHot: "Boissons Chaudes",
           catCold: "Boissons Froides",
@@ -2121,6 +2133,7 @@ const DICTIONARY = {
           appTitle: "نظام مقهى حلب",
           uiSubtitle: "واجهة فقط · بدون خلفية بعد",
           all: "الكل",
+          catFavorites: "المفضلة",
           catBreakfast: "فطور",
           catHot: "مشروبات ساخنة",
           catCold: "مشروبات باردة",
@@ -7109,7 +7122,12 @@ const DICTIONARY = {
                         React.createElement(
                           "div",
                           { style: { fontWeight: 700 } },
-                          ((t && t.orderLabel) || "Commande") + " #" + displayOrderNumber(o.id)
+                          (() => {
+                            const code = String(o.ticketCode || ("#" + displayOrderNumber(o.id)));
+                            const nm = String(o.orderName || "").trim();
+                            const namePart = nm && nm !== code ? nm + " · " : "";
+                            return ((t && t.orderLabel) || "Commande") + " " + namePart + code;
+                          })()
                         ),
                         React.createElement(
                           "div",
@@ -7296,6 +7314,28 @@ const DICTIONARY = {
           if (mods.eggCount) {
             parts.push(`${t.eggsInLine}: ${mods.eggCount}`);
           }
+          if (mods.sbDrinkId || mods.sbDrinkName || mods.sbDrinkNameFr || mods.sbDrinkNameAr) {
+            const sbDrinkLabel =
+              lang === "ar"
+                ? mods.sbDrinkNameAr || mods.sbDrinkName || mods.sbDrinkNameFr || ""
+                : mods.sbDrinkNameFr || mods.sbDrinkName || mods.sbDrinkNameAr || "";
+            if (sbDrinkLabel) {
+              parts.push((lang === "ar" ? "مشروب" : "Boisson") + ": " + sbDrinkLabel);
+            }
+          }
+          if (mods.sbEggCount) {
+            parts.push((lang === "ar" ? "بيض" : "Oeufs") + ": " + String(mods.sbEggCount));
+          }
+          if (mods.sbKashir) parts.push(lang === "ar" ? "كاشير" : "Kashir");
+          if (mods.sbFromage) parts.push(lang === "ar" ? "جبن" : "Fromage");
+          if (mods.sbWater) parts.push(lang === "ar" ? "ماء" : "Eau");
+          if (mods.sbCroissant) parts.push(lang === "ar" ? "كرواسون" : "Croissant");
+          if (mods.sbBreakfastSet) parts.push(lang === "ar" ? "باك الفطور (+5)" : "Breakfast set (+5)");
+          if (mods.sbCheesePieces) {
+            parts.push(
+              (lang === "ar" ? "قطع الجبن" : "Fromage pièces") + ": " + String(mods.sbCheesePieces)
+            );
+          }
           if (line && (line.containerType || line.cupSize)) {
             const typeLabel =
               line.containerType === "glass"
@@ -7411,9 +7451,12 @@ const DICTIONARY = {
                     React.createElement(
                       "div",
                       { style: { fontSize: 12, fontWeight: 700 } },
-                      (t && t.orderLabel ? t.orderLabel : "Commande") +
-                        " " +
-                        String(o.ticketCode || (o.id ? "#" + o.id : "")) +
+                      (() => {
+                        const code = String(o.ticketCode || (o.id ? "#" + o.id : ""));
+                        const nm = String(o.orderName || "").trim();
+                        const namePart = nm && nm !== code ? nm + " · " : "";
+                        return (t && t.orderLabel ? t.orderLabel : "Commande") + " " + namePart + code;
+                      })() +
                         (o && o.serviceType === "takeaway"
                           ? lang === "ar"
                             ? " · خارجي"
@@ -7544,12 +7587,16 @@ const DICTIONARY = {
                       React.createElement(
                         "div",
                         { style: { fontWeight: 800 } },
-                        String(o.ticketCode || (o.id ? "#" + o.id : ""))
+                        (() => {
+                          const code = String(o.ticketCode || (o.id ? "#" + o.id : ""));
+                          const nm = String(o.orderName || "").trim();
+                          return nm && nm !== code ? nm : code;
+                        })()
                       ),
                       React.createElement(
                         "div",
                         { style: { fontSize: 11, color: "#64748b" } },
-                        "#" + displayOrderNumber(o.id)
+                        String(o.ticketCode || ("#" + displayOrderNumber(o.id)))
                       ),
                       React.createElement(
                         "div",
@@ -7634,21 +7681,106 @@ const DICTIONARY = {
         );
       }
 
-      function AdminMenuEditor({ menu, onUpdateMenuItem, onSaveMenu, isPhone }) {
-        const [selectedId, setSelectedId] = React.useState(menu[0]?.id || null);
+      function AdminMenuEditor({ menu, onUpdateMenuItem, onAddMenuItem, onSaveMenu, isPhone }) {
+        const [selectedId, setSelectedId] = React.useState((menu && menu[0] && menu[0].id) || "");
+        const [newNameFr, setNewNameFr] = React.useState("");
+        const [newNameAr, setNewNameAr] = React.useState("");
+        const [newPrice, setNewPrice] = React.useState("");
+        const [newCategory, setNewCategory] = React.useState("Breakfast");
+        const [newImage, setNewImage] = React.useState("");
+        const [newError, setNewError] = React.useState(null);
 
-        if (!selectedId) {
-          return React.createElement(
-            "p",
-            { style: { fontSize: 12 } },
-            "Aucun article."
-          );
-        }
+        React.useEffect(() => {
+          const list = Array.isArray(menu) ? menu : [];
+          if (!list.length) {
+            if (selectedId) setSelectedId("");
+            return;
+          }
+          if (!selectedId) {
+            setSelectedId(list[0].id);
+            return;
+          }
+          const ok = list.some((m) => m && m.id === selectedId);
+          if (!ok) setSelectedId(list[0].id);
+        }, [menu]);
 
-        const item = menu.find((m) => m.id === selectedId);
+        const item = selectedId ? (menu || []).find((m) => m && m.id === selectedId) : null;
 
         function handleChange(field, value) {
           onUpdateMenuItem(selectedId, { [field]: value });
+        }
+
+        function handleNewImageFile(ev) {
+          try {
+            const file = ev && ev.target && ev.target.files ? ev.target.files[0] : null;
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              try {
+                setNewImage(String(reader.result || ""));
+              } catch (e) {}
+            };
+            reader.readAsDataURL(file);
+          } catch (e) {}
+        }
+
+        function handleEditImageFile(ev) {
+          try {
+            if (!item || !item.id) return;
+            const file = ev && ev.target && ev.target.files ? ev.target.files[0] : null;
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+              try {
+                onUpdateMenuItem(item.id, { image: String(reader.result || "") });
+              } catch (e) {}
+            };
+            reader.readAsDataURL(file);
+          } catch (e) {}
+        }
+
+        function addNewItem(ev) {
+          if (ev && ev.preventDefault) ev.preventDefault();
+          setNewError(null);
+          const nameFr = String(newNameFr || "").trim();
+          const nameAr = String(newNameAr || "").trim();
+          const name = nameFr || nameAr;
+          if (!name) {
+            setNewError("Nom requis.");
+            return;
+          }
+          const priceNum = parseFloat(String(newPrice || "").trim());
+          if (!Number.isFinite(priceNum) || priceNum < 0) {
+            setNewError("Prix invalide.");
+            return;
+          }
+          const cat = String(newCategory || "").trim() || "Breakfast";
+
+          let id = makeId("menu");
+          try {
+            const list = Array.isArray(menu) ? menu : [];
+            while (list.some((m) => m && m.id === id)) {
+              id = makeId("menu");
+            }
+          } catch (e) {}
+
+          const created = {
+            id,
+            name,
+            nameFr: nameFr || name,
+            nameAr: nameAr || "",
+            price: Number(priceNum || 0) || 0,
+            category: cat,
+            image: String(newImage || ""),
+            modifiers: []
+          };
+          if (onAddMenuItem) onAddMenuItem(created);
+          setSelectedId(id);
+          setNewNameFr("");
+          setNewNameAr("");
+          setNewPrice("");
+          setNewCategory("Breakfast");
+          setNewImage("");
         }
 
         return React.createElement(
@@ -7656,11 +7788,153 @@ const DICTIONARY = {
           {
             style: {
               display: "grid",
-              gridTemplateColumns: isPhone ? "1fr" : "minmax(0, 1.4fr) minmax(0, 2fr)",
               gap: 14,
               alignItems: "flex-start"
             }
           },
+          React.createElement(
+            "div",
+            {
+              style: {
+                fontSize: 12,
+                padding: 10,
+                borderRadius: 12,
+                background: "linear-gradient(135deg, rgba(255,255,255,0.98), rgba(224,231,255,0.72))",
+                border: "1px solid rgba(148,163,184,0.5)",
+                boxShadow: "0 10px 24px rgba(15,23,42,0.10)"
+              }
+            },
+            React.createElement(
+              "div",
+              { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } },
+              React.createElement("h4", { style: { margin: 0 } }, "Ajouter un article"),
+              React.createElement(
+                "button",
+                {
+                  type: "button",
+                  className: "category-btn",
+                  onClick: () => {
+                    setNewNameFr("");
+                    setNewNameAr("");
+                    setNewPrice("");
+                    setNewCategory("Breakfast");
+                    setNewImage("");
+                    setNewError(null);
+                  }
+                },
+                "Réinitialiser"
+              )
+            ),
+            React.createElement(
+              "form",
+              { onSubmit: addNewItem, style: { display: "grid", gap: 10, marginTop: 10 } },
+              React.createElement(
+                "div",
+                { style: { display: "grid", gridTemplateColumns: isPhone ? "1fr" : "1fr 1fr", gap: 10 } },
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement("div", { style: { fontWeight: 600, marginBottom: 2 } }, "Nom FR"),
+                  React.createElement("input", {
+                    value: newNameFr,
+                    onChange: (e) => setNewNameFr(e.target.value),
+                    style: { width: "100%", padding: 8, fontSize: 12 }
+                  })
+                ),
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement("div", { style: { fontWeight: 600, marginBottom: 2 } }, "Nom AR"),
+                  React.createElement("input", {
+                    value: newNameAr,
+                    onChange: (e) => setNewNameAr(e.target.value),
+                    style: { width: "100%", padding: 8, fontSize: 12 }
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { style: { display: "grid", gridTemplateColumns: isPhone ? "1fr" : "1fr 1fr", gap: 10 } },
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement("div", { style: { fontWeight: 600, marginBottom: 2 } }, "Prix (DHS)"),
+                  React.createElement("input", {
+                    type: "number",
+                    inputMode: "decimal",
+                    value: newPrice,
+                    onChange: (e) => setNewPrice(e.target.value),
+                    style: { width: "100%", padding: 8, fontSize: 12 }
+                  })
+                ),
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement("div", { style: { fontWeight: 600, marginBottom: 2 } }, "Catégorie"),
+                  React.createElement(
+                    "select",
+                    {
+                      value: newCategory,
+                      onChange: (e) => setNewCategory(e.target.value),
+                      style: { width: "100%", padding: 8, fontSize: 12 }
+                    },
+                    React.createElement("option", { value: "Breakfast" }, "Breakfast"),
+                    React.createElement("option", { value: "Hot Drinks" }, "Hot Drinks"),
+                    React.createElement("option", { value: "Cold Drinks" }, "Cold Drinks"),
+                    React.createElement("option", { value: "Others" }, "Others")
+                  )
+                )
+              ),
+              React.createElement(
+                "div",
+                null,
+                React.createElement("div", { style: { fontWeight: 600, marginBottom: 2 } }, "Image"),
+                React.createElement("input", {
+                  type: "file",
+                  accept: "image/*",
+                  onChange: handleNewImageFile,
+                  style: { width: "100%", padding: 6, fontSize: 12 }
+                }),
+                newImage
+                  ? React.createElement(
+                      "div",
+                      { style: { marginTop: 8 } },
+                      React.createElement("img", {
+                        src: newImage,
+                        alt: "preview",
+                        style: { width: 120, height: 80, objectFit: "cover", borderRadius: 10, border: "1px solid rgba(148,163,184,0.5)" }
+                      })
+                    )
+                  : null
+              ),
+              newError
+                ? React.createElement(
+                    "div",
+                    { style: { fontSize: 12, color: "#b91c1c" } },
+                    newError
+                  )
+                : null,
+              React.createElement(
+                "div",
+                { style: { display: "flex", justifyContent: "flex-end" } },
+                React.createElement(
+                  "button",
+                  { className: "btn-primary", type: "submit" },
+                  "Ajouter"
+                )
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            {
+              style: {
+                display: "grid",
+                gridTemplateColumns: isPhone ? "1fr" : "minmax(0, 1.4fr) minmax(0, 2fr)",
+                gap: 14,
+                alignItems: "flex-start"
+              }
+            },
           React.createElement(
             "div",
             {
@@ -7673,26 +7947,32 @@ const DICTIONARY = {
                 border: "1px solid #e5e7eb"
               }
             },
-            menu.map((m) =>
-              React.createElement(
-                "div",
-                {
-                  key: m.id,
-                  onClick: () => setSelectedId(m.id),
-                  style: {
-                    padding: "6px 10px",
-                    cursor: "pointer",
-                    fontSize: 12,
-                    background:
-                      m.id === selectedId ? "#e5e7eb" : "transparent"
-                  }
-                },
-                m.nameFr || m.name,
-                " - ",
-                m.price.toFixed(2),
-                " DHS"
-              )
-            )
+            (menu && menu.length
+              ? menu.map((m) =>
+                  React.createElement(
+                    "div",
+                    {
+                      key: m.id,
+                      onClick: () => setSelectedId(m.id),
+                      style: {
+                        padding: "6px 10px",
+                        cursor: "pointer",
+                        fontSize: 12,
+                        background:
+                          m.id === selectedId ? "#e5e7eb" : "transparent"
+                      }
+                    },
+                    m.nameFr || m.name,
+                    " - ",
+                    m.price.toFixed(2),
+                    " DHS"
+                  )
+                )
+              : React.createElement(
+                  "div",
+                  { style: { padding: 10, fontSize: 12, color: "#6b7280" } },
+                  "Aucun article."
+                ))
           ),
           React.createElement(
             "div",
@@ -7726,12 +8006,14 @@ const DICTIONARY = {
                 "Enregistrer"
               )
             ),
-            React.createElement(
-              "div",
-              { style: { marginTop: 4, fontSize: 11, color: "#6b7280" } },
-              "ID: ",
-              item.id
-            ),
+            item
+              ? React.createElement(
+                  "div",
+                  { style: { marginTop: 4, fontSize: 11, color: "#6b7280" } },
+                  "ID: ",
+                  item.id
+                )
+              : null,
             React.createElement(
               "div",
               { style: { marginTop: 6 } },
@@ -7741,8 +8023,8 @@ const DICTIONARY = {
                 "Nom FR:"
               ),
               React.createElement("input", {
-                value: item.nameFr || "",
-                onChange: (e) => handleChange("nameFr", e.target.value),
+                value: item ? item.nameFr || "" : "",
+                onChange: (e) => item && handleChange("nameFr", e.target.value),
                 style: { width: "100%", padding: 4, fontSize: 12 }
               })
             ),
@@ -7755,8 +8037,8 @@ const DICTIONARY = {
                 "Nom AR:"
               ),
               React.createElement("input", {
-                value: item.nameAr || "",
-                onChange: (e) => handleChange("nameAr", e.target.value),
+                value: item ? item.nameAr || "" : "",
+                onChange: (e) => item && handleChange("nameAr", e.target.value),
                 style: { width: "100%", padding: 4, fontSize: 12 }
               })
             ),
@@ -7770,12 +8052,59 @@ const DICTIONARY = {
               ),
               React.createElement("input", {
                 type: "number",
-                value: item.price,
-                onChange: (e) =>
-                  handleChange("price", parseFloat(e.target.value) || 0),
+                value: item ? item.price : 0,
+                onChange: (e) => item && handleChange("price", parseFloat(e.target.value) || 0),
                 style: { width: "100%", padding: 4, fontSize: 12 }
               })
+            ),
+            React.createElement(
+              "div",
+              { style: { marginTop: 6 } },
+              React.createElement(
+                "div",
+                { style: { fontWeight: 600, marginBottom: 2 } },
+                "Catégorie:"
+              ),
+              React.createElement(
+                "select",
+                {
+                  value: item ? item.category || "Breakfast" : "Breakfast",
+                  onChange: (e) => item && handleChange("category", e.target.value),
+                  style: { width: "100%", padding: 4, fontSize: 12 }
+                },
+                React.createElement("option", { value: "Breakfast" }, "Breakfast"),
+                React.createElement("option", { value: "Hot Drinks" }, "Hot Drinks"),
+                React.createElement("option", { value: "Cold Drinks" }, "Cold Drinks"),
+                React.createElement("option", { value: "Others" }, "Others")
+              )
+            ),
+            React.createElement(
+              "div",
+              { style: { marginTop: 6 } },
+              React.createElement(
+                "div",
+                { style: { fontWeight: 600, marginBottom: 2 } },
+                "Image:"
+              ),
+              React.createElement("input", {
+                type: "file",
+                accept: "image/*",
+                onChange: handleEditImageFile,
+                style: { width: "100%", padding: 4, fontSize: 12 }
+              }),
+              item && item.image
+                ? React.createElement(
+                    "div",
+                    { style: { marginTop: 8 } },
+                    React.createElement("img", {
+                      src: item.image,
+                      alt: "preview",
+                      style: { width: 120, height: 80, objectFit: "cover", borderRadius: 10, border: "1px solid rgba(148,163,184,0.5)" }
+                    })
+                  )
+                : null
             )
+          )
           )
         );
       }
@@ -7868,8 +8197,15 @@ const DICTIONARY = {
         const cartEnterTimeoutsRef = React.useRef({});
         const prevCartKeysRef = React.useRef(new Set());
 
+        const [favorites, setFavorites] = React.useState([]);
+        const [favoritePromptOpen, setFavoritePromptOpen] = React.useState(false);
+        const [favoritePromptValue, setFavoritePromptValue] = React.useState("");
+        const [favoritePromptError, setFavoritePromptError] = React.useState(null);
+        const [favoritePromptLineKey, setFavoritePromptLineKey] = React.useState(null);
+
         const [cartServiceType, setCartServiceType] = React.useState("dine_in");
         const [glassCupCustomerName, setGlassCupCustomerName] = React.useState("");
+        const [orderName, setOrderName] = React.useState("");
 
         const [exitingOrderIds, setExitingOrderIds] = React.useState({});
         const exitingOrderTimeoutsRef = React.useRef({});
@@ -7973,6 +8309,7 @@ const DICTIONARY = {
         const [closeShiftFloatValue, setCloseShiftFloatValue] = React.useState("");
         const [closeShiftFloatError, setCloseShiftFloatError] = React.useState(null);
         const [closeShiftTargetId, setCloseShiftTargetId] = React.useState(null);
+        const [closeShiftReport, setCloseShiftReport] = React.useState(null);
         const [pendingShiftOpen, setPendingShiftOpen] = React.useState(null);
         const [floatConfirmOpen, setFloatConfirmOpen] = React.useState(false);
         const [floatConfirmExpected, setFloatConfirmExpected] = React.useState(null);
@@ -8161,6 +8498,26 @@ const DICTIONARY = {
             "_" +
             Math.random().toString(16).slice(2)
           );
+        }
+
+        function hashString(str) {
+          const s = String(str == null ? "" : str);
+          let h = 5381;
+          for (let i = 0; i < s.length; i++) {
+            h = ((h << 5) + h) ^ s.charCodeAt(i);
+          }
+          return (h >>> 0).toString(16);
+        }
+
+        function stableStringify(obj) {
+          if (!obj || typeof obj !== "object") return JSON.stringify(obj);
+          const keys = Object.keys(obj).sort();
+          const out = {};
+          for (let i = 0; i < keys.length; i++) {
+            const k = keys[i];
+            out[k] = obj[k];
+          }
+          return JSON.stringify(out);
         }
 
         const deviceIdRef = React.useRef(null);
@@ -8563,10 +8920,87 @@ const DICTIONARY = {
           }
         }, [users]);
 
+        const activeWorkerId = activeWorker && activeWorker.id ? String(activeWorker.id) : "";
+
+        React.useEffect(() => {
+          if (!activeWorkerId) {
+            setFavorites([]);
+            return;
+          }
+          if (cloudEnabled) return;
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_favorites_" + activeWorkerId);
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (Array.isArray(parsed)) {
+              setFavorites(parsed);
+              return;
+            }
+          } catch (e) {}
+          setFavorites([]);
+        }, [activeWorkerId, cloudEnabled]);
+
+        React.useEffect(() => {
+          if (!activeWorkerId) return;
+          if (cloudEnabled) return;
+          try {
+            window.localStorage.setItem(
+              "cafe_halab_favorites_" + activeWorkerId,
+              JSON.stringify(favorites || [])
+            );
+          } catch (e) {}
+        }, [favorites, activeWorkerId, cloudEnabled]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          if (!activeWorkerId) {
+            setFavorites([]);
+            return;
+          }
+          const favCol = cloudCol("favorites");
+          if (!favCol) return;
+          const unsub = favCol.where("userId", "==", activeWorkerId).onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.name || a.id || "").localeCompare(String(b.name || b.id || "")));
+              setFavorites(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled, activeWorkerId]);
+
         const categories = React.useMemo(
           () => INITIAL_CATEGORIES.slice(),
           []
         );
+
+        const favoritesById = React.useMemo(() => {
+          const map = {};
+          (favorites || []).forEach((f) => {
+            if (!f || !f.id) return;
+            map[String(f.id)] = f;
+          });
+          return map;
+        }, [favorites]);
+
+        const favoritesSorted = React.useMemo(() => {
+          return (favorites || [])
+            .slice()
+            .sort((a, b) =>
+              String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || ""))
+            );
+        }, [favorites]);
 
         const filteredProducts = React.useMemo(() => {
           if (!activeCategory) return [];
@@ -8655,6 +9089,28 @@ const DICTIONARY = {
           }
           if (mods.eggCount) {
             parts.push(`${t.eggsInLine}: ${mods.eggCount}`);
+          }
+          if (mods.sbDrinkId || mods.sbDrinkName || mods.sbDrinkNameFr || mods.sbDrinkNameAr) {
+            const sbDrinkLabel =
+              lang === "ar"
+                ? mods.sbDrinkNameAr || mods.sbDrinkName || mods.sbDrinkNameFr || ""
+                : mods.sbDrinkNameFr || mods.sbDrinkName || mods.sbDrinkNameAr || "";
+            if (sbDrinkLabel) {
+              parts.push((lang === "ar" ? "مشروب" : "Boisson") + ": " + sbDrinkLabel);
+            }
+          }
+          if (mods.sbEggCount) {
+            parts.push((lang === "ar" ? "بيض" : "Oeufs") + ": " + String(mods.sbEggCount));
+          }
+          if (mods.sbKashir) parts.push(lang === "ar" ? "كاشير" : "Kashir");
+          if (mods.sbFromage) parts.push(lang === "ar" ? "جبن" : "Fromage");
+          if (mods.sbWater) parts.push(lang === "ar" ? "ماء" : "Eau");
+          if (mods.sbCroissant) parts.push(lang === "ar" ? "كرواسون" : "Croissant");
+          if (mods.sbBreakfastSet) parts.push(lang === "ar" ? "باك الفطور (+5)" : "Breakfast set (+5)");
+          if (mods.sbCheesePieces) {
+            parts.push(
+              (lang === "ar" ? "قطع الجبن" : "Fromage pièces") + ": " + String(mods.sbCheesePieces)
+            );
           }
           if (line && (line.containerType || line.cupSize)) {
             const typeLabel =
@@ -8892,10 +9348,13 @@ const DICTIONARY = {
           const o = (orders || []).find((x) => x && String(x.id) === id) || null;
           if (!o) return;
           const amt = o && o.totals && typeof o.totals.total === "number" ? o.totals.total : 0;
+          const code = String(o.ticketCode || ("#" + displayOrderNumber(o.id)));
+          const nm = String(o.orderName || "").trim();
+          const displayName = nm && nm !== code ? nm + " · " + code : code;
           const label =
             (t.orderLabel || "Commande") +
             " " +
-            (o.ticketCode || ("#" + displayOrderNumber(o.id)));
+            displayName;
           setCalcItems((p) => {
             const arr = (p || []).filter(Boolean);
             if (arr.some((it) => it && String(it.id) === id)) return arr;
@@ -9219,7 +9678,7 @@ const DICTIONARY = {
           } catch (e) {}
         }
 
-        function handleAddToCart(product, modifiers) {
+        function handleAddToCart(product, modifiers, extras) {
           if (shiftPaused) {
             setStatus({
               type: "err",
@@ -9243,20 +9702,29 @@ const DICTIONARY = {
           }
 
           setCart((prev) => {
+            const hasAnyModifiers = (() => {
+              if (!modifiers || typeof modifiers !== "object") return false;
+              try {
+                const keys = Object.keys(modifiers);
+                for (let i = 0; i < keys.length; i++) {
+                  const v = modifiers[keys[i]];
+                  if (v == null) continue;
+                  if (v === false) continue;
+                  if (typeof v === "string" && v.trim() === "") continue;
+                  if (typeof v === "number" && (!Number.isFinite(v) || v === 0)) continue;
+                  return true;
+                }
+              } catch (e) {}
+              return false;
+            })();
+
+            const keySuffix =
+              extras && extras.favoriteId ? `__${String(extras.favoriteId)}` : "";
+
             const key =
               product.id +
-              (modifiers &&
-              (modifiers.milk != null ||
-                modifiers.sugar ||
-                modifiers.sirop ||
-                modifiers.water ||
-                modifiers.waterFee ||
-                modifiers.waterSize ||
-                modifiers.herb ||
-                modifiers.drink ||
-                modifiers.eggCount)
-                ? `_${JSON.stringify(modifiers)}`
-                : "");
+              (hasAnyModifiers ? `_${stableStringify(modifiers)}` : "") +
+              keySuffix;
 
             const forceNewLine =
               cartServiceType === "takeaway" && isDrinkProduct(product);
@@ -9282,10 +9750,164 @@ const DICTIONARY = {
                 price: product.price,
                 qty: 1,
                 modifiers: modifiers || {},
-                ...defaultCup
+                ...defaultCup,
+                ...(extras && typeof extras === "object" ? extras : {})
               }
             ];
           });
+        }
+
+        function favoriteDocIdForLine(line) {
+          if (!activeWorkerId) return "";
+          if (!line || !line.id) return "";
+          const raw =
+            activeWorkerId +
+            "|" +
+            String(line.id) +
+            "|" +
+            stableStringify((line && line.modifiers) || {}) +
+            "|" +
+            String(Number(line.price || 0) || 0) +
+            "|" +
+            String((line && line.containerType) || "") +
+            "|" +
+            String((line && line.cupSize) || "");
+          return "fav_" + activeWorkerId + "_" + hashString(raw);
+        }
+
+        function closeFavoritePrompt() {
+          setFavoritePromptOpen(false);
+          setFavoritePromptError(null);
+          setFavoritePromptValue("");
+          setFavoritePromptLineKey(null);
+        }
+
+        function saveFavoriteFromLine(line, favName) {
+          if (!line || !line.id) return;
+          if (!activeWorkerId) return;
+          const favId = favoriteDocIdForLine(line);
+          if (!favId) return;
+          const nowIso = new Date().toISOString();
+          const rec = {
+            id: favId,
+            userId: activeWorkerId,
+            name: String(favName || "").trim(),
+            productId: String(line.id || ""),
+            baseName: String(line.name || ""),
+            price: Number(line.price || 0) || 0,
+            modifiers: (line && line.modifiers) || {},
+            containerType: line && line.containerType ? String(line.containerType) : null,
+            cupSize: line && line.cupSize ? String(line.cupSize) : null,
+            updatedAt: nowIso,
+            createdAt: nowIso,
+            appId: CLOUD_APP_ID,
+            deviceId: deviceIdRef.current
+          };
+
+          setFavorites((prev) => {
+            const list = Array.isArray(prev) ? prev : [];
+            const idx = list.findIndex((f) => f && f.id === favId);
+            if (idx >= 0) {
+              const next = list.slice();
+              const old = next[idx] || {};
+              next[idx] = { ...old, ...rec, createdAt: old.createdAt || rec.createdAt };
+              return next;
+            }
+            return [...list, rec];
+          });
+
+          if (!cloudEnabled) return;
+          const favCol = cloudCol("favorites");
+          if (!favCol) return;
+          try {
+            favCol
+              .doc(favId)
+              .set(rec, { merge: true })
+              .catch(() => {});
+          } catch (e) {}
+        }
+
+        function removeFavoriteById(favId) {
+          if (!favId) return;
+          setFavorites((prev) => (prev || []).filter((f) => f && f.id !== favId));
+          if (!cloudEnabled) return;
+          const favCol = cloudCol("favorites");
+          if (!favCol) return;
+          try {
+            favCol
+              .doc(favId)
+              .delete()
+              .catch(() => {});
+          } catch (e) {}
+        }
+
+        function toggleFavoriteLine(line) {
+          if (!line) return;
+          if (shiftPaused) {
+            setStatus({ type: "err", message: t.shiftPausedBlocking || "Shift en pause." });
+            return;
+          }
+          if (!activeWorkerId) {
+            setStatus({ type: "err", message: (t && t.needWorkerLogin) || "Ouvrir un shift." });
+            return;
+          }
+          const favId = favoriteDocIdForLine(line);
+          if (!favId) return;
+          const exists = !!(favoritesById && favoritesById[favId]);
+          if (exists) {
+            removeFavoriteById(favId);
+            setStatus({ type: "ok", message: lang === "ar" ? "تم حذف المفضل." : "Favori supprimé." });
+            return;
+          }
+          setFavoritePromptLineKey(line.key);
+          setFavoritePromptValue(String(line.name || ""));
+          setFavoritePromptError(null);
+          setFavoritePromptOpen(true);
+        }
+
+        function confirmFavoritePrompt(ev) {
+          if (ev && ev.preventDefault) ev.preventDefault();
+          const name = String(favoritePromptValue || "").trim();
+          if (!name) {
+            setFavoritePromptError(lang === "ar" ? "الاسم مطلوب" : "Nom requis");
+            return;
+          }
+          const line = (cart || []).find((l) => l && l.key === favoritePromptLineKey) || null;
+          if (!line) {
+            closeFavoritePrompt();
+            return;
+          }
+          saveFavoriteFromLine(line, name);
+          closeFavoritePrompt();
+          setStatus({ type: "ok", message: lang === "ar" ? "تم حفظه في المفضلة." : "Ajouté aux favoris." });
+        }
+
+        function addFavoriteToCart(fav) {
+          if (!fav) return;
+          const base = (menu || []).find((p) => p && p.id === fav.productId) || null;
+          const baseName = base
+            ? lang === "ar"
+              ? base.nameAr || base.name
+              : base.nameFr || base.name
+            : String(fav.productId || "");
+          const effectiveProduct = base
+            ? {
+                ...base,
+                name: String(fav.name || baseName),
+                price: Number(fav.price || base.price || 0) || 0
+              }
+            : {
+                id: String(fav.productId || ""),
+                name: String(fav.name || baseName),
+                price: Number(fav.price || 0) || 0
+              };
+
+          const extras = {};
+          if (fav.containerType) extras.containerType = fav.containerType;
+          if (fav.cupSize) extras.cupSize = fav.cupSize;
+          extras.favoriteId = fav.id;
+
+          handleAddToCart(effectiveProduct, (fav && fav.modifiers) || {}, extras);
         }
 
         React.useEffect(() => {
@@ -10808,9 +11430,12 @@ const DICTIONARY = {
           const ticketSeq = pad3(maxExistingSeq + 1);
           const ticketCode = ticketPrefix + ticketSeq;
 
+          const orderNameTrimmed = String(orderName || "").trim();
+
           const order = {
             id: orderId,
             appId: "cafe-halab-pos",
+            orderName: orderNameTrimmed,
             serviceType: cartServiceType,
             glassCupCustomerName: needsGlassCupCustomerName ? String(glassCupCustomerName || "").trim() : "",
             items: cart.map((line) => {
@@ -10955,6 +11580,7 @@ const DICTIONARY = {
           });
           setCart([]);
           setGlassCupCustomerName("");
+          setOrderName("");
           setSubmitting(false);
         }
 
@@ -11044,6 +11670,23 @@ const DICTIONARY = {
           if (idx !== -1) {
             INITIAL_MENU_DATA[idx] = { ...INITIAL_MENU_DATA[idx], ...partial };
           }
+        }
+
+        function handleAddMenuItem(item) {
+          if (!item || !item.id) return;
+          setMenu((prev) => {
+            const arr = Array.isArray(prev) ? prev : [];
+            if (arr.some((m) => m && m.id === item.id)) return arr;
+            const next = [...arr, item];
+            try {
+              window.localStorage.setItem("cafe_halab_menu", JSON.stringify(next));
+            } catch (e) {}
+            return next;
+          });
+          try {
+            INITIAL_MENU_DATA.push(item);
+          } catch (e) {}
+          setStatus({ type: "ok", message: "Article ajouté." });
         }
 
         function handleSaveMenu(currentMenu) {
@@ -11339,6 +11982,77 @@ const DICTIONARY = {
               : fallbackActive && typeof fallbackActive.openingFloatCash === "number"
               ? fallbackActive.openingFloatCash
               : 0;
+          try {
+            const shiftOrders = (orders || []).filter(
+              (o) =>
+                o &&
+                o.shiftId === sid &&
+                (o.status === "paid" || o.status === "unpaid" || o.status === "debt")
+            );
+            const paidOrders = shiftOrders.filter((o) => o.status === "paid");
+            const debtOrders = shiftOrders.filter((o) => o.status === "debt");
+            const unpaidOrders = shiftOrders.filter((o) => o.status === "unpaid");
+
+            const paidRevenue = paidOrders.reduce(
+              (sum, o) => sum + (Number((o.totals && o.totals.total) || 0) || 0),
+              0
+            );
+            const debtTotal = debtOrders.reduce(
+              (sum, o) => sum + (Number((o.totals && o.totals.total) || 0) || 0),
+              0
+            );
+            const unpaidTotal = unpaidOrders.reduce(
+              (sum, o) => sum + (Number((o.totals && o.totals.total) || 0) || 0),
+              0
+            );
+
+            const purchasesLogs = (inventoryLogs || []).filter(
+              (l) =>
+                l &&
+                l.shiftId === sid &&
+                l.reason === "purchase" &&
+                l.deductFromExpectedCash !== false
+            );
+            const purchasesTotal = purchasesLogs.reduce(
+              (sum, l) => sum + (Number(l.totalCost || 0) || 0),
+              0
+            );
+
+            const debtsCreated = (clientDebts || []).filter(
+              (d) => d && d.originalShiftId === sid
+            );
+            const debtsCreatedTotal = debtsCreated.reduce(
+              (sum, d) => sum + (Number(d.amount || 0) || 0),
+              0
+            );
+
+            const debtsPaidInShift = (clientDebts || []).filter(
+              (d) => d && d.paidShiftId === sid && d.paidAt
+            );
+            const debtsPaidTotal = debtsPaidInShift.reduce(
+              (sum, d) => sum + (Number(d.amount || 0) || 0),
+              0
+            );
+
+            setCloseShiftReport({
+              shiftId: sid,
+              orderCount: shiftOrders.length,
+              paidCount: paidOrders.length,
+              paidRevenue,
+              debtCount: debtOrders.length,
+              debtTotal,
+              unpaidCount: unpaidOrders.length,
+              unpaidTotal,
+              purchasesTotal,
+              debtsCreatedCount: debtsCreated.length,
+              debtsCreatedTotal,
+              debtsPaidCount: debtsPaidInShift.length,
+              debtsPaidTotal,
+              openingFloatCash: Number(initialFloat || 0) || 0
+            });
+          } catch (e) {
+            setCloseShiftReport(null);
+          }
           setCloseShiftFloatValue(String((Number(initialFloat || 0) || 0).toFixed(2)));
           setCloseShiftFloatOpen(true);
         }
@@ -11354,6 +12068,7 @@ const DICTIONARY = {
           }
           setCloseShiftFloatError(null);
           setCloseShiftFloatOpen(false);
+          setCloseShiftReport(null);
           const actor = closeShiftActorOverride;
           setCloseShiftActorOverride(null);
           setCloseShiftTargetId(null);
@@ -11410,6 +12125,7 @@ const DICTIONARY = {
             setActiveShift(null);
             setActiveWorker(null);
             setCart([]);
+            setOrderName("");
             setActiveCategory(null);
             setPosSection("sales");
             setShiftPaused(false);
@@ -11517,6 +12233,74 @@ const DICTIONARY = {
               onSignedIn: handleFirebaseSignedIn,
               onDismiss: dismissFirebaseLogin
             }),
+          favoritePromptOpen &&
+            e(
+              "div",
+              {
+                style: {
+                  position: "fixed",
+                  inset: 0,
+                  background: "rgba(15,23,42,0.55)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 16,
+                  zIndex: 57
+                }
+              },
+              e(
+                "section",
+                { className: "panel", style: { maxWidth: 460, width: "100%" } },
+                e(
+                  "h3",
+                  { style: { marginTop: 0 } },
+                  lang === "ar" ? "حفظ في المفضلة" : "Enregistrer favori"
+                ),
+                e(
+                  "p",
+                  { style: { fontSize: 13, marginTop: 6 } },
+                  lang === "ar"
+                    ? "أدخل اسمًا لهذا الطلب المفضل."
+                    : "Donnez un nom à ce favori."
+                ),
+                e(
+                  "form",
+                  { onSubmit: confirmFavoritePrompt, style: { display: "grid", gap: 10, marginTop: 10 } },
+                  e("input", {
+                    value: favoritePromptValue,
+                    onChange: (ev) => setFavoritePromptValue(ev.target.value),
+                    inputMode: "text",
+                    autoComplete: "off",
+                    placeholder: lang === "ar" ? "اسم المفضل" : "Nom du favori",
+                    style: { padding: 10, fontSize: 16 }
+                  }),
+                  favoritePromptError &&
+                    e(
+                      "div",
+                      { style: { fontSize: 12, color: "#b91c1c" } },
+                      favoritePromptError
+                    ),
+                  e(
+                    "div",
+                    { style: { display: "flex", gap: 8, justifyContent: "flex-end" } },
+                    e(
+                      "button",
+                      {
+                        className: "category-btn",
+                        type: "button",
+                        onClick: closeFavoritePrompt
+                      },
+                      (t && t.cancelBtn) || (lang === "ar" ? "إلغاء" : "Annuler")
+                    ),
+                    e(
+                      "button",
+                      { className: "btn-primary", type: "submit" },
+                      lang === "ar" ? "حفظ" : "Enregistrer"
+                    )
+                  )
+                )
+              )
+            ),
           advanceOpen &&
             e(
               "div",
@@ -12750,9 +13534,12 @@ const DICTIONARY = {
                             e(
                               "div",
                               { style: { fontWeight: 800, fontSize: 13 } },
-                              (t.orderLabel || "Commande") +
-                                " " +
-                                (o.ticketCode || ("#" + displayOrderNumber(o.id)))
+                              (() => {
+                                const code = String(o.ticketCode || ("#" + displayOrderNumber(o.id)));
+                                const nm = String(o.orderName || "").trim();
+                                const namePart = nm && nm !== code ? nm + " · " : "";
+                                return (t.orderLabel || "Commande") + " " + namePart + code;
+                              })()
                             ),
                             e(
                               "div",
@@ -12874,6 +13661,84 @@ const DICTIONARY = {
                   (t && t.closeShiftFloatSubtitle) ||
                     "Saisissez le fonds (cash) que vous laissez pour le prochain serveur."
                 ),
+                closeShiftReport &&
+                  e(
+                    "div",
+                    {
+                      style: {
+                        marginTop: 10,
+                        padding: 10,
+                        borderRadius: 12,
+                        background: "rgba(255,255,255,0.85)",
+                        border: "1px solid rgba(148,163,184,0.55)",
+                        display: "grid",
+                        gap: 8
+                      }
+                    },
+                    e(
+                      "div",
+                      { style: { fontSize: 12, fontWeight: 900, color: "#334155" } },
+                      lang === "ar" ? "تقرير النوبة" : "Rapport du shift"
+                    ),
+                    e(
+                      "div",
+                      { style: { fontSize: 12, color: "#475569", display: "grid", gap: 4 } },
+                      e(
+                        "div",
+                        null,
+                        (lang === "ar" ? "الطلبات" : "Commandes") +
+                          ": " +
+                          String(closeShiftReport.orderCount || 0)
+                      ),
+                      e(
+                        "div",
+                        null,
+                        (lang === "ar" ? "المبيعات (مدفوع)" : "Ventes (payé)") +
+                          ": " +
+                          `${Number(closeShiftReport.paidRevenue || 0).toFixed(2)} DHS` +
+                          " (" +
+                          String(closeShiftReport.paidCount || 0) +
+                          ")"
+                      ),
+                      e(
+                        "div",
+                        null,
+                        (lang === "ar" ? "ديون (طلبات)" : "Dettes (commandes)") +
+                          ": " +
+                          `${Number(closeShiftReport.debtTotal || 0).toFixed(2)} DHS` +
+                          " (" +
+                          String(closeShiftReport.debtCount || 0) +
+                          ")"
+                      ),
+                      e(
+                        "div",
+                        null,
+                        (lang === "ar" ? "المشتريات" : "Achats") +
+                          ": " +
+                          `${Number(closeShiftReport.purchasesTotal || 0).toFixed(2)} DHS`
+                      ),
+                      e(
+                        "div",
+                        null,
+                        (lang === "ar" ? "ديون مُنشأة" : "Dettes créées") +
+                          ": " +
+                          `${Number(closeShiftReport.debtsCreatedTotal || 0).toFixed(2)} DHS` +
+                          " (" +
+                          String(closeShiftReport.debtsCreatedCount || 0) +
+                          ")"
+                      ),
+                      e(
+                        "div",
+                        null,
+                        (lang === "ar" ? "ديون مُحصّلة" : "Dettes recouvrées") +
+                          ": " +
+                          `${Number(closeShiftReport.debtsPaidTotal || 0).toFixed(2)} DHS` +
+                          " (" +
+                          String(closeShiftReport.debtsPaidCount || 0) +
+                          ")"
+                      )
+                    )
+                  ),
                 e(
                   "form",
                   {
@@ -12905,6 +13770,7 @@ const DICTIONARY = {
                           setCloseShiftFloatOpen(false);
                           setCloseShiftTargetId(null);
                           setCloseShiftActorOverride(null);
+                          setCloseShiftReport(null);
                         }
                       },
                       (t && t.cancelBtn) || "Annuler"
@@ -13330,9 +14196,9 @@ const DICTIONARY = {
                   e(
                     "div",
                     { className: "pos-sidebar-muted" },
-                    ((t && t.purchaseExpectedCashLabel) || "Cash attendu") +
+                    (lang === "ar" ? "الصندوق (بداية)" : "Fond (début)") +
                       ": " +
-                      Number((activeShift && activeShift.expectedCash) || 0).toFixed(2) +
+                      Number((activeShift && activeShift.openingFloatCash) || 0).toFixed(2) +
                       " DHS"
                   )
                 ),
@@ -13436,7 +14302,8 @@ const DICTIONARY = {
                         { className: "pos-category-grid" },
                         categories.map((cat) => {
                           let label = cat;
-                          if (cat === "Breakfast") label = t.catBreakfast;
+                          if (cat === "Favorites") label = t.catFavorites;
+                          else if (cat === "Breakfast") label = t.catBreakfast;
                           else if (cat === "Hot Drinks") label = t.catHot;
                           else if (cat === "Cold Drinks") label = t.catCold;
                           else if (cat === "Others") label = t.catOthers;
@@ -13479,6 +14346,23 @@ const DICTIONARY = {
                                       display: "block"
                                     }
                                   })
+                                : cat === "Favorites"
+                                ? e(
+                                    "svg",
+                                    {
+                                      width: 42,
+                                      height: 42,
+                                      viewBox: "0 0 24 24",
+                                      fill: "#f59e0b",
+                                      stroke: "#d97706",
+                                      strokeWidth: "1.5",
+                                      strokeLinecap: "round",
+                                      strokeLinejoin: "round"
+                                    },
+                                    e("path", {
+                                      d: "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                                    })
+                                  )
                                 : e(
                                     "svg",
                                     {
@@ -13538,7 +14422,9 @@ const DICTIONARY = {
                             e(
                               "h3",
                               { style: { margin: 0 } },
-                              activeCategory === "Breakfast"
+                              activeCategory === "Favorites"
+                                ? t.catFavorites
+                                : activeCategory === "Breakfast"
                                 ? t.catBreakfast
                                 : activeCategory === "Hot Drinks"
                                 ? t.catHot
@@ -13550,15 +14436,62 @@ const DICTIONARY = {
                           e(
                             "div",
                             { className: "products-grid" },
-                            filteredProducts.map((product) =>
-                              e(ProductCard, {
-                                key: product.id,
-                                product,
-                                onAdd: handleAddToCart,
-                                lang,
-                                t
-                              })
-                            )
+                            activeCategory === "Favorites"
+                              ? favoritesSorted && favoritesSorted.length
+                                ? favoritesSorted.map((fav) => {
+                                    const modsLabel = lineModifiersLabel({
+                                      modifiers: (fav && fav.modifiers) || {},
+                                      containerType: fav && fav.containerType,
+                                      cupSize: fav && fav.cupSize
+                                    });
+                                    const base = (menu || []).find((p) => p && p.id === fav.productId) || null;
+                                    const baseName = base
+                                      ? lang === "ar"
+                                        ? base.nameAr || base.name
+                                        : base.nameFr || base.name
+                                      : String(fav.productId || "");
+                                    return e(
+                                      "button",
+                                      {
+                                        key: fav.id,
+                                        type: "button",
+                                        className: "product-card",
+                                        onClick: () => addFavoriteToCart(fav),
+                                        style: { width: "100%", textAlign: "left", border: "none", cursor: "pointer" }
+                                      },
+                                      e(
+                                        "div",
+                                        { className: "product-name" },
+                                        String(fav.name || baseName),
+                                        modsLabel || ""
+                                      ),
+                                      e(
+                                        "div",
+                                        { className: "product-price" },
+                                        `${Number((fav && fav.price) || 0).toFixed(2)} DHS`
+                                      ),
+                                      e(
+                                        "div",
+                                        { style: { fontSize: 11, color: "#64748b" } },
+                                        baseName
+                                      )
+                                    );
+                                  })
+                                : e(
+                                    "div",
+                                    { className: "pos-cart-empty" },
+                                    lang === "ar" ? "لا يوجد مفضلات." : "Aucun favori."
+                                  )
+                              : filteredProducts.map((product) =>
+                                  e(ProductCard, {
+                                    key: product.id,
+                                    product,
+                                    menu,
+                                    onAdd: handleAddToCart,
+                                    lang,
+                                    t
+                                  })
+                                )
                           )
                         )
                     )
@@ -13596,6 +14529,25 @@ const DICTIONARY = {
                       : "À emporter: Non"
                   )
                 ),
+                e(
+                  "div",
+                  { style: { marginTop: 8, padding: 10, borderRadius: 14, border: "1px solid rgba(148,163,184,0.55)", background: "rgba(255,255,255,0.9)" } },
+                  e(
+                    "div",
+                    { style: { fontSize: 12, fontWeight: 700, marginBottom: 6 } },
+                    lang === "ar" ? "اسم الطلب (اختياري)" : "Nom de commande (optionnel)"
+                  ),
+                  e("input", {
+                    value: orderName,
+                    onChange: (ev) => setOrderName(ev.target.value),
+                    inputMode: "text",
+                    autoComplete: "off",
+                    enterKeyHint: "done",
+                    autoCapitalize: "words",
+                    placeholder: lang === "ar" ? "مثال: طاولة 5 / أحمد" : "Ex: Table 5 / Ahmed",
+                    style: { width: "100%", padding: 10, fontSize: 14 }
+                  })
+                ),
                 cartServiceType === "takeaway" && needsGlassCupCustomerName
                   ? e(
                       "div",
@@ -13621,6 +14573,8 @@ const DICTIONARY = {
                   ? e("div", { className: "pos-cart-empty" }, t.cartEmpty)
                   : cart.map((line) => {
                       const p = (menu || []).find((m) => m && m.id === line.id) || null;
+                      const favId = favoriteDocIdForLine(line);
+                      const isFav = !!(favId && favoritesById && favoritesById[favId]);
                       const isDrink =
                         cartServiceType === "takeaway" &&
                         !!(p && (p.category === "Hot Drinks" || p.category === "Cold Drinks")) ||
@@ -13691,6 +14645,31 @@ const DICTIONARY = {
                         e(
                           "div",
                           { className: "cart-item-controls" },
+                          e(
+                            "button",
+                            {
+                              type: "button",
+                              className: "qty-btn",
+                              onClick: () => toggleFavoriteLine(line),
+                              title: isFav
+                                ? lang === "ar"
+                                  ? "حذف من المفضلة"
+                                  : "Retirer des favoris"
+                                : lang === "ar"
+                                ? "حفظ في المفضلة"
+                                : "Ajouter aux favoris",
+                              style: {
+                                width: 24,
+                                height: 24,
+                                fontSize: 14,
+                                borderRadius: 12,
+                                border: "1px solid rgba(148, 163, 184, 0.55)",
+                                background: isFav ? "rgba(251,191,36,0.24)" : "#fff",
+                                color: isFav ? "#b45309" : "#64748b"
+                              }
+                            },
+                            isFav ? "★" : "☆"
+                          ),
                           e(
                             "button",
                             {
@@ -13884,9 +14863,12 @@ const DICTIONARY = {
                               e(
                                 "div",
                                 { style: { fontSize: 12, fontWeight: 700 } },
-                                (t.orderLabel || "Commande") +
-                                  " " +
-                                  (o.ticketCode || ("#" + displayOrderNumber(o.id))) +
+                                (() => {
+                                  const code = String(o.ticketCode || ("#" + displayOrderNumber(o.id)));
+                                  const nm = String(o.orderName || "").trim();
+                                  const namePart = nm && nm !== code ? nm + " · " : "";
+                                  return (t.orderLabel || "Commande") + " " + namePart + code;
+                                })() +
                                   (o && o.serviceType === "takeaway"
                                     ? lang === "ar"
                                       ? " · خارجي"
@@ -15316,6 +16298,28 @@ const DICTIONARY = {
                                 if (mods.eggCount) {
                                   parts.push(`${t.eggsInLine}: ${mods.eggCount}`);
                                 }
+                                if (mods.sbDrinkId || mods.sbDrinkName || mods.sbDrinkNameFr || mods.sbDrinkNameAr) {
+                                  const sbDrinkLabel =
+                                    lang === "ar"
+                                      ? mods.sbDrinkNameAr || mods.sbDrinkName || mods.sbDrinkNameFr || ""
+                                      : mods.sbDrinkNameFr || mods.sbDrinkName || mods.sbDrinkNameAr || "";
+                                  if (sbDrinkLabel) {
+                                    parts.push((lang === "ar" ? "مشروب" : "Boisson") + ": " + sbDrinkLabel);
+                                  }
+                                }
+                                if (mods.sbEggCount) {
+                                  parts.push((lang === "ar" ? "بيض" : "Oeufs") + ": " + String(mods.sbEggCount));
+                                }
+                                if (mods.sbKashir) parts.push(lang === "ar" ? "كاشير" : "Kashir");
+                                if (mods.sbFromage) parts.push(lang === "ar" ? "جبن" : "Fromage");
+                                if (mods.sbWater) parts.push(lang === "ar" ? "ماء" : "Eau");
+                                if (mods.sbCroissant) parts.push(lang === "ar" ? "كرواسون" : "Croissant");
+                                if (mods.sbBreakfastSet) parts.push(lang === "ar" ? "باك الفطور (+5)" : "Breakfast set (+5)");
+                                if (mods.sbCheesePieces) {
+                                  parts.push(
+                                    (lang === "ar" ? "قطع الجبن" : "Fromage pièces") + ": " + String(mods.sbCheesePieces)
+                                  );
+                                }
                                 if (line && (line.containerType || line.cupSize)) {
                                   const typeLabel =
                                     line.containerType === "glass"
@@ -15427,6 +16431,7 @@ const DICTIONARY = {
                             e(AdminMenuEditor, {
                               menu: menu,
                               onUpdateMenuItem: handleUpdateMenuItem,
+                              onAddMenuItem: handleAddMenuItem,
                               onSaveMenu: handleSaveMenu,
                               isPhone
                             })
@@ -15627,12 +16632,20 @@ const DICTIONARY = {
         );
       }
 
-      function ProductCard({ product, onAdd, lang, t }) {
+      function ProductCard({ product, menu, onAdd, lang, t }) {
         const [milk, setMilk] = React.useState(true); // yes/no for coffee
         const [sugar, setSugar] = React.useState("medium");
         const [herb, setHerb] = React.useState("mint");
         const [drink, setDrink] = React.useState("coffee_milk"); // for breakfast combos
         const [eggCount, setEggCount] = React.useState(2); // for fried eggs
+        const [sbDrinkId, setSbDrinkId] = React.useState("");
+        const [sbEggCount, setSbEggCount] = React.useState(2);
+        const [sbKashir, setSbKashir] = React.useState(false);
+        const [sbFromage, setSbFromage] = React.useState(false);
+        const [sbWater, setSbWater] = React.useState(false);
+        const [sbCroissant, setSbCroissant] = React.useState(false);
+        const [sbBreakfastSet, setSbBreakfastSet] = React.useState(false);
+        const [sbCheesePieces, setSbCheesePieces] = React.useState(0);
         const [withSirop, setWithSirop] = React.useState(() => {
           try {
             return !!(
@@ -15645,7 +16658,10 @@ const DICTIONARY = {
         });
         const [withWater, setWithWater] = React.useState(() => {
           try {
-            return (product && product.category === "Breakfast") || isCoffee(product);
+            return (
+              (product && product.category === "Breakfast" && product.id !== "breakfast_special_set") ||
+              isCoffee(product)
+            );
           } catch (e) {
             return false;
           }
@@ -15657,10 +16673,37 @@ const DICTIONARY = {
           !isSoda(product) &&
           !isWaterItem(product) &&
           !(product && (product.id === "other_muffin" || product.id === "other_raib" || product.id === "other_flan"));
-        const hasWaterAddon = !isWaterItem(product);
+        const isSpecialBreakfast = product && product.id === "breakfast_special_set";
+        const hasWaterAddon = !isWaterItem(product) && !isSpecialBreakfast;
         const hasHerbModifier = isHerbalTea(product);
         const isBreakfast = product.category === "Breakfast";
         const isFriedEggs = product.id === "fried_eggs";
+
+        const hotDrinks = React.useMemo(() => {
+          return (menu || []).filter((p) => p && p.category === "Hot Drinks");
+        }, [menu]);
+
+        React.useEffect(() => {
+          if (!isSpecialBreakfast) return;
+          if (sbDrinkId) return;
+          const def =
+            (menu || []).find((p) => p && p.id === "coffee_with_milk") ||
+            (hotDrinks && hotDrinks[0]) ||
+            null;
+          if (def && def.id) setSbDrinkId(def.id);
+        }, [isSpecialBreakfast, sbDrinkId, menu, hotDrinks]);
+
+        const sbDrinkItem = React.useMemo(() => {
+          if (!isSpecialBreakfast) return null;
+          const id = String(sbDrinkId || "");
+          if (!id) return null;
+          return (menu || []).find((p) => p && p.id === id) || null;
+        }, [isSpecialBreakfast, sbDrinkId, menu]);
+
+        const sbDrinkPrice = React.useMemo(() => {
+          if (!isSpecialBreakfast) return 0;
+          return sbDrinkItem ? Number(sbDrinkItem.price || 0) || 0 : 0;
+        }, [isSpecialBreakfast, sbDrinkItem]);
 
         const waterFee = React.useMemo(() => {
           if (!hasWaterAddon || !withWater) return 0;
@@ -15671,23 +16714,69 @@ const DICTIONARY = {
           let p = product.price;
           if (isFriedEggs) p = eggCount === 1 ? 22.0 : 24.0;
           if (product.id === "other_water") p = waterSize === "half" ? 5.0 : 3.0;
+          if (isSpecialBreakfast) {
+            const eggs = Math.max(1, Math.min(5, Number(sbEggCount) || 1));
+            const eggsFee = eggs * 3;
+            const togglesFee =
+              (sbKashir ? 3 : 0) +
+              (sbFromage ? 3 : 0) +
+              (sbWater ? 2 : 0) +
+              (sbCroissant ? 6 : 0) +
+              (sbBreakfastSet ? 5 : 0);
+            const piecesA = Math.max(0, Math.floor(Number(sbCheesePieces) || 0));
+            const cheeseFee = piecesA * 1;
+            p = sbDrinkPrice + eggsFee + togglesFee + cheeseFee;
+          }
           if (waterFee) p += waterFee;
           return p;
-        }, [product, isFriedEggs, eggCount, waterSize, waterFee]);
+        }, [
+          product,
+          isFriedEggs,
+          eggCount,
+          waterSize,
+          waterFee,
+          isSpecialBreakfast,
+          sbDrinkPrice,
+          sbEggCount,
+          sbKashir,
+          sbFromage,
+          sbWater,
+          sbCroissant,
+          sbBreakfastSet,
+          sbCheesePieces
+        ]);
 
         function handleClick() {
           const effectiveProduct = { ...product, price: displayPrice };
 
+          const sbDrinkName = sbDrinkItem ? sbDrinkItem.name : "";
+          const sbDrinkNameFr = sbDrinkItem ? sbDrinkItem.nameFr || sbDrinkItem.name : "";
+          const sbDrinkNameAr = sbDrinkItem ? sbDrinkItem.nameAr || sbDrinkItem.name : "";
+
           onAdd(effectiveProduct, {
             milk: hasMilkModifier ? milk : null,
-            sugar: hasSugarModifier ? sugar : null,
+            sugar: hasSugarModifier && !isSpecialBreakfast ? sugar : null,
             sirop: hasSiropAddon && withSirop ? true : null,
             herb: hasHerbModifier ? herb : null,
-            drink: isBreakfast ? drink : null,
+            drink: isBreakfast && !isSpecialBreakfast ? drink : null,
             eggCount: isFriedEggs ? eggCount : null,
             water: hasWaterAddon && withWater ? true : null,
             waterFee: hasWaterAddon && withWater ? waterFee : null,
-            waterSize: product.id === "other_water" ? waterSize : null
+            waterSize: product.id === "other_water" ? waterSize : null,
+            sbDrinkId: isSpecialBreakfast ? String(sbDrinkId || "") : null,
+            sbDrinkName: isSpecialBreakfast ? sbDrinkName : null,
+            sbDrinkNameFr: isSpecialBreakfast ? sbDrinkNameFr : null,
+            sbDrinkNameAr: isSpecialBreakfast ? sbDrinkNameAr : null,
+            sbEggCount: isSpecialBreakfast ? Math.max(1, Math.min(5, Number(sbEggCount) || 1)) : null,
+            sbKashir: isSpecialBreakfast && sbKashir ? true : null,
+            sbFromage: isSpecialBreakfast && sbFromage ? true : null,
+            sbWater: isSpecialBreakfast && sbWater ? true : null,
+            sbCroissant: isSpecialBreakfast && sbCroissant ? true : null,
+            sbBreakfastSet: isSpecialBreakfast && sbBreakfastSet ? true : null,
+            sbCheesePieces:
+              isSpecialBreakfast && Number(sbCheesePieces) > 0
+                ? Math.max(0, Math.floor(Number(sbCheesePieces) || 0))
+                : null
           });
         }
 
@@ -15826,6 +16915,7 @@ const DICTIONARY = {
                 )
               ),
             isBreakfast &&
+              !isSpecialBreakfast &&
               React.createElement(
                 "div",
                 { style: { marginTop: 6, fontSize: 12 } },
@@ -15849,8 +16939,159 @@ const DICTIONARY = {
                   )
                 )
               ),
+            isSpecialBreakfast &&
+              React.createElement(
+                "div",
+                { style: { marginTop: 6, fontSize: 12, display: "grid", gap: 8 } },
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement(
+                    "span",
+                    null,
+                    lang === "ar" ? "مشروب ساخن" : "Boisson chaude",
+                    ": "
+                  ),
+                  React.createElement(
+                    "select",
+                    {
+                      className: "milk-select",
+                      value: String(sbDrinkId || ""),
+                      onChange: (ev) => setSbDrinkId(String(ev.target.value || ""))
+                    },
+                    hotDrinks.map((p) =>
+                      React.createElement(
+                        "option",
+                        { key: p.id, value: p.id },
+                        lang === "ar" ? p.nameAr || p.name : p.nameFr || p.name
+                      )
+                    )
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement(
+                    "span",
+                    null,
+                    lang === "ar" ? "عدد البيض" : "Oeufs",
+                    ": "
+                  ),
+                  React.createElement(
+                    "select",
+                    {
+                      className: "milk-select",
+                      value: String(sbEggCount),
+                      onChange: (ev) => setSbEggCount(Number(ev.target.value))
+                    },
+                    React.createElement("option", { value: "1" }, "1"),
+                    React.createElement("option", { value: "2" }, "2"),
+                    React.createElement("option", { value: "3" }, "3"),
+                    React.createElement("option", { value: "4" }, "4"),
+                    React.createElement("option", { value: "5" }, "5")
+                  ),
+                  React.createElement(
+                    "span",
+                    { style: { marginLeft: 8, color: "#64748b" } },
+                    "+3 DHS/egg"
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { style: { display: "grid", gap: 6 } },
+                  React.createElement(
+                    "label",
+                    { style: { display: "flex", gap: 8, alignItems: "center" } },
+                    React.createElement("input", {
+                      type: "checkbox",
+                      checked: !!sbKashir,
+                      onChange: (ev) => setSbKashir(!!(ev && ev.target && ev.target.checked))
+                    }),
+                    lang === "ar" ? "كاشير (+3)" : "Kashir (+3)"
+                  ),
+                  React.createElement(
+                    "label",
+                    { style: { display: "flex", gap: 8, alignItems: "center" } },
+                    React.createElement("input", {
+                      type: "checkbox",
+                      checked: !!sbFromage,
+                      onChange: (ev) => setSbFromage(!!(ev && ev.target && ev.target.checked))
+                    }),
+                    lang === "ar" ? "جبن (+3)" : "Fromage (+3)"
+                  ),
+                  React.createElement(
+                    "label",
+                    { style: { display: "flex", gap: 8, alignItems: "center" } },
+                    React.createElement("input", {
+                      type: "checkbox",
+                      checked: !!sbWater,
+                      onChange: (ev) => setSbWater(!!(ev && ev.target && ev.target.checked))
+                    }),
+                    lang === "ar" ? "ماء (+2)" : "Eau (+2)"
+                  ),
+                  React.createElement(
+                    "label",
+                    { style: { display: "flex", gap: 8, alignItems: "center" } },
+                    React.createElement("input", {
+                      type: "checkbox",
+                      checked: !!sbCroissant,
+                      onChange: (ev) => setSbCroissant(!!(ev && ev.target && ev.target.checked))
+                    }),
+                    lang === "ar" ? "كرواسون (+6)" : "Croissant (+6)"
+                  ),
+                  React.createElement(
+                    "label",
+                    { style: { display: "flex", gap: 8, alignItems: "center" } },
+                    React.createElement("input", {
+                      type: "checkbox",
+                      checked: !!sbBreakfastSet,
+                      onChange: (ev) => setSbBreakfastSet(!!(ev && ev.target && ev.target.checked))
+                    }),
+                    lang === "ar" ? "باك الفطور (+5)" : "Breakfast set (+5)"
+                  )
+                ),
+                React.createElement(
+                  "div",
+                  { style: { display: "grid", gap: 6 } },
+                  React.createElement(
+                    "div",
+                    { style: { fontWeight: 700 } },
+                    lang === "ar" ? "قطع الجبن" : "Fromage (pièces)"
+                  ),
+                  React.createElement(
+                    "div",
+                    { style: { display: "grid", gridTemplateColumns: "1fr", gap: 8 } },
+                    React.createElement(
+                      "label",
+                      { style: { display: "grid", gap: 4 } },
+                      React.createElement(
+                        "span",
+                        { style: { color: "#64748b" } },
+                        lang === "ar" ? "قطع" : "Pièces"
+                      ),
+                      React.createElement("input", {
+                        type: "number",
+                        min: 0,
+                        step: 1,
+                        value: String(sbCheesePieces),
+                        onChange: (ev) => {
+                          const n = Number(ev && ev.target ? ev.target.value : 0);
+                          setSbCheesePieces(Number.isFinite(n) ? n : 0);
+                        },
+                        style: { width: "100%", padding: 8, fontSize: 14 }
+                      })
+                    )
+                  ),
+                  React.createElement(
+                    "div",
+                    { style: { fontSize: 11, color: "#64748b" } },
+                    "+1 DHS / pièce"
+                  )
+                )
+              ),
             hasSugarModifier &&
               isBreakfast &&
+              !isSpecialBreakfast &&
               React.createElement(
                 "div",
                 { style: { marginTop: 6, fontSize: 12 } },
