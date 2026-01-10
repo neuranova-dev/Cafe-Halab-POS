@@ -901,7 +901,7 @@
           nameAr: "فطور خاص",
           price: 0.0,
           category: "Breakfast",
-          image: "petit déjeunée spécial.jpg",
+          image: "petit déjeuner spécial.png",
           modifiers: []
         },
 
@@ -1183,6 +1183,12 @@
             patch = patch || {};
             patch.image = base.image;
           }
+          if (id === "breakfast_special_set") {
+            if (base.image && item.image !== base.image) {
+              patch = patch || {};
+              patch.image = base.image;
+            }
+          }
           if (id === "water_oulmes_yellow") {
             if (item.name !== base.name) {
               patch = patch || {};
@@ -1223,6 +1229,16 @@
         return next;
       }
 
+      function resolveImageSrc(src) {
+        const s = String(src == null ? "" : src).trim();
+        if (!s) return "";
+        if (/^data:image\//i.test(s)) return s;
+        if (/^https?:\/\//i.test(s)) return s;
+        if (s.startsWith("./") || s.startsWith("../")) return encodeURI(s);
+        if (s.startsWith("/")) return encodeURI(s);
+        return encodeURI("./" + s);
+      }
+
       const INITIAL_CATEGORIES = [
         "Favorites",
         "Breakfast",
@@ -1237,6 +1253,54 @@
         { id: "manager_halab", name: "Manager", role: "manager", pin: "4444" },
         { id: "admin_nouri", name: "Nouri", role: "admin", pin: "3333" }
       ];
+
+      function ensureDefaultUsers(list) {
+        const arr = Array.isArray(list) ? list.slice() : [];
+        const byId = {};
+        for (let i = 0; i < arr.length; i++) {
+          const u = arr[i];
+          if (!u || !u.id) continue;
+          byId[String(u.id)] = { u, i };
+        }
+
+        let changed = false;
+        for (let i = 0; i < (USERS || []).length; i++) {
+          const base = USERS[i];
+          if (!base || !base.id) continue;
+          const id = String(base.id);
+          const hit = byId[id] || null;
+          if (!hit) {
+            arr.push({ ...base });
+            changed = true;
+            continue;
+          }
+
+          const cur = hit.u;
+          let patch = null;
+          const isCore = id === "manager_halab" || id === "admin_nouri";
+          if (isCore && base.role && cur.role !== base.role) {
+            patch = patch || {};
+            patch.role = base.role;
+          }
+          const pin = cur && cur.pin != null ? String(cur.pin) : "";
+          if (isCore && (!pin || !pin.trim()) && base.pin) {
+            patch = patch || {};
+            patch.pin = base.pin;
+          }
+          const nm = cur && cur.name != null ? String(cur.name) : "";
+          if ((!nm || !nm.trim()) && base.name) {
+            patch = patch || {};
+            patch.name = base.name;
+          }
+
+          if (patch) {
+            arr[hit.i] = { ...cur, ...patch };
+            changed = true;
+          }
+        }
+
+        return changed ? arr : list;
+      }
 
       const INVENTORY_AR_MAP = {
         coffee_beans: "قهوة (حبوب)",
@@ -8097,7 +8161,7 @@ const DICTIONARY = {
                     "div",
                     { style: { marginTop: 8 } },
                     React.createElement("img", {
-                      src: item.image,
+                      src: resolveImageSrc(item.image),
                       alt: "preview",
                       style: { width: 120, height: 80, objectFit: "cover", borderRadius: 10, border: "1px solid rgba(148,163,184,0.5)" }
                     })
@@ -8173,24 +8237,7 @@ const DICTIONARY = {
         });
 
         React.useEffect(() => {
-          setUsers((prev) => {
-            const list = Array.isArray(prev) ? prev : [];
-            const idx = list.findIndex((u) => u && u.role === "manager");
-            if (idx === -1) {
-              return [
-                ...list,
-                { id: "manager_halab", name: "Manager", role: "manager", pin: "4444" }
-              ];
-            }
-            const u = list[idx];
-            const pin = u && u.pin != null ? String(u.pin) : "";
-            if (!pin) {
-              const next = list.slice();
-              next[idx] = { ...u, pin: "4444" };
-              return next;
-            }
-            return prev;
-          });
+          setUsers((prev) => ensureDefaultUsers(prev));
         }, []);
         const [cart, setCart] = React.useState([]);
         const [cartEnterKeys, setCartEnterKeys] = React.useState({});
@@ -8850,7 +8897,33 @@ const DICTIONARY = {
                 next.push({ ...d, id: d.id || doc.id });
               });
               next.sort((a, b) => String(a.name || a.id || "").localeCompare(String(b.name || b.id || "")));
-              setUsers(next);
+              const merged = ensureDefaultUsers(next);
+              setUsers(merged);
+
+              try {
+                const have = new Set(next.map((u) => (u && u.id ? String(u.id) : null)).filter(Boolean));
+                const nowIso = new Date().toISOString();
+                (USERS || []).forEach((u) => {
+                  if (!u || !u.id) return;
+                  if (have.has(String(u.id))) return;
+                  usersCol
+                    .doc(String(u.id))
+                    .set(
+                      {
+                        id: String(u.id),
+                        name: u.name || String(u.id),
+                        role: u.role || "worker",
+                        pin: u.pin || "",
+                        salary: typeof u.salary === "number" ? u.salary : 0,
+                        appId: CLOUD_APP_ID,
+                        deviceId: deviceIdRef.current,
+                        updatedAt: nowIso
+                      },
+                      { merge: true }
+                    )
+                    .catch(() => {});
+                });
+              } catch (e) {}
             },
             (err) => {
               setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
@@ -11048,16 +11121,20 @@ const DICTIONARY = {
             const list = (prev || []).slice();
             const idx = list.findIndex((u) => u && u.id === partial.id);
             if (idx === -1) {
+              const base = (USERS || []).find((u) => u && u.id === partial.id) || null;
               list.push({
                 id: partial.id,
-                name: partial.name || partial.id,
-                role: partial.role || "worker",
-                pin: partial.pin || "",
+                name: partial.name || (base && base.name) || partial.id,
+                role: partial.role || (base && base.role) || "worker",
+                pin:
+                  partial.pin !== undefined
+                    ? (partial.pin || "")
+                    : (base && base.pin ? String(base.pin) : ""),
                 salary: typeof partial.salary === "number" ? partial.salary : 0,
                 posAccess: partial.posAccess === false ? false : true,
                 cycleStartDate: partial.cycleStartDate || null
               });
-              return list;
+              return ensureDefaultUsers(list);
             }
             const cur = list[idx];
             list[idx] = {
@@ -11076,7 +11153,7 @@ const DICTIONARY = {
                   ? (cur && cur.cycleStartDate ? cur.cycleStartDate : null)
                   : (partial.cycleStartDate ? String(partial.cycleStartDate) : null)
             };
-            return list;
+            return ensureDefaultUsers(list);
           });
 
           if (!cloudEnabled) return;
@@ -11101,6 +11178,10 @@ const DICTIONARY = {
 
         function handleDeleteUser(userId) {
           if (!userId) return;
+          if (userId === "manager_halab" || userId === "admin_nouri") {
+            setStatus({ type: "err", message: "Utilisateur protégé." });
+            return;
+          }
           setUsers((prev) => (prev || []).filter((u) => u && u.id !== userId));
           if (activeWorker && activeWorker.id === userId) {
             setActiveWorker(null);
@@ -11118,19 +11199,35 @@ const DICTIONARY = {
         }
 
         function applyShiftExpectedCashDelta(shiftId, delta, nowIso) {
-          if (!shiftId || !delta) return;
+          if (!shiftId) return;
+          const d = Number(delta || 0) || 0;
+          if (!d) return;
           setShifts((prev) =>
             (prev || []).map((s) =>
               s && s.id === shiftId
-                ? { ...s, expectedCash: (s.expectedCash || 0) + delta }
+                ? { ...s, expectedCash: (s.expectedCash || 0) + d }
                 : s
             )
           );
           setActiveShift((s) =>
             s && s.id === shiftId
-              ? { ...s, expectedCash: (s.expectedCash || 0) + delta }
+              ? { ...s, expectedCash: (s.expectedCash || 0) + d }
               : s
           );
+
+          if (!cloudEnabled) return;
+          const shiftsCol = cloudCol("shifts");
+          if (!shiftsCol) return;
+          try {
+            const inc = firebase.firestore.FieldValue.increment;
+            shiftsCol
+              .doc(shiftId)
+              .set(
+                { id: shiftId, expectedCash: inc(d), updatedAt: nowIso || new Date().toISOString() },
+                { merge: true }
+              )
+              .catch(() => {});
+          } catch (e) {}
         }
 
         function openAdvancePrompt() {
@@ -14336,7 +14433,7 @@ const DICTIONARY = {
                               { className: "pos-category-icon" },
                               imgSrc
                                 ? e("img", {
-                                    src: imgSrc,
+                                    src: resolveImageSrc(imgSrc),
                                     alt: label,
                                     style: {
                                       width: "100%",
@@ -16788,7 +16885,7 @@ const DICTIONARY = {
             null,
             product.image
               ? React.createElement("img", {
-                  src: product.image,
+                  src: resolveImageSrc(product.image),
                   alt:
                     lang === "ar"
                       ? product.nameAr || product.name
