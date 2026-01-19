@@ -4625,7 +4625,7 @@ const DICTIONARY = {
         );
       }
 
-      function AdminReportsPage({ shifts, orders, inventoryLogs, clientDebts, inventory, t, lang, isPhone }) {
+      function AdminReportsPage({ shifts, orders, inventoryLogs, clientDebts, inventory, t, lang, isPhone, onEnsureRangeDataLoaded, onEnsureShiftDataLoaded }) {
         const [reportMode, setReportMode] = React.useState("shift");
         const [reportShiftId, setReportShiftId] = React.useState(() => {
           const last = (shifts || [])[shifts.length - 1];
@@ -4709,6 +4709,27 @@ const DICTIONARY = {
           const tdy = new Date().toISOString().slice(0, 10);
           return { from: tdy, to: tdy };
         }
+
+        React.useEffect(() => {
+          if (reportMode === "shift") {
+            const sid =
+              reportShiftId ||
+              defaultRecentShiftId ||
+              (((shifts || [])[shifts.length - 1] && (shifts || [])[shifts.length - 1].id) || "");
+            if (sid && onEnsureShiftDataLoaded) {
+              try {
+                onEnsureShiftDataLoaded(sid);
+              } catch (e) {}
+            }
+            return;
+          }
+          const range = resolveReportRange();
+          if (range && range.from && range.to && onEnsureRangeDataLoaded) {
+            try {
+              onEnsureRangeDataLoaded(range);
+            } catch (e) {}
+          }
+        }, [reportMode, reportShiftId, reportFrom, reportTo, defaultRecentShiftId, shifts]);
 
         function getReportData() {
           if (reportMode === "shift") {
@@ -8627,6 +8648,7 @@ const DICTIONARY = {
             return null;
           }
         });
+        const activeWorkerId = activeWorker && activeWorker.id ? String(activeWorker.id) : "";
         const [view, setView] = React.useState("pos");
         const [nowMs, setNowMs] = React.useState(() => Date.now());
         const [adminSection, setAdminSection] = React.useState("overview");
@@ -8914,6 +8936,12 @@ const DICTIONARY = {
         }
 
         const deviceIdRef = React.useRef(null);
+        const loadedShiftOrdersRef = React.useRef(new Set());
+        const loadedShiftLogsRef = React.useRef(new Set());
+        const loadedShiftDebtsRef = React.useRef(new Set());
+        const loadedRangeOrdersRef = React.useRef(new Set());
+        const loadedRangeLogsRef = React.useRef(new Set());
+        const loadedRangeDebtsRef = React.useRef(new Set());
 
         React.useEffect(() => {
           if (deviceIdRef.current) return;
@@ -8944,6 +8972,199 @@ const DICTIONARY = {
         function cloudPublicDoc(name) {
           const root = cloudAppDoc();
           return root ? root.collection("public").doc(String(name || "")) : null;
+        }
+
+        function mergeRecordsById(prev, incoming, sortKey) {
+          const base = Array.isArray(prev) ? prev : [];
+          const next = Array.isArray(incoming) ? incoming : [];
+          const map = new Map();
+          base.forEach((x) => {
+            if (!x || !x.id) return;
+            map.set(String(x.id), x);
+          });
+          next.forEach((x) => {
+            if (!x || !x.id) return;
+            map.set(String(x.id), x);
+          });
+          const out = Array.from(map.values());
+          const key = sortKey ? String(sortKey) : "createdAt";
+          out.sort((a, b) => String((a && a[key]) || "").localeCompare(String((b && b[key]) || "")));
+          return out;
+        }
+
+        async function ensureOrdersLoadedForShiftId(shiftId) {
+          if (!cloudEnabled) return;
+          const sid = String(shiftId || "");
+          if (!sid) return;
+          if (loadedShiftOrdersRef.current.has(sid)) return;
+          loadedShiftOrdersRef.current.add(sid);
+          const ordersCol = cloudCol("orders");
+          if (!ordersCol) return;
+          try {
+            const snap = await ordersCol.where("shiftId", "==", sid).get();
+            const next = [];
+            snap.forEach((doc) => {
+              const d = doc && doc.data ? doc.data() : null;
+              if (!d || typeof d !== "object") return;
+              next.push({ ...d, id: d.id || doc.id });
+            });
+            next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+            setOrders((prev) => mergeRecordsById(prev, next, "createdAt"));
+          } catch (e) {}
+        }
+
+        async function ensureInventoryLogsLoadedForShiftId(shiftId) {
+          if (!cloudEnabled) return;
+          const sid = String(shiftId || "");
+          if (!sid) return;
+          if (loadedShiftLogsRef.current.has(sid)) return;
+          loadedShiftLogsRef.current.add(sid);
+          const logsCol = cloudCol("inventoryLogs");
+          if (!logsCol) return;
+          try {
+            const snap = await logsCol.where("shiftId", "==", sid).get();
+            const next = [];
+            snap.forEach((doc) => {
+              const d = doc && doc.data ? doc.data() : null;
+              if (!d || typeof d !== "object") return;
+              next.push({ ...d, id: d.id || doc.id });
+            });
+            next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+            setInventoryLogs((prev) => mergeRecordsById(prev, next, "createdAt"));
+          } catch (e) {}
+        }
+
+        async function ensureDebtsLoadedForShiftId(shiftId) {
+          if (!cloudEnabled) return;
+          const sid = String(shiftId || "");
+          if (!sid) return;
+          if (loadedShiftDebtsRef.current.has(sid)) return;
+          loadedShiftDebtsRef.current.add(sid);
+          const debtsCol = cloudCol("clientDebts");
+          if (!debtsCol) return;
+          try {
+            const [a, b, c] = await Promise.all([
+              debtsCol.where("originalShiftId", "==", sid).get(),
+              debtsCol.where("paidShiftId", "==", sid).get(),
+              debtsCol.where("chargedShiftId", "==", sid).get()
+            ]);
+            const next = [];
+            function addSnap(snap) {
+              if (!snap) return;
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+            }
+            addSnap(a);
+            addSnap(b);
+            addSnap(c);
+            next.sort((x, y) => String(x.createdAt || "").localeCompare(String(y.createdAt || "")));
+            setClientDebts((prev) => mergeRecordsById(prev, next, "createdAt"));
+          } catch (e) {}
+        }
+
+        function rangeToIsoBounds(range) {
+          const from = range && range.from ? String(range.from) : "";
+          const to = range && range.to ? String(range.to) : "";
+          if (!from || !to) return null;
+          const fromIso = from + "T00:00:00.000Z";
+          const toIso = to + "T23:59:59.999Z";
+          return { from, to, fromIso, toIso };
+        }
+
+        async function ensureOrdersLoadedForRange(range) {
+          if (!cloudEnabled) return;
+          const b = rangeToIsoBounds(range);
+          if (!b) return;
+          const key = b.from + "|" + b.to;
+          if (loadedRangeOrdersRef.current.has(key)) return;
+          loadedRangeOrdersRef.current.add(key);
+          const ordersCol = cloudCol("orders");
+          if (!ordersCol) return;
+          try {
+            const snap = await ordersCol.where("createdAt", ">=", b.fromIso).where("createdAt", "<=", b.toIso).get();
+            const next = [];
+            snap.forEach((doc) => {
+              const d = doc && doc.data ? doc.data() : null;
+              if (!d || typeof d !== "object") return;
+              next.push({ ...d, id: d.id || doc.id });
+            });
+            next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+            setOrders((prev) => mergeRecordsById(prev, next, "createdAt"));
+          } catch (e) {}
+        }
+
+        async function ensureInventoryLogsLoadedForRange(range) {
+          if (!cloudEnabled) return;
+          const b = rangeToIsoBounds(range);
+          if (!b) return;
+          const key = b.from + "|" + b.to;
+          if (loadedRangeLogsRef.current.has(key)) return;
+          loadedRangeLogsRef.current.add(key);
+          const logsCol = cloudCol("inventoryLogs");
+          if (!logsCol) return;
+          try {
+            const snap = await logsCol.where("createdAt", ">=", b.fromIso).where("createdAt", "<=", b.toIso).get();
+            const next = [];
+            snap.forEach((doc) => {
+              const d = doc && doc.data ? doc.data() : null;
+              if (!d || typeof d !== "object") return;
+              next.push({ ...d, id: d.id || doc.id });
+            });
+            next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+            setInventoryLogs((prev) => mergeRecordsById(prev, next, "createdAt"));
+          } catch (e) {}
+        }
+
+        async function ensureDebtsLoadedForRange(range) {
+          if (!cloudEnabled) return;
+          const b = rangeToIsoBounds(range);
+          if (!b) return;
+          const key = b.from + "|" + b.to;
+          if (loadedRangeDebtsRef.current.has(key)) return;
+          loadedRangeDebtsRef.current.add(key);
+          const debtsCol = cloudCol("clientDebts");
+          if (!debtsCol) return;
+          try {
+            const [a, p, c] = await Promise.all([
+              debtsCol.where("createdAt", ">=", b.fromIso).where("createdAt", "<=", b.toIso).get(),
+              debtsCol.where("paidAt", ">=", b.fromIso).where("paidAt", "<=", b.toIso).get(),
+              debtsCol.where("chargedAt", ">=", b.fromIso).where("chargedAt", "<=", b.toIso).get()
+            ]);
+            const next = [];
+            function addSnap(snap) {
+              if (!snap) return;
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+            }
+            addSnap(a);
+            addSnap(p);
+            addSnap(c);
+            next.sort((x, y) => String(x.createdAt || "").localeCompare(String(y.createdAt || "")));
+            setClientDebts((prev) => mergeRecordsById(prev, next, "createdAt"));
+          } catch (e) {}
+        }
+
+        function ensureShiftDataLoaded(shiftId) {
+          const sid = String(shiftId || "");
+          if (!sid) return;
+          const activeId = activeShift && activeShift.id ? String(activeShift.id) : "";
+          if (sid && sid !== activeId) {
+            ensureOrdersLoadedForShiftId(sid);
+            ensureInventoryLogsLoadedForShiftId(sid);
+          }
+          ensureDebtsLoadedForShiftId(sid);
+        }
+
+        function ensureRangeDataLoaded(range) {
+          ensureOrdersLoadedForRange(range);
+          ensureInventoryLogsLoadedForRange(range);
+          ensureDebtsLoadedForRange(range);
         }
 
         function sanitizeMenuForPublic(menu) {
@@ -9105,18 +9326,9 @@ const DICTIONARY = {
           const db = window.firebaseDb;
           if (!db) return;
 
-          const shiftsCol = cloudCol("shifts");
-          const ordersCol = cloudCol("orders");
-          const cupLoansCol = cloudCol("cupLoans");
-          const debtsCol = cloudCol("clientDebts");
           const invCol = cloudCol("inventory");
-          const logsCol = cloudCol("inventoryLogs");
-          const invoicesCol = cloudCol("purchaseInvoices");
-          const stockCountsCol = cloudCol("stockCountRequests");
           const usersCol = cloudCol("users");
-          const advancesCol = cloudCol("advances");
-          const discountsCol = cloudCol("discounts");
-          if (!shiftsCol || !ordersCol || !cupLoansCol || !debtsCol || !invCol || !logsCol || !invoicesCol || !stockCountsCol || !usersCol || !advancesCol || !discountsCol) return;
+          if (!invCol || !usersCol) return;
 
           let cancelled = false;
 
@@ -9176,7 +9388,16 @@ const DICTIONARY = {
             })
             .catch(() => {});
 
-          const unsubShifts = shiftsCol.onSnapshot(
+          return () => {
+            cancelled = true;
+          };
+        }, [cloudEnabled]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          const shiftsCol = cloudCol("shifts");
+          if (!shiftsCol) return;
+          const unsub = shiftsCol.onSnapshot(
             (snap) => {
               const next = [];
               snap.forEach((doc) => {
@@ -9191,56 +9412,18 @@ const DICTIONARY = {
               setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
             }
           );
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled]);
 
-          const unsubOrders = ordersCol.onSnapshot(
-            (snap) => {
-              const next = [];
-              snap.forEach((doc) => {
-                const d = doc && doc.data ? doc.data() : null;
-                if (!d || typeof d !== "object") return;
-                next.push({ ...d, id: d.id || doc.id });
-              });
-              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
-              setOrders(next);
-            },
-            (err) => {
-              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
-            }
-          );
-
-          const unsubCupLoans = cupLoansCol.onSnapshot(
-            (snap) => {
-              const next = [];
-              snap.forEach((doc) => {
-                const d = doc && doc.data ? doc.data() : null;
-                if (!d || typeof d !== "object") return;
-                next.push({ ...d, id: d.id || doc.id });
-              });
-              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
-              setCupLoans(next);
-            },
-            (err) => {
-              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
-            }
-          );
-
-          const unsubDebts = debtsCol.onSnapshot(
-            (snap) => {
-              const next = [];
-              snap.forEach((doc) => {
-                const d = doc && doc.data ? doc.data() : null;
-                if (!d || typeof d !== "object") return;
-                next.push({ ...d, id: d.id || doc.id });
-              });
-              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
-              setClientDebts(next);
-            },
-            (err) => {
-              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
-            }
-          );
-
-          const unsubInv = invCol.onSnapshot(
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          const invCol = cloudCol("inventory");
+          if (!invCol) return;
+          const unsub = invCol.onSnapshot(
             (snap) => {
               const merged = { ...INVENTORY_INITIAL };
               snap.forEach((doc) => {
@@ -9256,8 +9439,18 @@ const DICTIONARY = {
               setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
             }
           );
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled]);
 
-          const unsubLogs = logsCol.onSnapshot(
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          const discountsCol = cloudCol("discounts");
+          if (!discountsCol) return;
+          const unsub = discountsCol.onSnapshot(
             (snap) => {
               const next = [];
               snap.forEach((doc) => {
@@ -9265,47 +9458,25 @@ const DICTIONARY = {
                 if (!d || typeof d !== "object") return;
                 next.push({ ...d, id: d.id || doc.id });
               });
-              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
-              setInventoryLogs(next);
+              next.sort((a, b) => String(b.startAt || "").localeCompare(String(a.startAt || "")));
+              setDiscounts(next);
             },
             (err) => {
               setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
             }
           );
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled]);
 
-          const unsubInvoices = invoicesCol.onSnapshot(
-            (snap) => {
-              const next = [];
-              snap.forEach((doc) => {
-                const d = doc && doc.data ? doc.data() : null;
-                if (!d || typeof d !== "object") return;
-                next.push({ ...d, id: d.id || doc.id });
-              });
-              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
-              setPurchaseInvoices(next);
-            },
-            (err) => {
-              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
-            }
-          );
-
-          const unsubStockCounts = stockCountsCol.onSnapshot(
-            (snap) => {
-              const next = [];
-              snap.forEach((doc) => {
-                const d = doc && doc.data ? doc.data() : null;
-                if (!d || typeof d !== "object") return;
-                next.push({ ...d, id: d.id || doc.id });
-              });
-              next.sort((a, b) => String(a.requestedAt || a.createdAt || "").localeCompare(String(b.requestedAt || b.createdAt || "")));
-              setStockCountRequests(next);
-            },
-            (err) => {
-              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
-            }
-          );
-
-          const unsubUsers = usersCol.onSnapshot(
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          const usersCol = cloudCol("users");
+          if (!usersCol) return;
+          const unsub = usersCol.onSnapshot(
             (snap) => {
               const next = [];
               snap.forEach((doc) => {
@@ -9346,8 +9517,233 @@ const DICTIONARY = {
               setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
             }
           );
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled]);
 
-          const unsubAdvances = advancesCol.onSnapshot(
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          if (!activeShift || !activeShift.id) return;
+          const ordersCol = cloudCol("orders");
+          if (!ordersCol) return;
+          const shiftId = String(activeShift.id);
+
+          const unsub = ordersCol.where("shiftId", "==", shiftId).onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+              setOrders((prev) => {
+                const base = Array.isArray(prev) ? prev : [];
+                const keep = base.filter((o) => o && String(o.shiftId || "") !== shiftId);
+                const merged = keep.concat(next);
+                merged.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+                return merged;
+              });
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled, activeShift ? activeShift.id : null]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          if (view !== "pos") return;
+          const cupLoansCol = cloudCol("cupLoans");
+          if (!cupLoansCol) return;
+
+          const unsub = cupLoansCol.where("status", "==", "out").onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+              setCupLoans(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled, view]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          const debtsCol = cloudCol("clientDebts");
+          if (!debtsCol) return;
+
+          const shouldFullListen = view === "admin" && adminSection === "debts";
+          const shouldWorkerListen = view === "pos" && !!activeWorkerId;
+
+          if (!shouldFullListen && !shouldWorkerListen) return;
+
+          const query = shouldFullListen
+            ? debtsCol
+            : debtsCol.where("waiterId", "==", String(activeWorkerId || "")).where("paidAt", "==", null);
+
+          const unsub = query.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+              setClientDebts(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled, view, adminSection, activeWorkerId]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          const logsCol = cloudCol("inventoryLogs");
+          if (!logsCol) return;
+
+          const shouldFullListen =
+            view === "admin" && adminSection === "inventory";
+          const shouldShiftListen = !shouldFullListen && activeShift && activeShift.id && (view === "manager" || view === "admin");
+
+          if (!shouldFullListen && !shouldShiftListen) return;
+
+          const query = shouldFullListen ? logsCol : logsCol.where("shiftId", "==", String(activeShift.id));
+
+          const unsub = query.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+              setInventoryLogs(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled, view, adminSection, activeShift ? activeShift.id : null]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          if (!(view === "admin" && adminSection === "inventory")) return;
+          const invoicesCol = cloudCol("purchaseInvoices");
+          if (!invoicesCol) return;
+          const unsub = invoicesCol.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+              setPurchaseInvoices(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled, view, adminSection]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          if (view !== "manager") return;
+          const closed = (shifts || [])
+            .filter((s) => s && (s.status === "closed" || s.closedAt))
+            .slice()
+            .sort((a, b) => shiftTimeMs(b) - shiftTimeMs(a));
+          const selectedShiftId = managerSelectedShiftId || (closed[0] && closed[0].id) || "";
+          if (!selectedShiftId) return;
+          ensureShiftDataLoaded(selectedShiftId);
+        }, [cloudEnabled, view, shifts, managerSelectedShiftId]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          if (!(view === "admin" && adminSection === "overview")) return;
+          const sid = adminOverviewShiftId || (activeShift && activeShift.id ? activeShift.id : "");
+          if (!sid) return;
+          ensureShiftDataLoaded(sid);
+        }, [cloudEnabled, view, adminSection, adminOverviewShiftId, activeShift ? activeShift.id : null]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          if (!(view === "admin" && adminSection === "inventory")) return;
+          const stockCountsCol = cloudCol("stockCountRequests");
+          if (!stockCountsCol) return;
+          const unsub = stockCountsCol.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) =>
+                String(a.requestedAt || a.createdAt || "").localeCompare(String(b.requestedAt || b.createdAt || ""))
+              );
+              setStockCountRequests(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+          return () => {
+            try {
+              if (typeof unsub === "function") unsub();
+            } catch (e) {}
+          };
+        }, [cloudEnabled, view, adminSection]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          if (!(view === "admin" && adminSection === "staff")) return;
+          const advancesCol = cloudCol("advances");
+          if (!advancesCol) return;
+          const unsub = advancesCol.onSnapshot(
             (snap) => {
               const next = [];
               snap.forEach((doc) => {
@@ -9362,60 +9758,12 @@ const DICTIONARY = {
               setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
             }
           );
-
-          const unsubDiscounts = discountsCol.onSnapshot(
-            (snap) => {
-              const next = [];
-              snap.forEach((doc) => {
-                const d = doc && doc.data ? doc.data() : null;
-                if (!d || typeof d !== "object") return;
-                next.push({ ...d, id: d.id || doc.id });
-              });
-              next.sort((a, b) => String(b.startAt || "").localeCompare(String(a.startAt || "")));
-              setDiscounts(next);
-            },
-            (err) => {
-              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
-            }
-          );
-
           return () => {
-            cancelled = true;
             try {
-              if (typeof unsubShifts === "function") unsubShifts();
-            } catch (e) {}
-            try {
-              if (typeof unsubOrders === "function") unsubOrders();
-            } catch (e) {}
-            try {
-              if (typeof unsubCupLoans === "function") unsubCupLoans();
-            } catch (e) {}
-            try {
-              if (typeof unsubDebts === "function") unsubDebts();
-            } catch (e) {}
-            try {
-              if (typeof unsubInv === "function") unsubInv();
-            } catch (e) {}
-            try {
-              if (typeof unsubLogs === "function") unsubLogs();
-            } catch (e) {}
-            try {
-              if (typeof unsubInvoices === "function") unsubInvoices();
-            } catch (e) {}
-            try {
-              if (typeof unsubStockCounts === "function") unsubStockCounts();
-            } catch (e) {}
-            try {
-              if (typeof unsubUsers === "function") unsubUsers();
-            } catch (e) {}
-            try {
-              if (typeof unsubAdvances === "function") unsubAdvances();
-            } catch (e) {}
-            try {
-              if (typeof unsubDiscounts === "function") unsubDiscounts();
+              if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled]);
+        }, [cloudEnabled, view, adminSection]);
 
         React.useEffect(() => {
           if (!activeWorker || !activeWorker.id) return;
@@ -9428,8 +9776,6 @@ const DICTIONARY = {
             setActiveWorker(u);
           }
         }, [users]);
-
-        const activeWorkerId = activeWorker && activeWorker.id ? String(activeWorker.id) : "";
 
         React.useEffect(() => {
           if (!activeWorkerId) {
@@ -17163,7 +17509,9 @@ const DICTIONARY = {
                               inventory,
                               t,
                               lang,
-                              isPhone
+                              isPhone,
+                              onEnsureRangeDataLoaded: ensureRangeDataLoaded,
+                              onEnsureShiftDataLoaded: ensureShiftDataLoaded
                             })
                           )
                         : adminSection === "staff"
