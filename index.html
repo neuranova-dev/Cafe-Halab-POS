@@ -1830,6 +1830,61 @@
         return item && ids.includes(item.id);
       }
 
+      function isTeaItem(item) {
+        try {
+          if (!item) return false;
+          const id = String(item.id || "");
+          if (!id) return false;
+          return id.indexOf("tea_") === 0;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function discountScopeMatchesProduct(scope, product) {
+        try {
+          const s = String(scope || "all");
+          if (s === "all") return true;
+          if (!product) return false;
+          if (s === "breakfast") return product.category === "Breakfast";
+          if (s === "hot_drinks") return product.category === "Hot Drinks";
+          if (s === "coffee") return isCoffee(product);
+          if (s === "tea") return isTeaItem(product);
+          return false;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function discountActiveNow(d, nowMs) {
+        try {
+          if (!d || d.enabled === false) return false;
+          const startMs = new Date(String(d.startAt || "")).getTime();
+          const endMs = new Date(String(d.endAt || "")).getTime();
+          if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return false;
+          const t = Number(nowMs || Date.now());
+          if (!Number.isFinite(t)) return false;
+          return t >= startMs && t < endMs;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function discountAmountForProduct(discounts, product, nowMs) {
+        try {
+          let best = 0;
+          (discounts || []).forEach((d) => {
+            if (!discountActiveNow(d, nowMs)) return;
+            if (!discountScopeMatchesProduct(d.scope, product)) return;
+            const amt = Number(d.amount || 0) || 0;
+            if (amt > best) best = amt;
+          });
+          return best;
+        } catch (e) {
+          return 0;
+        }
+      }
+
       function herbValueLabel(value, t) {
         if (value === "mint") return (t && t.herbMint) || "Menthe";
         if (value === "absinthe") return (t && t.herbAbsinthe) || "Absinthe";
@@ -3962,6 +4017,282 @@ const DICTIONARY = {
                 })
               )
             )
+          )
+        );
+      }
+
+      function AdminDiscountsPanel({ discounts, onUpsert, onDelete, lang, isPhone, nowMs }) {
+        const [startAt, setStartAt] = React.useState("");
+        const [endAt, setEndAt] = React.useState("");
+        const [amount, setAmount] = React.useState("1");
+        const [scope, setScope] = React.useState("all");
+        const [enabled, setEnabled] = React.useState(true);
+        const [error, setError] = React.useState(null);
+
+        function makeLocalId(prefix) {
+          try {
+            return (
+              String(prefix || "id") +
+              "_" +
+              Date.now() +
+              "_" +
+              Math.random().toString(16).slice(2)
+            );
+          } catch (e) {
+            return String(prefix || "id") + "_" + String(Date.now());
+          }
+        }
+
+        const rows = React.useMemo(() => {
+          return (discounts || [])
+            .slice()
+            .sort((a, b) => String(b.startAt || "").localeCompare(String(a.startAt || "")));
+        }, [discounts]);
+
+        function scopeLabel(s) {
+          const v = String(s || "all");
+          if (lang === "ar") {
+            if (v === "all") return "الكل";
+            if (v === "breakfast") return "فطور";
+            if (v === "coffee") return "قهوة";
+            if (v === "hot_drinks") return "مشروبات ساخنة";
+            if (v === "tea") return "شاي";
+            return v;
+          }
+          if (v === "all") return "All";
+          if (v === "breakfast") return "Breakfast";
+          if (v === "coffee") return "Coffees";
+          if (v === "hot_drinks") return "Hot drinks";
+          if (v === "tea") return "Tea";
+          return v;
+        }
+
+        function fmtDateTime(v) {
+          try {
+            if (!v) return "";
+            const d = new Date(String(v));
+            return d.toLocaleString(lang === "ar" ? "ar-MA" : "fr-FR", {
+              year: "2-digit",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+          } catch (e) {
+            return String(v || "");
+          }
+        }
+
+        function resetForm() {
+          setStartAt("");
+          setEndAt("");
+          setAmount("1");
+          setScope("all");
+          setEnabled(true);
+          setError(null);
+        }
+
+        function addDiscount(ev) {
+          if (ev && ev.preventDefault) ev.preventDefault();
+          setError(null);
+          const s = String(startAt || "").trim();
+          const e = String(endAt || "").trim();
+          const sMs = new Date(s).getTime();
+          const eMs = new Date(e).getTime();
+          if (!s || !e || !Number.isFinite(sMs) || !Number.isFinite(eMs) || eMs <= sMs) {
+            setError(lang === "ar" ? "تاريخ/وقت غير صالح" : "Date/heure invalide");
+            return;
+          }
+          const amt = Number(String(amount || "").trim());
+          if (!Number.isFinite(amt) || amt <= 0) {
+            setError(lang === "ar" ? "خصم غير صالح" : "Remise invalide");
+            return;
+          }
+          const rec = {
+            id: makeLocalId("disc"),
+            startAt: s,
+            endAt: e,
+            amount: amt,
+            scope: String(scope || "all"),
+            enabled: !!enabled
+          };
+          if (onUpsert) onUpsert(rec);
+          resetForm();
+        }
+
+        return React.createElement(
+          "div",
+          { style: { display: "grid", gap: 14 } },
+          React.createElement(
+            "div",
+            {
+              style: {
+                fontSize: 12,
+                padding: 10,
+                borderRadius: 12,
+                background: "linear-gradient(135deg, rgba(255,255,255,0.98), rgba(224,231,255,0.72))",
+                border: "1px solid rgba(148,163,184,0.5)",
+                boxShadow: "0 10px 24px rgba(15,23,42,0.10)"
+              }
+            },
+            React.createElement(
+              "div",
+              { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline" } },
+              React.createElement("h4", { style: { margin: 0 } }, lang === "ar" ? "إضافة خصم" : "Ajouter une remise"),
+              React.createElement(
+                "button",
+                { type: "button", className: "category-btn", onClick: resetForm },
+                lang === "ar" ? "إعادة ضبط" : "Réinitialiser"
+              )
+            ),
+            React.createElement(
+              "form",
+              { onSubmit: addDiscount, style: { display: "grid", gap: 10, marginTop: 10 } },
+              React.createElement(
+                "div",
+                { style: { display: "grid", gridTemplateColumns: isPhone ? "1fr" : "1fr 1fr", gap: 10 } },
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement("div", { style: { fontWeight: 600, marginBottom: 2 } }, lang === "ar" ? "البداية" : "Début"),
+                  React.createElement("input", {
+                    type: "datetime-local",
+                    value: startAt,
+                    onChange: (ev) => setStartAt(ev.target.value),
+                    style: { width: "100%", padding: 8, fontSize: 12 }
+                  })
+                ),
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement("div", { style: { fontWeight: 600, marginBottom: 2 } }, lang === "ar" ? "النهاية" : "Fin"),
+                  React.createElement("input", {
+                    type: "datetime-local",
+                    value: endAt,
+                    onChange: (ev) => setEndAt(ev.target.value),
+                    style: { width: "100%", padding: 8, fontSize: 12 }
+                  })
+                )
+              ),
+              React.createElement(
+                "div",
+                { style: { display: "grid", gridTemplateColumns: isPhone ? "1fr" : "1fr 1fr", gap: 10 } },
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement("div", { style: { fontWeight: 600, marginBottom: 2 } }, lang === "ar" ? "الخصم (درهم)" : "Remise (DHS)"),
+                  React.createElement("input", {
+                    type: "number",
+                    inputMode: "decimal",
+                    value: amount,
+                    onChange: (ev) => setAmount(ev.target.value),
+                    style: { width: "100%", padding: 8, fontSize: 12 }
+                  })
+                ),
+                React.createElement(
+                  "div",
+                  null,
+                  React.createElement("div", { style: { fontWeight: 600, marginBottom: 2 } }, lang === "ar" ? "الفئة" : "Catégorie"),
+                  React.createElement(
+                    "select",
+                    { value: scope, onChange: (ev) => setScope(ev.target.value), style: { width: "100%", padding: 8, fontSize: 12 } },
+                    React.createElement("option", { value: "all" }, scopeLabel("all")),
+                    React.createElement("option", { value: "breakfast" }, scopeLabel("breakfast")),
+                    React.createElement("option", { value: "coffee" }, scopeLabel("coffee")),
+                    React.createElement("option", { value: "hot_drinks" }, scopeLabel("hot_drinks")),
+                    React.createElement("option", { value: "tea" }, scopeLabel("tea"))
+                  )
+                )
+              ),
+              React.createElement(
+                "label",
+                { style: { display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 700 } },
+                React.createElement("input", {
+                  type: "checkbox",
+                  checked: !!enabled,
+                  onChange: (ev) => setEnabled(!!(ev && ev.target && ev.target.checked))
+                }),
+                lang === "ar" ? "مفعل" : "Activée"
+              ),
+              error ? React.createElement("div", { style: { fontSize: 12, color: "#b91c1c" } }, error) : null,
+              React.createElement(
+                "div",
+                { style: { display: "flex", justifyContent: "flex-end" } },
+                React.createElement("button", { className: "btn-primary", type: "submit" }, lang === "ar" ? "إضافة" : "Ajouter")
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { style: { display: "grid", gap: 10 } },
+            rows.length
+              ? rows.map((d) => {
+                  const active = discountActiveNow(d, nowMs);
+                  return React.createElement(
+                    "div",
+                    {
+                      key: d.id,
+                      style: {
+                        borderRadius: 14,
+                        border: "1px solid rgba(148,163,184,0.45)",
+                        background: "rgba(255,255,255,0.85)",
+                        padding: 12,
+                        display: "grid",
+                        gap: 6
+                      }
+                    },
+                    React.createElement(
+                      "div",
+                      { style: { display: "flex", justifyContent: "space-between", gap: 10 } },
+                      React.createElement(
+                        "div",
+                        { style: { fontWeight: 900 } },
+                        `${Number(d.amount || 0).toFixed(2)} DHS · ${scopeLabel(d.scope)}`
+                      ),
+                      React.createElement(
+                        "div",
+                        { style: { whiteSpace: "nowrap", fontWeight: 900, color: active ? "#16a34a" : "#64748b" } },
+                        active ? (lang === "ar" ? "نشط" : "Actif") : (lang === "ar" ? "غير نشط" : "Inactif")
+                      )
+                    ),
+                    React.createElement(
+                      "div",
+                      { style: { fontSize: 12, color: "#64748b" } },
+                      fmtDateTime(d.startAt) + " → " + fmtDateTime(d.endAt)
+                    ),
+                    React.createElement(
+                      "div",
+                      { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" } },
+                      React.createElement(
+                        "label",
+                        { style: { display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 800 } },
+                        React.createElement("input", {
+                          type: "checkbox",
+                          checked: d.enabled !== false,
+                          onChange: (ev) => {
+                            const v = !!(ev && ev.target && ev.target.checked);
+                            if (onUpsert) onUpsert({ ...d, enabled: v });
+                          }
+                        }),
+                        lang === "ar" ? "مفعل" : "Activée"
+                      ),
+                      React.createElement(
+                        "button",
+                        {
+                          type: "button",
+                          className: "category-btn",
+                          onClick: () => onDelete && onDelete(d.id)
+                        },
+                        lang === "ar" ? "حذف" : "Supprimer"
+                      )
+                    )
+                  );
+                })
+              : React.createElement(
+                  "div",
+                  { style: { fontSize: 12, color: "#64748b" } },
+                  lang === "ar" ? "لا توجد خصومات." : "Aucune remise."
+                )
           )
         );
       }
@@ -7665,7 +7996,7 @@ const DICTIONARY = {
                       React.createElement(
                         "div",
                         { style: { color: "#6b7280" } },
-                        formatDateTimeSafe(o.paidAt || o.createdAt)
+                        formatDateTimeSafe(o.createdAt)
                       ),
                       React.createElement(
                         "button",
@@ -8297,6 +8628,7 @@ const DICTIONARY = {
           }
         });
         const [view, setView] = React.useState("pos");
+        const [nowMs, setNowMs] = React.useState(() => Date.now());
         const [adminSection, setAdminSection] = React.useState("overview");
         const [activeShift, setActiveShift] = React.useState(() => {
           try {
@@ -8347,6 +8679,20 @@ const DICTIONARY = {
             const raw = window.localStorage.getItem("cafe_halab_state");
             const parsed = raw ? JSON.parse(raw) : null;
             if (parsed && Array.isArray(parsed.advances)) return parsed.advances;
+          } catch (e) {}
+          return [];
+        });
+
+        const [discounts, setDiscounts] = React.useState(() => {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_state");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && Array.isArray(parsed.discounts)) return parsed.discounts;
+          } catch (e) {}
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_discounts");
+            const parsed = raw ? JSON.parse(raw) : null;
+            if (Array.isArray(parsed)) return parsed;
           } catch (e) {}
           return [];
         });
@@ -8595,6 +8941,40 @@ const DICTIONARY = {
           return root ? root.collection(name) : null;
         }
 
+        function cloudPublicDoc(name) {
+          const root = cloudAppDoc();
+          return root ? root.collection("public").doc(String(name || "")) : null;
+        }
+
+        function sanitizeMenuForPublic(menu) {
+          const list = Array.isArray(menu) ? menu : [];
+          return list
+            .filter((p) => p && p.id)
+            .map((p) => ({
+              id: String(p.id),
+              name: p.name != null ? String(p.name) : "",
+              nameFr: p.nameFr != null ? String(p.nameFr) : "",
+              nameAr: p.nameAr != null ? String(p.nameAr) : "",
+              price: Number(p.price || 0) || 0,
+              category: p.category != null ? String(p.category) : "",
+              image: p.image != null ? String(p.image) : ""
+            }));
+        }
+
+        function sanitizeDiscountsForPublic(list) {
+          const arr = Array.isArray(list) ? list : [];
+          return arr
+            .filter((d) => d && d.id)
+            .map((d) => ({
+              id: String(d.id),
+              startAt: d.startAt != null ? String(d.startAt) : "",
+              endAt: d.endAt != null ? String(d.endAt) : "",
+              amount: Number(d.amount || 0) || 0,
+              scope: String(d.scope || "all"),
+              enabled: d.enabled !== false
+            }));
+        }
+
         React.useEffect(() => {
           try {
             window.localStorage.setItem(
@@ -8609,11 +8989,47 @@ const DICTIONARY = {
                 purchaseInvoices,
                 stockCountRequests,
                 users,
-                advances
+                advances,
+                discounts
               })
             );
           } catch (e) {}
-        }, [shifts, orders, cupLoans, clientDebts, inventory, inventoryLogs, purchaseInvoices, stockCountRequests, users, advances]);
+        }, [shifts, orders, cupLoans, clientDebts, inventory, inventoryLogs, purchaseInvoices, stockCountRequests, users, advances, discounts]);
+
+        React.useEffect(() => {
+          try {
+            window.localStorage.setItem("cafe_halab_discounts", JSON.stringify(discounts || []));
+          } catch (e) {}
+        }, [discounts]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled) return;
+          const docRef = cloudPublicDoc("discounts");
+          if (!docRef) return;
+          try {
+            const nowIso = new Date().toISOString();
+            docRef
+              .set(
+                {
+                  discounts: sanitizeDiscountsForPublic(discounts || []),
+                  updatedAt: nowIso,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current
+                },
+                { merge: true }
+              )
+              .catch(() => {});
+          } catch (e) {}
+        }, [discounts, cloudEnabled]);
+
+        React.useEffect(() => {
+          const id = setInterval(() => setNowMs(Date.now()), 30000);
+          return () => {
+            try {
+              clearInterval(id);
+            } catch (e) {}
+          };
+        }, []);
 
         React.useEffect(() => {
           try {
@@ -8699,7 +9115,8 @@ const DICTIONARY = {
           const stockCountsCol = cloudCol("stockCountRequests");
           const usersCol = cloudCol("users");
           const advancesCol = cloudCol("advances");
-          if (!shiftsCol || !ordersCol || !cupLoansCol || !debtsCol || !invCol || !logsCol || !invoicesCol || !stockCountsCol || !usersCol || !advancesCol) return;
+          const discountsCol = cloudCol("discounts");
+          if (!shiftsCol || !ordersCol || !cupLoansCol || !debtsCol || !invCol || !logsCol || !invoicesCol || !stockCountsCol || !usersCol || !advancesCol || !discountsCol) return;
 
           let cancelled = false;
 
@@ -8946,6 +9363,22 @@ const DICTIONARY = {
             }
           );
 
+          const unsubDiscounts = discountsCol.onSnapshot(
+            (snap) => {
+              const next = [];
+              snap.forEach((doc) => {
+                const d = doc && doc.data ? doc.data() : null;
+                if (!d || typeof d !== "object") return;
+                next.push({ ...d, id: d.id || doc.id });
+              });
+              next.sort((a, b) => String(b.startAt || "").localeCompare(String(a.startAt || "")));
+              setDiscounts(next);
+            },
+            (err) => {
+              setStatus({ type: "err", message: String((err && err.message) || err || "Cloud error") });
+            }
+          );
+
           return () => {
             cancelled = true;
             try {
@@ -8977,6 +9410,9 @@ const DICTIONARY = {
             } catch (e) {}
             try {
               if (typeof unsubAdvances === "function") unsubAdvances();
+            } catch (e) {}
+            try {
+              if (typeof unsubDiscounts === "function") unsubDiscounts();
             } catch (e) {}
           };
         }, [cloudEnabled]);
@@ -9963,16 +10399,19 @@ const DICTIONARY = {
               ? base.nameAr || base.name
               : base.nameFr || base.name
             : String(fav.productId || "");
+          const favBasePrice = Number(fav.price || (base && base.price) || 0) || 0;
+          const discAmt = discountAmountForProduct(discounts, base || { id: fav.productId }, nowMs);
+          const finalPrice = Math.max(0, favBasePrice - (Number(discAmt || 0) || 0));
           const effectiveProduct = base
             ? {
                 ...base,
                 name: String(fav.name || baseName),
-                price: Number(fav.price || base.price || 0) || 0
+                price: finalPrice
               }
             : {
                 id: String(fav.productId || ""),
                 name: String(fav.name || baseName),
-                price: Number(fav.price || 0) || 0
+                price: finalPrice
               };
 
           const extras = {};
@@ -11796,6 +12235,82 @@ const DICTIONARY = {
           } catch (e) {
             setStatus({ type: "err", message: "Erreur lors de l'enregistrement." });
           }
+
+          if (!cloudEnabled) return;
+          const docRef = cloudPublicDoc("menu");
+          if (!docRef) return;
+          try {
+            const nowIso = new Date().toISOString();
+            docRef
+              .set(
+                {
+                  items: sanitizeMenuForPublic(currentMenu || []),
+                  updatedAt: nowIso,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current
+                },
+                { merge: true }
+              )
+              .catch(() => {});
+          } catch (e) {}
+        }
+
+        function handleUpsertDiscount(partial) {
+          if (!partial || !partial.id) return;
+          const nowIso = new Date().toISOString();
+          const rec = {
+            ...partial,
+            id: String(partial.id),
+            scope: String(partial.scope || "all"),
+            amount: Number(partial.amount || 0) || 0,
+            enabled: partial.enabled !== false,
+            updatedAt: nowIso,
+            createdAt: partial.createdAt || nowIso
+          };
+
+          setDiscounts((prev) => {
+            const list = Array.isArray(prev) ? prev : [];
+            const idx = list.findIndex((d) => d && d.id === rec.id);
+            if (idx >= 0) {
+              const next = list.slice();
+              next[idx] = { ...(next[idx] || {}), ...rec };
+              return next;
+            }
+            return [rec, ...list];
+          });
+
+          if (!cloudEnabled) return;
+          const discountsCol = cloudCol("discounts");
+          if (!discountsCol) return;
+          try {
+            discountsCol
+              .doc(rec.id)
+              .set(
+                {
+                  ...rec,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current
+                },
+                { merge: true }
+              )
+              .catch(() => {});
+          } catch (e) {}
+        }
+
+        function handleDeleteDiscount(id) {
+          const did = String(id || "");
+          if (!did) return;
+          setDiscounts((prev) => (prev || []).filter((d) => d && d.id !== did));
+
+          if (!cloudEnabled) return;
+          const discountsCol = cloudCol("discounts");
+          if (!discountsCol) return;
+          try {
+            discountsCol
+              .doc(did)
+              .delete()
+              .catch(() => {});
+          } catch (e) {}
         }
 
         function canSeeManager() {
@@ -14562,11 +15077,36 @@ const DICTIONARY = {
                                         String(fav.name || baseName),
                                         modsLabel || ""
                                       ),
-                                      e(
-                                        "div",
-                                        { className: "product-price" },
-                                        `${Number((fav && fav.price) || 0).toFixed(2)} DHS`
-                                      ),
+                                      (() => {
+                                        const basePrice = Number((fav && fav.price) || 0) || 0;
+                                        const discAmt = discountAmountForProduct(
+                                          discounts,
+                                          base || { id: fav.productId },
+                                          nowMs
+                                        );
+                                        const finalPrice = Math.max(0, basePrice - (Number(discAmt || 0) || 0));
+                                        const hasDisc = discAmt > 0 && finalPrice < basePrice;
+                                        return e(
+                                          "div",
+                                          { className: "product-price" },
+                                          hasDisc
+                                            ? e(
+                                                "div",
+                                                { style: { display: "flex", gap: 8, alignItems: "baseline" } },
+                                                e(
+                                                  "span",
+                                                  { style: { fontWeight: 900, color: "#111827" } },
+                                                  `${finalPrice.toFixed(2)} DHS`
+                                                ),
+                                                e(
+                                                  "span",
+                                                  { style: { textDecoration: "line-through", fontSize: 12, color: "#64748b" } },
+                                                  `${basePrice.toFixed(2)} DHS`
+                                                )
+                                              )
+                                            : `${basePrice.toFixed(2)} DHS`
+                                        );
+                                      })(),
                                       e(
                                         "div",
                                         { style: { fontSize: 11, color: "#64748b" } },
@@ -14586,7 +15126,9 @@ const DICTIONARY = {
                                     menu,
                                     onAdd: handleAddToCart,
                                     lang,
-                                    t
+                                    t,
+                                    discounts,
+                                    nowMs
                                   })
                                 )
                           )
@@ -15590,6 +16132,7 @@ const DICTIONARY = {
                         ? {
                             overview: "نظرة عامة على المبيعات",
                             menu: "القائمة",
+                            discounts: "خصومات",
                             inventory: "المخزون",
                             reports: "التقارير",
                             staff: "الموظفون",
@@ -15600,6 +16143,7 @@ const DICTIONARY = {
                         : {
                             overview: "Aperçu des Ventes",
                             menu: "Menu",
+                            discounts: "Remises",
                             inventory: "Inventaire",
                             reports: "Rapports",
                             staff: "Staff",
@@ -15703,6 +16247,16 @@ const DICTIONARY = {
                               onClick: () => setAdminSection("menu")
                             },
                             labels.menu
+                          ),
+                          e(
+                            "button",
+                            {
+                              type: "button",
+                              className:
+                                "admin-nav-item" + (adminSection === "discounts" ? " active" : ""),
+                              onClick: () => setAdminSection("discounts")
+                            },
+                            labels.discounts
                           ),
                           e(
                             "button",
@@ -16520,6 +17074,20 @@ const DICTIONARY = {
                               );
                             })()
                           )
+                        : adminSection === "discounts"
+                        ? e(
+                            "section",
+                            { className: "panel" },
+                            e("h3", { style: { marginTop: 0 } }, lang === "ar" ? "خصومات حسب الوقت" : "Remises horaires"),
+                            e(AdminDiscountsPanel, {
+                              discounts,
+                              onUpsert: handleUpsertDiscount,
+                              onDelete: handleDeleteDiscount,
+                              lang,
+                              isPhone,
+                              nowMs
+                            })
+                          )
                         : adminSection === "menu"
                         ? e(
                             "section",
@@ -16729,7 +17297,7 @@ const DICTIONARY = {
         );
       }
 
-      function ProductCard({ product, menu, onAdd, lang, t }) {
+      function ProductCard({ product, menu, onAdd, lang, t, discounts, nowMs }) {
         const [milk, setMilk] = React.useState(true); // yes/no for coffee
         const [sugar, setSugar] = React.useState("medium");
         const [herb, setHerb] = React.useState("mint");
@@ -16843,8 +17411,20 @@ const DICTIONARY = {
           sbCheesePieces
         ]);
 
+        const discountAmount = React.useMemo(() => {
+          return discountAmountForProduct(discounts, product, nowMs);
+        }, [discounts, product, nowMs]);
+
+        const discountedPrice = React.useMemo(() => {
+          const amt = Number(discountAmount || 0) || 0;
+          if (!amt) return displayPrice;
+          return Math.max(0, Number(displayPrice || 0) - amt);
+        }, [displayPrice, discountAmount]);
+
+        const hasDiscount = !!(discountAmount > 0 && discountedPrice < displayPrice);
+
         function handleClick() {
-          const effectiveProduct = { ...product, price: displayPrice };
+          const effectiveProduct = { ...product, price: discountedPrice };
 
           const sbDrinkName = sbDrinkItem ? sbDrinkItem.name : "";
           const sbDrinkNameFr = sbDrinkItem ? sbDrinkItem.nameFr || sbDrinkItem.name : "";
@@ -16905,7 +17485,22 @@ const DICTIONARY = {
             React.createElement(
               "div",
               { className: "product-price" },
-              `${displayPrice.toFixed(2)} DHS`
+              hasDiscount
+                ? React.createElement(
+                    "div",
+                    { style: { display: "flex", gap: 8, alignItems: "baseline" } },
+                    React.createElement(
+                      "span",
+                      { style: { fontWeight: 900, color: "#111827" } },
+                      `${discountedPrice.toFixed(2)} DHS`
+                    ),
+                    React.createElement(
+                      "span",
+                      { style: { textDecoration: "line-through", fontSize: 12, color: "#64748b" } },
+                      `${displayPrice.toFixed(2)} DHS`
+                    )
+                  )
+                : `${displayPrice.toFixed(2)} DHS`
             ),
             hasMilkModifier &&
               React.createElement(

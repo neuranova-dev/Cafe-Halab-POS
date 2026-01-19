@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cafe Halab — Menu</title>
+    <style>
+      :root{
+        --bg:#0b1220;
+        --card:rgba(255,255,255,0.10);
+        --card2:rgba(255,255,255,0.08);
+        --border:rgba(148,163,184,0.22);
+        --text:#e5e7eb;
+        --muted:rgba(229,231,235,0.70);
+        --brand:#f97316;
+        --brand2:#fb923c;
+        --good:#22c55e;
+      }
+      *{box-sizing:border-box}
+      body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 700px at 20% 10%, rgba(249,115,22,.35), transparent 55%),radial-gradient(900px 600px at 80% 0%, rgba(59,130,246,.25), transparent 55%),var(--bg);color:var(--text)}
+      .topbar{position:sticky;top:0;z-index:30;-webkit-backdrop-filter:saturate(1.5) blur(14px);backdrop-filter:saturate(1.5) blur(14px);background:linear-gradient(180deg, rgba(11,18,32,.92), rgba(11,18,32,.65));border-bottom:1px solid var(--border)}
+      .topbar-inner{max-width:1100px;margin:0 auto;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+      .brand{display:flex;align-items:center;gap:10px}
+      .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--brand),#fbbf24);box-shadow:0 18px 40px rgba(0,0,0,.35)}
+      .title{display:flex;flex-direction:column;line-height:1.15}
+      .title strong{font-size:14px;letter-spacing:.2px}
+      .title span{font-size:12px;color:var(--muted)}
+      .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+      .btn{appearance:none;border:1px solid var(--border);background:rgba(255,255,255,.06);color:var(--text);padding:9px 12px;border-radius:12px;font-weight:700;font-size:12px;cursor:pointer}
+      .btn:hover{border-color:rgba(148,163,184,.38);background:rgba(255,255,255,.09)}
+      .pill{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
+      .dot{width:8px;height:8px;border-radius:999px;background:rgba(148,163,184,.65)}
+      .dot.ok{background:rgba(34,197,94,.85)}
+      .dot.bad{background:rgba(239,68,68,.85)}
+
+      .container{max-width:1100px;margin:0 auto;padding:16px 14px 40px}
+      .hero{margin:10px 0 16px;display:flex;flex-direction:column;gap:10px}
+      .hero h1{margin:0;font-size:20px}
+      .hero p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+
+      .searchRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+      .search{flex:1;min-width:180px;display:flex;gap:8px;align-items:center;border:1px solid var(--border);background:rgba(255,255,255,.05);padding:10px 12px;border-radius:14px}
+      .search input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:13px}
+      .search input::placeholder{color:rgba(229,231,235,.55)}
+      .select{border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--text);padding:10px 12px;border-radius:14px;font-size:13px;min-width:160px}
+
+      .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+      @media (max-width:980px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+      @media (max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));}.topbar-inner{flex-direction:column;align-items:flex-start}.actions{width:100%;justify-content:space-between}}
+
+      .card{border:1px solid var(--border);background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));border-radius:18px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.30)}
+      .imgWrap{position:relative;height:140px;background:rgba(255,255,255,.05)}
+      .imgWrap img{width:100%;height:100%;object-fit:cover;display:block}
+      .badge{position:absolute;left:10px;top:10px;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;border:1px solid rgba(0,0,0,.12);background:rgba(15,23,42,.65);color:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+      .content{padding:12px 12px 14px;display:flex;flex-direction:column;gap:8px}
+      .name{font-weight:900;font-size:13px;line-height:1.2}
+      .sub{font-size:11px;color:var(--muted)}
+      .priceRow{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+      .price{font-weight:900;color:var(--text)}
+      .old{font-size:12px;color:rgba(229,231,235,.55);text-decoration:line-through}
+      .new{font-weight:900;color:#0b1220;background:linear-gradient(135deg,#fbbf24,var(--brand2));padding:4px 8px;border-radius:999px}
+
+      .sectionTitle{margin:18px 0 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+      .sectionTitle h2{margin:0;font-size:14px;letter-spacing:.2px}
+      .small{font-size:12px;color:var(--muted)}
+      .empty{padding:14px;border:1px dashed rgba(148,163,184,.35);border-radius:16px;color:var(--muted);background:rgba(255,255,255,.04)}
+    </style>
+
+    <script crossorigin="anonymous" src="https://unpkg.com/react@18/umd/react.production.min.js" onerror="var s=document.createElement('script');s.crossOrigin='anonymous';s.src='https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js';document.head.appendChild(s);"></script>
+    <script crossorigin="anonymous" src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" onerror="var s=document.createElement('script');s.crossOrigin='anonymous';s.src='https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js';document.head.appendChild(s);"></script>
+
+    <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAcMZVPiMQKNqb2rcrV1WqmixIo1xFK2CE",
+        authDomain: "cafe-halab.firebaseapp.com",
+        projectId: "cafe-halab",
+        storageBucket: "cafe-halab.firebasestorage.app",
+        messagingSenderId: "915112396018",
+        appId: "1:915112396018:web:4aa8dbadbc6651c3f6bc6b"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script>
+      const e = React.createElement;
+
+      function resolveImageSrc(src) {
+        const s = String(src == null ? "" : src).trim();
+        if (!s) return "";
+        if (/^data:image\//i.test(s)) return s;
+        if (/^https?:\/\//i.test(s)) return s;
+        if (s.startsWith("./") || s.startsWith("../")) return encodeURI(s);
+        if (s.startsWith("/")) return encodeURI(s);
+        return encodeURI("./" + s);
+      }
+
+      function isCoffee(item) {
+        const ids = ["coffee", "coffee_with_milk", "nescafe", "machada"];
+        return item && item.id && ids.includes(item.id);
+      }
+
+      function isTeaItem(item) {
+        try {
+          if (!item) return false;
+          const id = String(item.id || "");
+          if (!id) return false;
+          return id.indexOf("tea_") === 0;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function discountScopeMatchesProduct(scope, product) {
+        try {
+          const s = String(scope || "all");
+          if (s === "all") return true;
+          if (!product) return false;
+          if (s === "breakfast") return product.category === "Breakfast";
+          if (s === "hot_drinks") return product.category === "Hot Drinks";
+          if (s === "coffee") return isCoffee(product);
+          if (s === "tea") return isTeaItem(product);
+          return false;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function discountActiveNow(d, nowMs) {
+        try {
+          if (!d || d.enabled === false) return false;
+          const startMs = new Date(String(d.startAt || "")).getTime();
+          const endMs = new Date(String(d.endAt || "")).getTime();
+          if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return false;
+          const t = Number(nowMs || Date.now());
+          if (!Number.isFinite(t)) return false;
+          return t >= startMs && t < endMs;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function discountAmountForProduct(discounts, product, nowMs) {
+        try {
+          let best = 0;
+          (discounts || []).forEach((d) => {
+            if (!discountActiveNow(d, nowMs)) return;
+            if (!discountScopeMatchesProduct(d.scope, product)) return;
+            const amt = Number(d.amount || 0) || 0;
+            if (amt > best) best = amt;
+          });
+          return best;
+        } catch (e) {
+          return 0;
+        }
+      }
+
+      function groupByCategory(items) {
+        const m = {};
+        (items || []).forEach((p) => {
+          const cat = String((p && p.category) || "Others");
+          if (!m[cat]) m[cat] = [];
+          m[cat].push(p);
+        });
+        Object.keys(m).forEach((k) => {
+          m[k].sort((a, b) => String((a && (a.nameFr || a.name)) || "").localeCompare(String((b && (b.nameFr || b.name)) || "")));
+        });
+        return m;
+      }
+
+      function CustomerApp() {
+        const [lang, setLang] = React.useState("fr");
+        const [items, setItems] = React.useState([]);
+        const [discounts, setDiscounts] = React.useState([]);
+        const [connected, setConnected] = React.useState(true);
+        const [statusMsg, setStatusMsg] = React.useState("Chargement…");
+        const [search, setSearch] = React.useState("");
+        const [category, setCategory] = React.useState("all");
+        const [nowMs, setNowMs] = React.useState(Date.now());
+
+        React.useEffect(() => {
+          const id = setInterval(() => setNowMs(Date.now()), 30000);
+          return () => { try { clearInterval(id); } catch(e){} };
+        }, []);
+
+        React.useEffect(() => {
+          try {
+            const params = new URLSearchParams(window.location.search || "");
+            const l = String(params.get("lang") || "").toLowerCase();
+            if (l === "ar" || l === "fr") setLang(l);
+          } catch (e) {}
+        }, []);
+
+        React.useEffect(() => {
+          const root = db.collection("posApps").doc("cafe-halab-pos");
+          const menuDoc = root.collection("public").doc("menu");
+          const discountsDoc = root.collection("public").doc("discounts");
+
+          let unsubMenu = null;
+          let unsubDisc = null;
+
+          try {
+            unsubMenu = menuDoc.onSnapshot(
+              (snap) => {
+                const data = snap && snap.data ? snap.data() : null;
+                const arr = data && Array.isArray(data.items) ? data.items : [];
+                setItems(arr);
+                setConnected(true);
+                setStatusMsg(arr && arr.length ? "" : (lang === "ar" ? "لا توجد عناصر." : "Aucun article."));
+              },
+              (err) => {
+                setConnected(false);
+                setStatusMsg(String((err && err.message) || err || "Erreur"));
+              }
+            );
+          } catch (e) {
+            setConnected(false);
+            setStatusMsg(String(e && e.message ? e.message : e));
+          }
+
+          try {
+            unsubDisc = discountsDoc.onSnapshot(
+              (snap) => {
+                const data = snap && snap.data ? snap.data() : null;
+                const arr = data && Array.isArray(data.discounts) ? data.discounts : [];
+                setDiscounts(arr);
+              },
+              () => {}
+            );
+          } catch (e) {}
+
+          return () => {
+            try { if (unsubMenu) unsubMenu(); } catch (e) {}
+            try { if (unsubDisc) unsubDisc(); } catch (e) {}
+          };
+        }, [lang]);
+
+        const categories = React.useMemo(() => {
+          const set = new Set(["all"]);
+          (items || []).forEach((p) => {
+            if (p && p.category) set.add(String(p.category));
+          });
+          const arr = Array.from(set);
+          arr.sort((a, b) => (a === "all" ? -1 : b === "all" ? 1 : a.localeCompare(b)));
+          return arr;
+        }, [items]);
+
+        const filtered = React.useMemo(() => {
+          const q = String(search || "").trim().toLowerCase();
+          return (items || []).filter((p) => {
+            if (!p || !p.id) return false;
+            if (category !== "all" && String(p.category || "") !== category) return false;
+            if (!q) return true;
+            const n1 = String(p.name || "").toLowerCase();
+            const n2 = String(p.nameFr || "").toLowerCase();
+            const n3 = String(p.nameAr || "").toLowerCase();
+            return n1.includes(q) || n2.includes(q) || n3.includes(q);
+          });
+        }, [items, search, category]);
+
+        const grouped = React.useMemo(() => groupByCategory(filtered), [filtered]);
+
+        function labelForCategory(cat) {
+          const c = String(cat || "");
+          if (lang === "ar") {
+            if (c === "Breakfast") return "فطور";
+            if (c === "Hot Drinks") return "مشروبات ساخنة";
+            if (c === "Cold Drinks") return "مشروبات باردة";
+            if (c === "Others") return "أخرى";
+            return c;
+          }
+          if (c === "Breakfast") return "Breakfast";
+          if (c === "Hot Drinks") return "Hot Drinks";
+          if (c === "Cold Drinks") return "Cold Drinks";
+          if (c === "Others") return "Others";
+          return c;
+        }
+
+        function nameFor(p) {
+          if (!p) return "";
+          return lang === "ar" ? (p.nameAr || p.name || "") : (p.nameFr || p.name || "");
+        }
+
+        const activeDiscountCount = React.useMemo(() => {
+          return (discounts || []).filter((d) => discountActiveNow(d, nowMs)).length;
+        }, [discounts, nowMs]);
+
+        return e(
+          "div",
+          null,
+          e(
+            "div",
+            { className: "topbar" },
+            e(
+              "div",
+              { className: "topbar-inner" },
+              e(
+                "div",
+                { className: "brand" },
+                e("div", { className: "logo", "aria-hidden": true }),
+                e(
+                  "div",
+                  { className: "title" },
+                  e("strong", null, lang === "ar" ? "منيو كافيه حلب" : "Cafe Halab — Menu"),
+                  e(
+                    "span",
+                    null,
+                    lang === "ar" ? "عرض فقط" : "View only",
+                    activeDiscountCount > 0 ? (lang === "ar" ? " · خصومات مفعلة" : " · Discounts active") : ""
+                  )
+                )
+              ),
+              e(
+                "div",
+                { className: "actions" },
+                e(
+                  "span",
+                  { className: "pill" },
+                  e("span", { className: "dot " + (connected ? "ok" : "bad") }),
+                  connected ? (lang === "ar" ? "مباشر" : "Live") : (lang === "ar" ? "غير متصل" : "Offline")
+                ),
+                e(
+                  "button",
+                  {
+                    className: "btn",
+                    type: "button",
+                    onClick: () => {
+                      const next = lang === "ar" ? "fr" : "ar";
+                      setLang(next);
+                      try {
+                        const u = new URL(window.location.href);
+                        u.searchParams.set("lang", next);
+                        window.history.replaceState(null, "", u.toString());
+                      } catch (e) {}
+                    }
+                  },
+                  lang === "ar" ? "FR" : "AR"
+                )
+              )
+            )
+          ),
+          e(
+            "div",
+            { className: "container" },
+            e(
+              "div",
+              { className: "hero" },
+              e("h1", null, lang === "ar" ? "المنيو" : "Menu"),
+              e(
+                "p",
+                null,
+                lang === "ar"
+                  ? "هذه الصفحة للعرض فقط. لا يمكن تقديم الطلبات من هنا."
+                  : "This page is view-only. No orders can be placed here."
+              ),
+              e(
+                "div",
+                { className: "searchRow" },
+                e(
+                  "div",
+                  { className: "search" },
+                  e(
+                    "input",
+                    {
+                      value: search,
+                      onChange: (ev) => setSearch(ev.target.value),
+                      placeholder: lang === "ar" ? "بحث…" : "Search…"
+                    }
+                  )
+                ),
+                e(
+                  "select",
+                  {
+                    className: "select",
+                    value: category,
+                    onChange: (ev) => setCategory(ev.target.value)
+                  },
+                  categories.map((c) =>
+                    e("option", { key: c, value: c }, c === "all" ? (lang === "ar" ? "الكل" : "All") : labelForCategory(c))
+                  )
+                )
+              )
+            ),
+
+            statusMsg
+              ? e("div", { className: "empty" }, statusMsg)
+              : null,
+
+            Object.keys(grouped || {}).length
+              ? Object.keys(grouped)
+                  .sort((a, b) => a.localeCompare(b))
+                  .map((cat) => {
+                    const list = grouped[cat] || [];
+                    return e(
+                      "div",
+                      { key: cat },
+                      e(
+                        "div",
+                        { className: "sectionTitle" },
+                        e("h2", null, labelForCategory(cat)),
+                        e("div", { className: "small" }, (list || []).length + " " + (lang === "ar" ? "عنصر" : "items"))
+                      ),
+                      e(
+                        "div",
+                        { className: "grid" },
+                        list.map((p) => {
+                          const basePrice = Number(p && p.price) || 0;
+                          const discAmt = discountAmountForProduct(discounts, p, nowMs);
+                          const finalPrice = Math.max(0, basePrice - (Number(discAmt || 0) || 0));
+                          const hasDisc = discAmt > 0 && finalPrice < basePrice;
+                          const img = resolveImageSrc(p && p.image);
+                          return e(
+                            "div",
+                            { className: "card", key: p.id },
+                            e(
+                              "div",
+                              { className: "imgWrap" },
+                              img
+                                ? e("img", { src: img, alt: nameFor(p), loading: "lazy" })
+                                : null,
+                              e("div", { className: "badge" }, labelForCategory(p.category))
+                            ),
+                            e(
+                              "div",
+                              { className: "content" },
+                              e("div", { className: "name" }, nameFor(p)),
+                              (p && (p.nameFr || p.nameAr))
+                                ? e("div", { className: "sub" }, lang === "ar" ? (p.nameFr || p.name || "") : (p.nameAr || p.name || ""))
+                                : null,
+                              e(
+                                "div",
+                                { className: "priceRow" },
+                                hasDisc
+                                  ? e(
+                                      React.Fragment,
+                                      null,
+                                      e("span", { className: "new" }, finalPrice.toFixed(2) + " DHS"),
+                                      e("span", { className: "old" }, basePrice.toFixed(2) + " DHS")
+                                    )
+                                  : e("span", { className: "price" }, basePrice.toFixed(2) + " DHS")
+                              )
+                            )
+                          );
+                        })
+                      )
+                    );
+                  })
+              : (!statusMsg ? e("div", { className: "empty" }, lang === "ar" ? "لا توجد عناصر." : "Aucun article.") : null)
+          )
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(e(CustomerApp));
+    </script>
+  </body>
+</html>
