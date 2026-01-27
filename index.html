@@ -8890,7 +8890,7 @@ const DICTIONARY = {
           const recent = (shifts || []).filter((s) => s && shiftTimeMs(s) >= cutoff);
           const recentIds = new Set(recent.map((s) => s && s.id).filter(Boolean));
           const preferred =
-            activeShift && activeShift.id && recentIds.has(activeShift.id)
+            activeShift && activeShift.id && (activeShift.status === "open" || !activeShift.status)
               ? activeShift.id
               : null;
           const lastRecent = recent.length ? recent[recent.length - 1] : null;
@@ -9469,19 +9469,16 @@ const DICTIONARY = {
         function handleFirebaseLogout() {
           if (!window.firebaseAuth) return;
           try {
-            const isAdminNow = adminUser && adminUser.role === "admin";
-            if (!isAdminNow) {
-              const entered = normalizePinValue(
-                window.prompt(lang === "ar" ? "PIN الإدارة" : "PIN Admin")
-              );
-              if (!entered) return;
-              const ok = (users || []).some(
-                (u) => u && u.role === "admin" && normalizePinValue(u.pin) === entered
-              );
-              if (!ok) {
-                setStatus({ type: "err", message: (t && t.pinIncorrect) || "PIN incorrect" });
-                return;
-              }
+            const entered = normalizePinValue(
+              window.prompt(lang === "ar" ? "PIN الإدارة" : "PIN Admin")
+            );
+            if (!entered) return;
+            const ok = (users || []).some(
+              (u) => u && u.role === "admin" && normalizePinValue(u.pin) === entered
+            );
+            if (!ok) {
+              setStatus({ type: "err", message: (t && t.pinIncorrect) || "PIN incorrect" });
+              return;
             }
           } catch (e) {
             return;
@@ -17476,10 +17473,19 @@ const DICTIONARY = {
                                   .filter((s) => s && shiftTimeMs(s) >= cutoff)
                                   .slice()
                                   .sort((a, b) => shiftTimeMs(a) - shiftTimeMs(b));
+                                if (
+                                  activeShift &&
+                                  activeShift.id &&
+                                  (activeShift.status === "open" || !activeShift.status) &&
+                                  !recentShifts.some((s) => s && s.id === activeShift.id)
+                                ) {
+                                  recentShifts.push(activeShift);
+                                  recentShifts.sort((a, b) => shiftTimeMs(a) - shiftTimeMs(b));
+                                }
                                 const selectedShiftId =
                                   adminOverviewShiftId ||
-                                  ((recentShifts.length && recentShifts[recentShifts.length - 1] && recentShifts[recentShifts.length - 1].id) ||
-                                    (activeShift && activeShift.id) ||
+                                  ((activeShift && activeShift.id) ||
+                                    (recentShifts.length && recentShifts[recentShifts.length - 1] && recentShifts[recentShifts.length - 1].id) ||
                                     null);
                                 const shiftRec = selectedShiftId
                                   ? (shifts || []).find((s) => s && s.id === selectedShiftId)
