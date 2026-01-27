@@ -8883,6 +8883,7 @@ const DICTIONARY = {
 
         const CLOUD_APP_ID = "cafe-halab-pos";
         const cloudEnabled = !!(window.firebaseDb && firebaseUser);
+        const [cloudSyncReady, setCloudSyncReady] = React.useState(true);
 
         React.useEffect(() => {
           const cutoff = Date.now() - 72 * 60 * 60 * 1000;
@@ -8936,6 +8937,7 @@ const DICTIONARY = {
         }
 
         const deviceIdRef = React.useRef(null);
+        const cloudSyncingRef = React.useRef(false);
         const loadedShiftOrdersRef = React.useRef(new Set());
         const loadedShiftLogsRef = React.useRef(new Set());
         const loadedShiftDebtsRef = React.useRef(new Set());
@@ -8974,6 +8976,152 @@ const DICTIONARY = {
           return root ? root.collection("public").doc(String(name || "")) : null;
         }
 
+        function loadPendingCloudOps() {
+          try {
+            const raw = window.localStorage.getItem("cafe_halab_pending_cloud_ops");
+            const parsed = raw ? JSON.parse(raw) : null;
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (e) {
+            return [];
+          }
+        }
+
+        function savePendingCloudOps(list) {
+          try {
+            window.localStorage.setItem("cafe_halab_pending_cloud_ops", JSON.stringify(list || []));
+          } catch (e) {}
+        }
+
+        function enqueueCloudOp(op) {
+          try {
+            if (!op || typeof op !== "object") return;
+            const list = loadPendingCloudOps();
+            list.push(op);
+            savePendingCloudOps(list);
+          } catch (e) {}
+        }
+
+        function pendingCloudOpKey(op) {
+          try {
+            if (!op || typeof op !== "object") return "";
+            const c = String(op.col || "");
+            const i = String(op.id || "");
+            if (!c || !i) return "";
+            return c + "|" + i;
+          } catch (e) {
+            return "";
+          }
+        }
+
+        function isPendingCloudBaseSetOp(op) {
+          try {
+            if (!op || typeof op !== "object") return false;
+            if (op.type !== "set") return false;
+            const colName = String(op.col || "");
+            const data = op.data && typeof op.data === "object" ? op.data : null;
+            if (!colName || !data) return false;
+
+            if (colName === "shifts") return !!data.openedAt;
+            if (colName === "orders") return !!data.createdAt;
+            if (colName === "clientDebts") return !!data.createdAt;
+            if (colName === "purchaseInvoices") return !!data.createdAt;
+            if (colName === "favorites") return !!data.createdAt;
+            return false;
+          } catch (e) {
+            return false;
+          }
+        }
+
+        function reorderPendingCloudOpsForFlush(list) {
+          const ops = Array.isArray(list) ? list : [];
+          const baseByKey = new Map();
+          for (let i = 0; i < ops.length; i++) {
+            const op = ops[i];
+            if (!isPendingCloudBaseSetOp(op)) continue;
+            const key = pendingCloudOpKey(op);
+            if (!key) continue;
+            if (!baseByKey.has(key)) baseByKey.set(key, op);
+          }
+
+          const out = [];
+          const seenKey = new Set();
+          const insertedBase = new Set();
+
+          for (let i = 0; i < ops.length; i++) {
+            const op = ops[i];
+            const key = pendingCloudOpKey(op);
+            if (key && !seenKey.has(key)) {
+              seenKey.add(key);
+              const base = baseByKey.get(key);
+              if (base && base !== op && !insertedBase.has(key)) {
+                out.push(base);
+                insertedBase.add(key);
+              }
+            }
+
+            if (key && insertedBase.has(key) && baseByKey.get(key) === op) {
+              continue;
+            }
+
+            out.push(op);
+          }
+          return out;
+        }
+
+        async function flushPendingCloudOps() {
+          if (!cloudEnabled) return true;
+          const db = window.firebaseDb;
+          if (!db) return false;
+          const ops = reorderPendingCloudOpsForFlush(loadPendingCloudOps());
+          if (!ops.length) return true;
+
+          const inc =
+            firebase && firebase.firestore && firebase.firestore.FieldValue
+              ? firebase.firestore.FieldValue.increment
+              : null;
+
+          for (let i = 0; i < ops.length; i++) {
+            const op = ops[i];
+            if (!op || typeof op !== "object") {
+              savePendingCloudOps(ops.slice(i + 1));
+              continue;
+            }
+            const colName = String(op.col || "");
+            const docId = String(op.id || "");
+            if (!colName || !docId) {
+              savePendingCloudOps(ops.slice(i + 1));
+              continue;
+            }
+            const col = cloudCol(colName);
+            if (!col) return false;
+            try {
+              if (op.type === "set") {
+                await col.doc(docId).set(op.data || {}, { merge: op.merge !== false });
+              } else if (op.type === "inc" && inc) {
+                const base = op.data && typeof op.data === "object" ? op.data : {};
+                const deltas = op.deltas && typeof op.deltas === "object" ? op.deltas : {};
+                const payload = { ...base };
+                Object.keys(deltas).forEach((k) => {
+                  const v = Number(deltas[k] || 0) || 0;
+                  if (!v) return;
+                  payload[k] = inc(v);
+                });
+                await col.doc(docId).set(payload, { merge: true });
+              } else if (op.type === "del") {
+                await col.doc(docId).delete();
+              }
+            } catch (e) {
+              savePendingCloudOps(ops.slice(i));
+              return false;
+            }
+
+            savePendingCloudOps(ops.slice(i + 1));
+          }
+
+          savePendingCloudOps([]);
+          return true;
+        }
+
         function mergeRecordsById(prev, incoming, sortKey) {
           const base = Array.isArray(prev) ? prev : [];
           const next = Array.isArray(incoming) ? incoming : [];
@@ -8993,7 +9141,7 @@ const DICTIONARY = {
         }
 
         async function ensureOrdersLoadedForShiftId(shiftId) {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const sid = String(shiftId || "");
           if (!sid) return;
           if (loadedShiftOrdersRef.current.has(sid)) return;
@@ -9014,7 +9162,7 @@ const DICTIONARY = {
         }
 
         async function ensureInventoryLogsLoadedForShiftId(shiftId) {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const sid = String(shiftId || "");
           if (!sid) return;
           if (loadedShiftLogsRef.current.has(sid)) return;
@@ -9035,7 +9183,7 @@ const DICTIONARY = {
         }
 
         async function ensureDebtsLoadedForShiftId(shiftId) {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const sid = String(shiftId || "");
           if (!sid) return;
           if (loadedShiftDebtsRef.current.has(sid)) return;
@@ -9075,7 +9223,7 @@ const DICTIONARY = {
         }
 
         async function ensureOrdersLoadedForRange(range) {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const b = rangeToIsoBounds(range);
           if (!b) return;
           const key = b.from + "|" + b.to;
@@ -9097,7 +9245,7 @@ const DICTIONARY = {
         }
 
         async function ensureInventoryLogsLoadedForRange(range) {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const b = rangeToIsoBounds(range);
           if (!b) return;
           const key = b.from + "|" + b.to;
@@ -9119,7 +9267,7 @@ const DICTIONARY = {
         }
 
         async function ensureDebtsLoadedForRange(range) {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const b = rangeToIsoBounds(range);
           if (!b) return;
           const key = b.from + "|" + b.to;
@@ -9224,7 +9372,7 @@ const DICTIONARY = {
         }, [discounts]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const docRef = cloudPublicDoc("discounts");
           if (!docRef) return;
           try {
@@ -9241,7 +9389,7 @@ const DICTIONARY = {
               )
               .catch(() => {});
           } catch (e) {}
-        }, [discounts, cloudEnabled]);
+        }, [discounts, cloudEnabled, cloudSyncReady]);
 
         React.useEffect(() => {
           const id = setInterval(() => setNowMs(Date.now()), 30000);
@@ -9290,6 +9438,8 @@ const DICTIONARY = {
             return;
           }
           const unsub = window.firebaseAuth.onAuthStateChanged((u) => {
+            if (u) setCloudSyncReady(false);
+            else setCloudSyncReady(true);
             setFirebaseUser(u || null);
             setFirebaseAuthReady(true);
           });
@@ -9309,12 +9459,33 @@ const DICTIONARY = {
         }
 
         function handleFirebaseSignedIn(u) {
-          setFirebaseUser(u || (window.firebaseAuth ? window.firebaseAuth.currentUser : null));
+          const user = u || (window.firebaseAuth ? window.firebaseAuth.currentUser : null);
+          if (user) setCloudSyncReady(false);
+          else setCloudSyncReady(true);
+          setFirebaseUser(user);
           setFirebaseLoginDismissed(false);
         }
 
         function handleFirebaseLogout() {
           if (!window.firebaseAuth) return;
+          try {
+            const isAdminNow = adminUser && adminUser.role === "admin";
+            if (!isAdminNow) {
+              const entered = normalizePinValue(
+                window.prompt(lang === "ar" ? "PIN الإدارة" : "PIN Admin")
+              );
+              if (!entered) return;
+              const ok = (users || []).some(
+                (u) => u && u.role === "admin" && normalizePinValue(u.pin) === entered
+              );
+              if (!ok) {
+                setStatus({ type: "err", message: (t && t.pinIncorrect) || "PIN incorrect" });
+                return;
+              }
+            }
+          } catch (e) {
+            return;
+          }
           try {
             window.firebaseAuth.signOut();
           } catch (e) {}
@@ -9322,7 +9493,29 @@ const DICTIONARY = {
         }
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            cloudSyncingRef.current = false;
+            setCloudSyncReady(true);
+            return;
+          }
+          if (cloudSyncingRef.current) return;
+          cloudSyncingRef.current = true;
+          setCloudSyncReady(false);
+
+          (async () => {
+            const ok = await flushPendingCloudOps();
+            if (!ok) {
+              setStatus({ type: "err", message: lang === "ar" ? "فشل مزامنة البيانات" : "Échec de synchronisation" });
+              cloudSyncingRef.current = false;
+              return;
+            }
+            setCloudSyncReady(true);
+            cloudSyncingRef.current = false;
+          })();
+        }, [cloudEnabled]);
+
+        React.useEffect(() => {
+          if (!cloudEnabled || !cloudSyncReady) return;
           const db = window.firebaseDb;
           if (!db) return;
 
@@ -9391,10 +9584,10 @@ const DICTIONARY = {
           return () => {
             cancelled = true;
           };
-        }, [cloudEnabled]);
+        }, [cloudEnabled, cloudSyncReady]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const shiftsCol = cloudCol("shifts");
           if (!shiftsCol) return;
           const unsub = shiftsCol.onSnapshot(
@@ -9417,10 +9610,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled]);
+        }, [cloudEnabled, cloudSyncReady]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const invCol = cloudCol("inventory");
           if (!invCol) return;
           const unsub = invCol.onSnapshot(
@@ -9444,10 +9637,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled]);
+        }, [cloudEnabled, cloudSyncReady]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const discountsCol = cloudCol("discounts");
           if (!discountsCol) return;
           const unsub = discountsCol.onSnapshot(
@@ -9470,10 +9663,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled]);
+        }, [cloudEnabled, cloudSyncReady]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const usersCol = cloudCol("users");
           if (!usersCol) return;
           const unsub = usersCol.onSnapshot(
@@ -9522,10 +9715,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled]);
+        }, [cloudEnabled, cloudSyncReady]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           if (!activeShift || !activeShift.id) return;
           const ordersCol = cloudCol("orders");
           if (!ordersCol) return;
@@ -9558,10 +9751,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled, activeShift ? activeShift.id : null]);
+        }, [cloudEnabled, cloudSyncReady, activeShift ? activeShift.id : null]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           if (view !== "pos") return;
           const cupLoansCol = cloudCol("cupLoans");
           if (!cupLoansCol) return;
@@ -9587,10 +9780,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled, view]);
+        }, [cloudEnabled, cloudSyncReady, view]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const debtsCol = cloudCol("clientDebts");
           if (!debtsCol) return;
 
@@ -9624,10 +9817,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled, view, adminSection, activeWorkerId]);
+        }, [cloudEnabled, cloudSyncReady, view, adminSection, activeWorkerId]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const logsCol = cloudCol("inventoryLogs");
           if (!logsCol) return;
 
@@ -9660,10 +9853,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled, view, adminSection, activeShift ? activeShift.id : null]);
+        }, [cloudEnabled, cloudSyncReady, view, adminSection, activeShift ? activeShift.id : null]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           if (!(view === "admin" && adminSection === "inventory")) return;
           const invoicesCol = cloudCol("purchaseInvoices");
           if (!invoicesCol) return;
@@ -9687,10 +9880,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled, view, adminSection]);
+        }, [cloudEnabled, cloudSyncReady, view, adminSection]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           if (view !== "manager") return;
           const closed = (shifts || [])
             .filter((s) => s && (s.status === "closed" || s.closedAt))
@@ -9699,18 +9892,18 @@ const DICTIONARY = {
           const selectedShiftId = managerSelectedShiftId || (closed[0] && closed[0].id) || "";
           if (!selectedShiftId) return;
           ensureShiftDataLoaded(selectedShiftId);
-        }, [cloudEnabled, view, shifts, managerSelectedShiftId]);
+        }, [cloudEnabled, cloudSyncReady, view, shifts, managerSelectedShiftId]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           if (!(view === "admin" && adminSection === "overview")) return;
           const sid = adminOverviewShiftId || (activeShift && activeShift.id ? activeShift.id : "");
           if (!sid) return;
           ensureShiftDataLoaded(sid);
-        }, [cloudEnabled, view, adminSection, adminOverviewShiftId, activeShift ? activeShift.id : null]);
+        }, [cloudEnabled, cloudSyncReady, view, adminSection, adminOverviewShiftId, activeShift ? activeShift.id : null]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           if (!(view === "admin" && adminSection === "inventory")) return;
           const stockCountsCol = cloudCol("stockCountRequests");
           if (!stockCountsCol) return;
@@ -9736,10 +9929,10 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled, view, adminSection]);
+        }, [cloudEnabled, cloudSyncReady, view, adminSection]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           if (!(view === "admin" && adminSection === "staff")) return;
           const advancesCol = cloudCol("advances");
           if (!advancesCol) return;
@@ -9763,7 +9956,7 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled, view, adminSection]);
+        }, [cloudEnabled, cloudSyncReady, view, adminSection]);
 
         React.useEffect(() => {
           if (!activeWorker || !activeWorker.id) return;
@@ -9806,7 +9999,7 @@ const DICTIONARY = {
         }, [favorites, activeWorkerId, cloudEnabled]);
 
         React.useEffect(() => {
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           if (!activeWorkerId) {
             setFavorites([]);
             return;
@@ -9833,7 +10026,7 @@ const DICTIONARY = {
               if (typeof unsub === "function") unsub();
             } catch (e) {}
           };
-        }, [cloudEnabled, activeWorkerId]);
+        }, [cloudEnabled, cloudSyncReady, activeWorkerId]);
 
         const categories = React.useMemo(
           () => INITIAL_CATEGORIES.slice(),
@@ -10365,7 +10558,24 @@ const DICTIONARY = {
 
             closePinPrompt();
 
-            if (!cloudEnabled) return;
+            if (!cloudEnabled) {
+              try {
+                enqueueCloudOp({
+                  type: "set",
+                  col: "shifts",
+                  id: activeShift.id,
+                  merge: true,
+                  data: {
+                    id: activeShift.id,
+                    currentOperatorId: toWorker.id,
+                    pendingHandoff: null,
+                    operatorHandoffs: [...(((activeShift && activeShift.operatorHandoffs) || []).filter(Boolean)), event],
+                    updatedAt: nowIso
+                  }
+                });
+              } catch (e) {}
+              return;
+            }
             const shiftsCol = cloudCol("shifts");
             if (!shiftsCol) return;
             try {
@@ -10515,7 +10725,22 @@ const DICTIONARY = {
           });
           closeHandoffPrompt();
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "shifts",
+                id: activeShift.id,
+                merge: true,
+                data: {
+                  id: activeShift.id,
+                  pendingHandoff: pending,
+                  updatedAt: nowIso
+                }
+              });
+            } catch (e) {}
+            return;
+          }
           const shiftsCol = cloudCol("shifts");
           if (!shiftsCol) return;
           try {
@@ -10671,7 +10896,12 @@ const DICTIONARY = {
             return [...list, rec];
           });
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({ type: "set", col: "favorites", id: favId, merge: true, data: rec });
+            } catch (e) {}
+            return;
+          }
           const favCol = cloudCol("favorites");
           if (!favCol) return;
           try {
@@ -10685,7 +10915,12 @@ const DICTIONARY = {
         function removeFavoriteById(favId) {
           if (!favId) return;
           setFavorites((prev) => (prev || []).filter((f) => f && f.id !== favId));
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({ type: "del", col: "favorites", id: favId });
+            } catch (e) {}
+            return;
+          }
           const favCol = cloudCol("favorites");
           if (!favCol) return;
           try {
@@ -10902,7 +11137,36 @@ const DICTIONARY = {
             }
           ]);
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "inc",
+                col: "inventory",
+                id: ingredientId,
+                data: { id: ingredientId, updatedAt: nowIso },
+                deltas: { currentQty: delta }
+              });
+              enqueueCloudOp({
+                type: "set",
+                col: "inventoryLogs",
+                id: logId,
+                merge: true,
+                data: {
+                  id: logId,
+                  ingredientId,
+                  delta,
+                  reason: reason || "cup",
+                  orderId: orderId || null,
+                  shiftId: shiftId || (activeShift ? activeShift.id : null),
+                  userId: userId || (activeWorker ? activeWorker.id : null),
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  createdAt: nowIso
+                }
+              });
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const invCol = cloudCol("inventory");
           const logsCol = cloudCol("inventoryLogs");
@@ -10981,7 +11245,18 @@ const DICTIONARY = {
             if (amount > 0) applyShiftExpectedCashDelta(activeShift.id, -amount, nowIso);
           }
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "cupLoans",
+                id: loanId,
+                merge: true,
+                data: { ...patch, appId: CLOUD_APP_ID, deviceId: deviceIdRef.current }
+              });
+            } catch (e) {}
+            return;
+          }
           const loansCol = cloudCol("cupLoans");
           if (!loansCol) return;
           try {
@@ -11134,7 +11409,35 @@ const DICTIONARY = {
           });
           setInventoryLogs((prev) => [...prev, ...logEntries]);
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              Object.entries(ingredientDeltas).forEach(([ingId, delta]) => {
+                if (!ingId || !delta) return;
+                enqueueCloudOp({
+                  type: "inc",
+                  col: "inventory",
+                  id: ingId,
+                  data: { id: ingId, updatedAt: nowIso },
+                  deltas: { currentQty: delta }
+                });
+              });
+              logEntries.forEach((entry) => {
+                if (!entry || !entry.id) return;
+                enqueueCloudOp({
+                  type: "set",
+                  col: "inventoryLogs",
+                  id: entry.id,
+                  merge: true,
+                  data: {
+                    ...entry,
+                    appId: CLOUD_APP_ID,
+                    deviceId: deviceIdRef.current
+                  }
+                });
+              });
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const invCol = cloudCol("inventory");
           const logsCol = cloudCol("inventoryLogs");
@@ -11200,7 +11503,36 @@ const DICTIONARY = {
             }
           ]);
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "inc",
+                col: "inventory",
+                id: ingredientId,
+                data: { id: ingredientId, updatedAt: nowIso },
+                deltas: { currentQty: delta }
+              });
+              enqueueCloudOp({
+                type: "set",
+                col: "inventoryLogs",
+                id: logId,
+                merge: true,
+                data: {
+                  id: logId,
+                  ingredientId,
+                  delta,
+                  reason: "adjust",
+                  orderId: null,
+                  shiftId: activeShift ? activeShift.id : null,
+                  userId: adminUser ? adminUser.id : null,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  createdAt: nowIso
+                }
+              });
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const invCol = cloudCol("inventory");
           const logsCol = cloudCol("inventoryLogs");
@@ -11282,7 +11614,48 @@ const DICTIONARY = {
             ];
           });
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              const expiryPatch = expiryDate === undefined ? {} : { expiryDate: expiryDate || null };
+              const namePatch = {
+                name: (nameFr && String(nameFr)) || (inventory[ingredientId] && inventory[ingredientId].name) || ingredientId,
+                nameFr: nameFr === undefined ? (inventory[ingredientId] && inventory[ingredientId].nameFr) : String(nameFr || ""),
+                nameAr: nameAr === undefined ? (inventory[ingredientId] && inventory[ingredientId].nameAr) : String(nameAr || "")
+              };
+              enqueueCloudOp({
+                type: "set",
+                col: "inventory",
+                id: ingredientId,
+                merge: true,
+                data: Object.assign({ id: ingredientId, currentQty, minQty, updatedAt: nowIso }, expiryPatch, namePatch)
+              });
+
+              const ing = inventory[ingredientId];
+              const oldQty = ing ? ing.currentQty : null;
+              const diff = oldQty == null ? 0 : currentQty - oldQty;
+              if (diff) {
+                enqueueCloudOp({
+                  type: "set",
+                  col: "inventoryLogs",
+                  id: logId,
+                  merge: true,
+                  data: {
+                    id: logId,
+                    ingredientId,
+                    delta: diff,
+                    reason: "adjust",
+                    orderId: null,
+                    shiftId: activeShift ? activeShift.id : null,
+                    userId: adminUser ? adminUser.id : null,
+                    appId: CLOUD_APP_ID,
+                    deviceId: deviceIdRef.current,
+                    createdAt: nowIso
+                  }
+                });
+              }
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const invCol = cloudCol("inventory");
           const logsCol = cloudCol("inventoryLogs");
@@ -11374,7 +11747,42 @@ const DICTIONARY = {
           ]);
           setCloseShiftDebtNames((p) => ({ ...(p || {}), [orderId]: "" }));
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "orders",
+                id: orderId,
+                merge: true,
+                data: { status: "debt", debtId, debtCustomerName: name, updatedAt: nowIso }
+              });
+              enqueueCloudOp({
+                type: "set",
+                col: "clientDebts",
+                id: debtId,
+                merge: true,
+                data: {
+                  id: debtId,
+                  orderId,
+                  originalShiftId: order.shiftId,
+                  waiterId: order.cashierId,
+                  customerName: name,
+                  amount,
+                  createdAt: nowIso,
+                  dueAt: dueIso,
+                  paidAt: null,
+                  paidBy: null,
+                  paidShiftId: null,
+                  chargedAt: null,
+                  chargedShiftId: null,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  updatedAt: nowIso
+                }
+              });
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const ordersCol = cloudCol("orders");
           const debtsCol = cloudCol("clientDebts");
@@ -11442,7 +11850,36 @@ const DICTIONARY = {
             updateShiftStats(targetShiftId, amount);
           }
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "clientDebts",
+                id: debtId,
+                merge: true,
+                data: { paidAt: nowIso, paidBy: actorId, paidShiftId: targetShiftId, updatedAt: nowIso }
+              });
+              if (order) {
+                enqueueCloudOp({
+                  type: "set",
+                  col: "orders",
+                  id: order.id,
+                  merge: true,
+                  data: { status: "paid", paidAt: nowIso, paidShiftId: targetShiftId, updatedAt: nowIso }
+                });
+              }
+              if (targetShiftId && !debt.chargedAt && amount > 0) {
+                enqueueCloudOp({
+                  type: "inc",
+                  col: "shifts",
+                  id: targetShiftId,
+                  data: { id: targetShiftId, updatedAt: nowIso },
+                  deltas: { revenue: amount, orderCount: 1, expectedCash: amount }
+                });
+              }
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const debtsCol = cloudCol("clientDebts");
           const ordersCol = cloudCol("orders");
@@ -11561,7 +11998,48 @@ const DICTIONARY = {
             message: lang === "ar" ? "تمت إضافة الشراء." : "Achat ajouté."
           });
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "inc",
+                col: "inventory",
+                id: ingredientId,
+                data: { id: ingredientId, updatedAt: nowIso },
+                deltas: { currentQty: effectiveQty }
+              });
+              enqueueCloudOp({
+                type: "set",
+                col: "inventoryLogs",
+                id: logId,
+                merge: true,
+                data: {
+                  id: logId,
+                  ingredientId,
+                  delta: effectiveQty,
+                  reason: "purchase",
+                  orderId: null,
+                  shiftId: shiftId,
+                  userId: actorId,
+                  totalCost: cost,
+                  unitPrice: unitPrice,
+                  deductFromExpectedCash: affectsShiftCash,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  createdAt: nowIso
+                }
+              });
+              if (shiftId && affectsShiftCash) {
+                enqueueCloudOp({
+                  type: "inc",
+                  col: "shifts",
+                  id: shiftId,
+                  data: { id: shiftId, updatedAt: nowIso },
+                  deltas: { expectedCash: -cost }
+                });
+              }
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const invCol = cloudCol("inventory");
           const logsCol = cloudCol("inventoryLogs");
@@ -11738,7 +12216,57 @@ const DICTIONARY = {
             message: lang === "ar" ? "تمت إضافة الفاتورة." : "Facture ajoutée."
           });
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              Object.entries(ingredientDeltas).forEach(([id, delta]) => {
+                if (!id || !delta) return;
+                enqueueCloudOp({
+                  type: "inc",
+                  col: "inventory",
+                  id,
+                  data: { id, updatedAt: nowIso },
+                  deltas: { currentQty: delta }
+                });
+              });
+              logEntries.forEach((entry) => {
+                if (!entry || !entry.id) return;
+                enqueueCloudOp({
+                  type: "set",
+                  col: "inventoryLogs",
+                  id: entry.id,
+                  merge: true,
+                  data: {
+                    ...entry,
+                    appId: CLOUD_APP_ID,
+                    deviceId: deviceIdRef.current,
+                    updatedAt: nowIso
+                  }
+                });
+              });
+              enqueueCloudOp({
+                type: "set",
+                col: "purchaseInvoices",
+                id: invoiceId,
+                merge: true,
+                data: {
+                  ...invoice,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  updatedAt: nowIso
+                }
+              });
+              if (shiftId && affectsShiftCash && invoiceTotalCost) {
+                enqueueCloudOp({
+                  type: "inc",
+                  col: "shifts",
+                  id: shiftId,
+                  data: { id: shiftId, updatedAt: nowIso },
+                  deltas: { expectedCash: -invoiceTotalCost }
+                });
+              }
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const invCol = cloudCol("inventory");
           const logsCol = cloudCol("inventoryLogs");
@@ -11823,7 +12351,23 @@ const DICTIONARY = {
           };
           setStockCountRequests((prev) => [...(prev || []), req]);
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "stockCountRequests",
+                id,
+                merge: true,
+                data: {
+                  ...req,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  updatedAt: nowIso
+                }
+              });
+            } catch (e) {}
+            return;
+          }
           const stockCountsCol = cloudCol("stockCountRequests");
           if (!stockCountsCol) return;
           try {
@@ -11868,7 +12412,23 @@ const DICTIONARY = {
             (prev || []).map((r) => (r && r.id === id ? { ...r, ...patch } : r))
           );
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "stockCountRequests",
+                id,
+                merge: true,
+                data: {
+                  ...patch,
+                  id,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current
+                }
+              });
+            } catch (e) {}
+            return;
+          }
           const stockCountsCol = cloudCol("stockCountRequests");
           if (!stockCountsCol) return;
           try {
@@ -11941,7 +12501,24 @@ const DICTIONARY = {
             return ensureDefaultUsers(list);
           });
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "users",
+                id: partial.id,
+                merge: true,
+                data: {
+                  ...partial,
+                  id: partial.id,
+                  updatedAt: nowIso,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current
+                }
+              });
+            } catch (e) {}
+            return;
+          }
           const usersCol = cloudCol("users");
           if (!usersCol) return;
           try {
@@ -11975,7 +12552,12 @@ const DICTIONARY = {
           if (adminUser && adminUser.id === userId) {
             setAdminUser(null);
           }
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({ type: "del", col: "users", id: userId });
+            } catch (e) {}
+            return;
+          }
           const usersCol = cloudCol("users");
           if (!usersCol) return;
           try {
@@ -12000,7 +12582,18 @@ const DICTIONARY = {
               : s
           );
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "inc",
+                col: "shifts",
+                id: shiftId,
+                data: { id: shiftId, updatedAt: nowIso || new Date().toISOString() },
+                deltas: { expectedCash: d }
+              });
+            } catch (e) {}
+            return;
+          }
           const shiftsCol = cloudCol("shifts");
           if (!shiftsCol) return;
           try {
@@ -12068,7 +12661,23 @@ const DICTIONARY = {
             });
           }
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "advances",
+                id,
+                merge: true,
+                data: {
+                  ...rec,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  updatedAt: nowIso
+                }
+              });
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const advancesCol = cloudCol("advances");
           const shiftsCol = cloudCol("shifts");
@@ -12117,7 +12726,18 @@ const DICTIONARY = {
             applyShiftExpectedCashDelta(shiftId, -amount, nowIso);
           }
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "advances",
+                id: advanceId,
+                merge: true,
+                data: { status: "approved", approvedAt: nowIso, approvedBy: adminUser.id, updatedAt: nowIso }
+              });
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const advancesCol = cloudCol("advances");
           const shiftsCol = cloudCol("shifts");
@@ -12153,7 +12773,18 @@ const DICTIONARY = {
                 : a
             )
           );
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "advances",
+                id: advanceId,
+                merge: true,
+                data: { status: "rejected", rejectedAt: nowIso, rejectedBy: adminUser.id, updatedAt: nowIso }
+              });
+            } catch (e) {}
+            return;
+          }
           const advancesCol = cloudCol("advances");
           if (!advancesCol) return;
           try {
@@ -12206,6 +12837,23 @@ const DICTIONARY = {
                 )
                 .catch(() => {});
             }
+          } else {
+            try {
+              const nowIso = newShift.openedAt;
+              enqueueCloudOp({
+                type: "set",
+                col: "shifts",
+                id,
+                merge: true,
+                data: {
+                  ...newShift,
+                  openingExpectedCash: newShift.expectedCash,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  updatedAt: nowIso
+                }
+              });
+            } catch (e) {}
           }
         }
 
@@ -12237,6 +12885,22 @@ const DICTIONARY = {
                 )
                 .catch(() => {});
             }
+          } else {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "shifts",
+                id: activeShift.id,
+                merge: true,
+                data: {
+                  id: activeShift.id,
+                  status: "closed",
+                  closedAt,
+                  closedBy: adminUser ? adminUser.id : null,
+                  updatedAt: closedAt
+                }
+              });
+            } catch (e) {}
           }
           setActiveShift(null);
         }
@@ -12453,6 +13117,32 @@ const DICTIONARY = {
                   .catch(() => {});
               } catch (e) {}
             }
+          } else {
+            try {
+              const nowIso = order.createdAt;
+              enqueueCloudOp({
+                type: "set",
+                col: "orders",
+                id: orderId,
+                merge: true,
+                data: {
+                  ...order,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  updatedAt: nowIso
+                }
+              });
+              (loansToCreate || []).forEach((l) => {
+                if (!l || !l.id) return;
+                enqueueCloudOp({
+                  type: "set",
+                  col: "cupLoans",
+                  id: l.id,
+                  merge: true,
+                  data: { ...l, appId: CLOUD_APP_ID, deviceId: deviceIdRef.current, updatedAt: nowIso }
+                });
+              });
+            } catch (e) {}
           }
 
           await new Promise((resolve) => setTimeout(resolve, 300));
@@ -12504,7 +13194,25 @@ const DICTIONARY = {
           );
           updateShiftStats(order.shiftId, order.totals.total);
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "orders",
+                id: orderId,
+                merge: true,
+                data: { status: "paid", paidAt, updatedAt: paidAt }
+              });
+              enqueueCloudOp({
+                type: "inc",
+                col: "shifts",
+                id: order.shiftId,
+                data: { id: order.shiftId, updatedAt: paidAt },
+                deltas: { revenue: order.totals.total, orderCount: 1, expectedCash: order.totals.total }
+              });
+            } catch (e) {}
+            return;
+          }
           const db = window.firebaseDb;
           const ordersCol = cloudCol("orders");
           const shiftsCol = cloudCol("shifts");
@@ -12582,7 +13290,7 @@ const DICTIONARY = {
             setStatus({ type: "err", message: "Erreur lors de l'enregistrement." });
           }
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled || !cloudSyncReady) return;
           const docRef = cloudPublicDoc("menu");
           if (!docRef) return;
           try {
@@ -12625,7 +13333,22 @@ const DICTIONARY = {
             return [rec, ...list];
           });
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "discounts",
+                id: rec.id,
+                merge: true,
+                data: {
+                  ...rec,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current
+                }
+              });
+            } catch (e) {}
+            return;
+          }
           const discountsCol = cloudCol("discounts");
           if (!discountsCol) return;
           try {
@@ -12648,7 +13371,12 @@ const DICTIONARY = {
           if (!did) return;
           setDiscounts((prev) => (prev || []).filter((d) => d && d.id !== did));
 
-          if (!cloudEnabled) return;
+          if (!cloudEnabled) {
+            try {
+              enqueueCloudOp({ type: "del", col: "discounts", id: did });
+            } catch (e) {}
+            return;
+          }
           const discountsCol = cloudCol("discounts");
           if (!discountsCol) return;
           try {
@@ -12886,6 +13614,49 @@ const DICTIONARY = {
                 batch.commit().catch(() => {});
               } catch (e) {}
             }
+          } else {
+            try {
+              const nowIso = newShift.openedAt;
+              enqueueCloudOp({
+                type: "set",
+                col: "shifts",
+                id: shiftId,
+                merge: true,
+                data: {
+                  ...newShift,
+                  appId: CLOUD_APP_ID,
+                  deviceId: deviceIdRef.current,
+                  updatedAt: nowIso
+                }
+              });
+              if (shouldConfirmPrevFloat && prevShiftId) {
+                enqueueCloudOp({
+                  type: "set",
+                  col: "shifts",
+                  id: prevShiftId,
+                  merge: true,
+                  data: {
+                    id: prevShiftId,
+                    closingFloatConfirmedAt: nowIso,
+                    closingFloatConfirmedBy: worker.id,
+                    closingFloatConfirmedValue: Number(openingFloatCash || 0) || 0,
+                    updatedAt: nowIso
+                  }
+                });
+              }
+              if (overdue.length) {
+                overdue.forEach((d) => {
+                  if (!d || !d.id) return;
+                  enqueueCloudOp({
+                    type: "set",
+                    col: "clientDebts",
+                    id: d.id,
+                    merge: true,
+                    data: { chargedAt: nowIso, chargedShiftId: shiftId, updatedAt: nowIso }
+                  });
+                });
+              }
+            } catch (e) {}
           }
           setActiveWorker(worker);
           setShiftPaused(false);
@@ -13077,6 +13848,24 @@ const DICTIONARY = {
                 )
                 .catch(() => {});
             }
+          } else {
+            try {
+              enqueueCloudOp({
+                type: "set",
+                col: "shifts",
+                id: shiftId,
+                merge: true,
+                data: {
+                  id: shiftId,
+                  status: "closed",
+                  closedAt,
+                  closedBy,
+                  closingFloatCash: floatVal,
+                  closingFloatSetAt: closedAt,
+                  updatedAt: closedAt
+                }
+              });
+            } catch (e) {}
           }
 
           if (activeShift && activeShift.id === shiftId) {
